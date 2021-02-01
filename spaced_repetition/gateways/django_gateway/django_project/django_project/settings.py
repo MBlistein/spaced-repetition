@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'spaced_repetition.gateways.django_gateway.django_project.apps.problem'
 ]
 
 MIDDLEWARE = [
@@ -73,15 +74,10 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-# import os
-# p = BASE_DIR.parent.parent / 'db'
-# print(p)
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR.parent.parent / 'db/db.sqlite3',
+        'NAME': BASE_DIR.parent.parent.parent / 'db/db.sqlite3',
     }
 }
 
