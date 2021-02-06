@@ -1,12 +1,7 @@
-from typing import List
-
-from spaced_repetition.domain.problem import Difficulty
+from spaced_repetition.domain.problem import Problem
 
 
 class DBGatewayInterface:
     @staticmethod
-    def create_problem(difficulty: Difficulty,
-                       link: str,
-                       name: str,
-                       tags: List[str]) -> None:
+    def create_problem(problem: Problem) -> None:
         pass

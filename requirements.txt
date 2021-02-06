@@ -1,2 +1,4 @@
 dataclasses
 django==3.1.6
+pylint
+pylint-django
