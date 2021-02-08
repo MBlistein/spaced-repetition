@@ -31,22 +31,14 @@ class ProblemCreator:
     """
     @classmethod
     def create_problem(cls, name: str,
-                       difficulty: int,
+                       difficulty: Difficulty,
                        tags: List[str],
                        link: str = None):
         return Problem(
-            difficulty=cls.validate_difficulty(difficulty),
+            difficulty=difficulty,
             link=cls.validate_link(link),
             name=cls.validate_name(name),
             tags=cls.validate_tags(tags))
-
-    @staticmethod
-    def validate_difficulty(difficulty: int) -> Difficulty:
-        if difficulty in {1: Difficulty.EASY,
-                          2: Difficulty.MEDIUM,
-                          3: Difficulty.HARD}:
-            return Difficulty(difficulty)
-        raise ValueError(f"Unknown difficulty: {difficulty}.")
 
     @staticmethod
     def validate_link(link: str) -> Union[str, None]:

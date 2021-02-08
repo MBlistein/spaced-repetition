@@ -2,14 +2,30 @@
 
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.use_cases.add_problem import ProblemAdder
+from spaced_repetition.domain.problem import Difficulty
 
 
 def get_input() -> dict:
+    sorted_diffs = list(sorted([diff for diff in Difficulty],
+                               key=lambda d: d.value))
+    min_diff = sorted_diffs[0]
+    max_diff = sorted_diffs[-1]
     return {
         'name': input("Problem name: "),
-        'difficulty': int(input("Select a difficulty from 1 (easy) to 3 (hard): ")),
+        'difficulty': _format_difficulty(
+            input(f"Select a difficulty from {min_diff.value} ({min_diff.name})"
+                  f" to {max_diff.value} ({max_diff.name}: ")),
         'link': input("Link (optional): "),
-        'tags': input("Supply whitespace-separated tags (at least one): ")}
+        'tags': _format_tags(
+            input("Supply whitespace-separated tags (at least one): "))}
+
+
+def _format_difficulty(difficulty: str):
+    return Difficulty(int(difficulty))
+
+
+def _format_tags(tags: str):
+    return tags.split()
 
 
 def main():

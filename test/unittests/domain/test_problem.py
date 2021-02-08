@@ -1,9 +1,7 @@
 
 import unittest
-from unittest.mock import Mock
 
-from spaced_repetition.domain.problem import (Difficulty,
-                                              ProblemCreator)
+from spaced_repetition.domain.problem import ProblemCreator
 
 MAX_LINK_LENGTH = 255
 MAX_NAME_LENGTH = 100
@@ -11,18 +9,6 @@ MAX_TAG_LENGTH = 20
 
 
 class TestProblemCreator(unittest.TestCase):
-    def test_validate_difficulty(self):
-        for num in range(1, 4):
-            self.assertEqual(ProblemCreator.validate_difficulty(num),
-                             Difficulty(num))
-
-    def test_validate_difficulty_invalid_int(self):
-        with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_difficulty(0)
-
-        self.assertEqual(str(context.exception),
-                         "Unknown difficulty: 0.")
-
     def test_validate_link_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
             ProblemCreator.validate_link('a' * (MAX_LINK_LENGTH + 1))
