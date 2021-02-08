@@ -12,7 +12,7 @@ class TestProblemCreation(TestCase):
         dgw = DjangoGateway()
         prob = Problem(difficulty=Difficulty.EASY,
                        name='testname',
-                       link='https://testlink.com',
+                       url='https://testurl.com',
                        tags=['tag1'])
 
         dgw.create_problem(problem=prob)
@@ -22,5 +22,5 @@ class TestProblemCreation(TestCase):
 
         problem = problems.first()
         self.assertEqual(problem.name, 'testname')
-        self.assertEqual(problem.link, 'https://testlink.com')
+        self.assertEqual(problem.url, 'https://testurl.com')
         self.assertEqual(problem.tags, ['tag1'])

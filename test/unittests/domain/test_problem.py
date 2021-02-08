@@ -3,18 +3,18 @@ import unittest
 
 from spaced_repetition.domain.problem import ProblemCreator
 
-MAX_LINK_LENGTH = 255
+MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
 MAX_TAG_LENGTH = 20
 
 
 class TestProblemCreator(unittest.TestCase):
-    def test_validate_link_raises_too_long(self):
+    def test_validate_url_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_link('a' * (MAX_LINK_LENGTH + 1))
+            ProblemCreator.validate_url('a' * (MAX_URL_LENGTH + 1))
 
         self.assertEqual(str(context.exception),
-                         f"Link too long, max length = {MAX_LINK_LENGTH} chars.")
+                         f"Url too long, max length = {MAX_URL_LENGTH} chars.")
 
     def test_validate_name_raises_empty(self):
         with self.assertRaises(ValueError) as context:

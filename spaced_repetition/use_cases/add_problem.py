@@ -14,11 +14,18 @@ class ProblemAdder:
     def add_problem(self, name: str,
                     difficulty: Difficulty,
                     tags: List[str],
-                    link: str = None):
+                    url: str = None):
         problem = ProblemCreator.create_problem(
             name=name,
             difficulty=difficulty,
             tags=tags,
-            link=link)
+            url=url)
+
+
+
         self.repo.create_problem(problem=problem)
         self.present.confirm_problem_created(problem=problem)
+
+    def assert_unique_name(self, problem):
+        # if self.repo
+        pass

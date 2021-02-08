@@ -4,7 +4,7 @@ from typing import List, Union
 from dataclasses import dataclass
 
 
-MAX_LINK_LENGTH = 255
+MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
 MAX_TAG_LENGTH = 20
 
@@ -17,10 +17,10 @@ class Difficulty(Enum):
 
 @dataclass
 class Problem:
-    name: str
-    link: str
-    tags: List[str]
     difficulty: Difficulty
+    name: str
+    tags: List[str]
+    url: str
 
 
 class ProblemCreator:
@@ -33,20 +33,20 @@ class ProblemCreator:
     def create_problem(cls, name: str,
                        difficulty: Difficulty,
                        tags: List[str],
-                       link: str = None):
+                       url: str = None):
         return Problem(
             difficulty=difficulty,
-            link=cls.validate_link(link),
             name=cls.validate_name(name),
-            tags=cls.validate_tags(tags))
+            tags=cls.validate_tags(tags),
+            url=cls.validate_url(url))
 
     @staticmethod
-    def validate_link(link: str) -> Union[str, None]:
-        if len(link) == 0:
+    def validate_url(url: str) -> Union[str, None]:
+        if len(url) == 0:
             return None
-        if len(link) <= MAX_LINK_LENGTH:
-            return link
-        raise ValueError(f"Link too long, max length = {MAX_LINK_LENGTH} chars.")
+        if len(url) <= MAX_URL_LENGTH:
+            return url
+        raise ValueError(f"Url too long, max length = {MAX_URL_LENGTH} chars.")
 
     @staticmethod
     def validate_name(name: str) -> str:

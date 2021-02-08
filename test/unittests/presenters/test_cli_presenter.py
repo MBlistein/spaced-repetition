@@ -11,7 +11,7 @@ class TestCliPresenter(unittest.TestCase):
             name='testname',
             difficulty=Difficulty(1),
             tags=['test-tag'],
-            link='test-link')
+            url='test-url')
         self.assertEqual("Created Problem 'testname' (difficulty 'EASY', "
                          "tags: test-tag)",
                          CliPresenter._problem_confirmation_txt(problem=problem))

@@ -12,13 +12,13 @@ class TestProblemAdder(unittest.TestCase):
             name='testname',
             difficulty=Difficulty(1),
             tags=['test-tag'],
-            link='test-link')
+            url='test-url')
 
         p_a = ProblemAdder(db_gateway=Mock(), presenter=Mock())
         p_a.add_problem(
             name='testname',
             difficulty=Difficulty(1),
             tags=['test-tag'],
-            link='test-link')
+            url='test-url')
 
         p_a.repo.create_problem.assert_called_once_with(problem=problem)  # noqa
