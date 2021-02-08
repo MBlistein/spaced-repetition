@@ -9,23 +9,26 @@ MAX_TAG_LENGTH = 20
 
 
 class TestProblemCreator(unittest.TestCase):
+    def test_validate_url_empty(self):
+        self.assertIsNone(ProblemCreator.validate_url(url=''))
+
     def test_validate_url_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_url('a' * (MAX_URL_LENGTH + 1))
+            ProblemCreator.validate_url(url='a' * (MAX_URL_LENGTH + 1))
 
         self.assertEqual(str(context.exception),
                          f"Url too long, max length = {MAX_URL_LENGTH} chars.")
 
     def test_validate_name_raises_empty(self):
         with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_name('')
+            ProblemCreator.validate_name(name='')
 
         self.assertEqual(str(context.exception),
                          "Name cannot be empty.")
 
     def test_validate_name_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_name('a' * (MAX_NAME_LENGTH + 1))
+            ProblemCreator.validate_name(name='a' * (MAX_NAME_LENGTH + 1))
 
         self.assertEqual(str(context.exception),
                          f"Name too long, max length = {MAX_NAME_LENGTH} chars.")
@@ -57,7 +60,7 @@ class TestProblemCreator(unittest.TestCase):
 
     def test_validate_tag_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_tags(['a' * (MAX_TAG_LENGTH + 1)])
+            ProblemCreator.validate_tags(tags=['a' * (MAX_TAG_LENGTH + 1)])
 
         self.assertEqual(str(context.exception),
                          f"Each tag must be at most {MAX_TAG_LENGTH} chars long.")
