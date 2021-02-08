@@ -1,8 +1,9 @@
 """Command line controller / user interface"""
 
-from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
-from spaced_repetition.use_cases.add_problem import ProblemAdder
 from spaced_repetition.domain.problem import Difficulty
+from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
+from spaced_repetition.presenters.cli_presenter import CliPresenter
+from spaced_repetition.use_cases.add_problem import ProblemAdder
 
 
 class CliController:
@@ -31,7 +32,8 @@ class CliController:
 
     @classmethod
     def run(cls):
-        prob_adder = ProblemAdder(db_gateway=DjangoGateway())
+        prob_adder = ProblemAdder(db_gateway=DjangoGateway(),
+                                  presenter=CliPresenter())
         user_input = cls._get_input()
         try:
             prob_adder.add_problem(

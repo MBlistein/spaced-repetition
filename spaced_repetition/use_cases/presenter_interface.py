@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from spaced_repetition.domain.problem import Problem
 
 
-class DBGatewayInterface(ABC):
+class PresenterInterface(ABC):
     @staticmethod
     @abstractmethod
-    def create_problem(problem: Problem) -> None:
+    def confirm_problem_created(problem: Problem):
         pass
