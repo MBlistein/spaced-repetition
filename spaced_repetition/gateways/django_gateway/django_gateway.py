@@ -2,16 +2,16 @@ from typing import Union
 
 from django.db.models import QuerySet
 
-from spaced_repetition.domain.problem import Problem, ProblemCreator
+import spaced_repetition.domain.problem as domain
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 
-from .django_project.apps.problem import models
+from .django_project.apps.problem.models import Problem
 
 
 class DjangoGateway(DBGatewayInterface):
     @staticmethod
-    def create_problem(problem: Problem) -> None:
-        models.Problem.objects.create(
+    def create_problem(problem: domain.Problem) -> None:
+        Problem.objects.create(
             difficulty=problem.difficulty.value,
             url=problem.url,
             name=problem.name,
@@ -19,10 +19,10 @@ class DjangoGateway(DBGatewayInterface):
 
     @classmethod
     def get_problems(cls, name: Union[str, None] = None):
-        return cls.format_problems(data=cls.query_problems(name=name))
+        return cls._format_problems(problem_qs=cls._query_problems(name=name))
 
     @staticmethod
-    def query_problems(name: str):
+    def _query_problems(name: Union[str, None]):
         qs = Problem.objects.all()
         if name:
             qs = qs.filter(name=name)
@@ -30,8 +30,8 @@ class DjangoGateway(DBGatewayInterface):
         return qs
 
     @staticmethod
-    def format_problems(problem_qs: QuerySet):
-        return [ProblemCreator.create_problem(
+    def _format_problems(problem_qs: QuerySet):
+        return [domain.ProblemCreator.create_problem(
             difficulty=p.difficulty,
             name=p.name,
             tags=p.tags,
