@@ -67,7 +67,7 @@ class ProblemCreator:
                 raise TypeError("Tags must be strings.")
             if len(tag) > MAX_TAG_LENGTH:
                 raise ValueError(
-                    "Each tag must be at most {MAX_TAG_LENGTH} chars long.")
+                    f"Each tag must be at most {MAX_TAG_LENGTH} chars long.")
 
         if len(tags) == 0:
             raise ValueError("Provide at least one tag.")
