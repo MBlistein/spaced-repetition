@@ -11,7 +11,7 @@ class ProblemAdder:
     def __init__(self, db_gateway: DBGatewayInterface,
                  presenter: PresenterInterface):
         self.repo = db_gateway
-        self.present = presenter
+        self.presenter = presenter
 
     def add_problem(self, name: str,
                     difficulty: Difficulty,
@@ -25,7 +25,7 @@ class ProblemAdder:
 
         self._assert_is_unique(problem=problem)
         self.repo.create_problem(problem=problem)
-        self.present.confirm_problem_created(problem=problem)
+        self.presenter.confirm_problem_created(problem=problem)
 
     def _assert_is_unique(self, problem: Problem):
         if len(self.repo.get_problems(name=problem.name)) > 0:

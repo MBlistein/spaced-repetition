@@ -6,6 +6,7 @@ from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
+from spaced_repetition.use_cases.get_problem import ProblemGetter
 
 
 class CliController:
@@ -13,10 +14,12 @@ class CliController:
 
     def __init__(self):
         self.command_mapper = {
-            'create-problem': self._add_problem}
+            'create-problem': self._add_problem,
+            'list-problems': self._list_problems}
 
         # add shortcuts
         self.command_mapper['cp'] = self.command_mapper['create-problem']
+        self.command_mapper['l'] = self.command_mapper['list-problems']
 
     def run(self):
         args = self._parse_args()
@@ -29,7 +32,6 @@ class CliController:
         prob_adder = ProblemAdder(db_gateway=DjangoGateway(),
                                   presenter=CliPresenter())
         user_input = cls._record_problem_data()
-        print(user_input)
         try:
             prob_adder.add_problem(
                 difficulty=user_input['difficulty'],
@@ -47,6 +49,12 @@ class CliController:
     @staticmethod
     def _format_tags(tags: str):
         return tags.split()
+
+    @staticmethod
+    def _list_problems(limit: int = None):
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        prob_getter.list_problems()
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(description=CliController.DESCRIPTION)

@@ -12,6 +12,9 @@ class TestProblemCreator(unittest.TestCase):
     def test_validate_url_empty(self):
         self.assertIsNone(ProblemCreator.validate_url(url=''))
 
+    def test_validate_url_none(self):
+        self.assertIsNone(ProblemCreator.validate_url(url=None))
+
     def test_validate_url_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
             ProblemCreator.validate_url(url='a' * (MAX_URL_LENGTH + 1))

@@ -41,8 +41,8 @@ class ProblemCreator:
             url=cls.validate_url(url))
 
     @staticmethod
-    def validate_url(url: str) -> Union[str, None]:
-        if len(url) == 0:
+    def validate_url(url: Union[str, None]) -> Union[str, None]:
+        if url is None or len(url) == 0:
             return None
         if len(url) <= MAX_URL_LENGTH:
             return url
