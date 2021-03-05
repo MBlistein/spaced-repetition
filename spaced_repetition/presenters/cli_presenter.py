@@ -4,8 +4,8 @@ from spaced_repetition.domain.problem import Problem
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 
 
-NUM_COLUMNS = 4
-COLUMN_WIDTHS = [20, 20, 10, 25]
+NUM_COLUMNS = 5
+COLUMN_WIDTHS = [5, 20, 20, 10, 25]
 
 
 class CliPresenter(PresenterInterface):
@@ -16,11 +16,13 @@ class CliPresenter(PresenterInterface):
     @classmethod
     def list_problems(cls, problems: List[Problem]) -> None:
         print('\nProblems:')
-        print(cls._format_table_row(content=['Name', 'Tags', 'Difficulty', 'URL']))
+        print(cls._format_table_row(
+            content=['Id', 'Name', 'Tags', 'Difficulty', 'URL']))
 
         for p in problems:
             print(cls._format_table_row(content=[
-                p.name, ', '.join(p.tags), str(p.difficulty), p.url]))
+                str(p.problem_id), p.name, ', '.join(p.tags),
+                str(p.difficulty.name), p.url]))
 
     @staticmethod
     def _format_entry(entry: str, max_len: int):
@@ -40,5 +42,5 @@ class CliPresenter(PresenterInterface):
 
     @staticmethod
     def _problem_confirmation_txt(problem: Problem):
-        return f"Created Problem '{problem.name}' (difficulty " \
-               f"'{problem.difficulty.name}', tags: {', '.join(problem.tags)})"
+        return f"Created Problem '{problem.name}' with id '{problem.problem_id}'" \
+            f" (difficulty '{problem.difficulty.name}', tags: {', '.join(problem.tags)})"

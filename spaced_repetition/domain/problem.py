@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union
+from typing import Any, List, Union
 
 from dataclasses import dataclass
 
@@ -19,34 +19,30 @@ class Difficulty(Enum):
 class Problem:
     difficulty: Difficulty
     name: str
+    problem_id: Union[int, None]
     tags: List[str]
-    url: str
+    url: Union[str, None]
 
 
 class ProblemCreator:
-    """Each of the validator methods return a 3-tuple:
-        * idx 0: an integer if input was valid, None otherwise
-        * idx 1: None if input was valid, error message (str) otherwise,
-        * idx 2: optional validation message (str) or None
-    """
     @classmethod
     def create_problem(cls, name: str,
                        difficulty: Difficulty,
                        tags: List[str],
+                       problem_id: int = None,
                        url: str = None):
         return Problem(
-            difficulty=difficulty,
+            difficulty=cls.validate_difficulty(difficulty),
             name=cls.validate_name(name),
+            problem_id=problem_id,
             tags=cls.validate_tags(tags),
             url=cls.validate_url(url))
 
     @staticmethod
-    def validate_url(url: Union[str, None]) -> Union[str, None]:
-        if url is None or len(url) == 0:
-            return None
-        if len(url) <= MAX_URL_LENGTH:
-            return url
-        raise ValueError(f"Url too long, max length = {MAX_URL_LENGTH} chars.")
+    def validate_difficulty(difficulty: Difficulty) -> Difficulty:
+        if type(difficulty) is not Difficulty:
+            raise TypeError('difficulty should be of type Difficulty')
+        return difficulty
 
     @staticmethod
     def validate_name(name: str) -> str:
@@ -72,3 +68,11 @@ class ProblemCreator:
         if len(tags) == 0:
             raise ValueError("Provide at least one tag.")
         return tags
+
+    @staticmethod
+    def validate_url(url: Union[str, None]) -> Union[str, None]:
+        if url is None or len(url) == 0:
+            return None
+        if len(url) <= MAX_URL_LENGTH:
+            return url
+        raise ValueError(f"Url too long, max length = {MAX_URL_LENGTH} chars.")

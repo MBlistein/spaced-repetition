@@ -1,7 +1,8 @@
 
 import unittest
+from unittest.mock import Mock
 
-from spaced_repetition.domain.problem import ProblemCreator
+from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 
 MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
@@ -67,3 +68,35 @@ class TestProblemCreator(unittest.TestCase):
 
         self.assertEqual(str(context.exception),
                          f"Each tag must be at most {MAX_TAG_LENGTH} chars long.")
+
+    def test_validate_difficulty(self):
+        self.assertEqual(
+            ProblemCreator.validate_difficulty(difficulty=Difficulty.EASY),
+            Difficulty.EASY)
+
+    def test_validate_difficulty_raises(self):
+        with self.assertRaises(TypeError) as context:
+            ProblemCreator.validate_difficulty(difficulty=2)
+
+        self.assertEqual(str(context.exception),
+                         'difficulty should be of type Difficulty')
+
+    def test_all_validators_called(self):
+        class FakeProblemCreator(ProblemCreator):
+            pass
+
+        FakeProblemCreator.validate_difficulty = Mock()
+        FakeProblemCreator.validate_name = Mock()
+        FakeProblemCreator.validate_tags = Mock()
+        FakeProblemCreator.validate_url = Mock()
+
+        FakeProblemCreator.create_problem(name='fake',
+                                          difficulty='fake',
+                                          tags='fake',
+                                          problem_id='fake',
+                                          url='fake')
+
+        FakeProblemCreator.validate_difficulty.assert_called_once()
+        FakeProblemCreator.validate_name.assert_called_once()
+        FakeProblemCreator.validate_tags.assert_called_once()
+        FakeProblemCreator.validate_url.assert_called_once()

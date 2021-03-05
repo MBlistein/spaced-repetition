@@ -2,3 +2,4 @@ coverage
 django
 pylint
 pylint-django
+python-dateutil

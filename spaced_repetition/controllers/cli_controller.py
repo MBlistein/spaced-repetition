@@ -3,32 +3,43 @@
 import argparse
 
 from spaced_repetition.domain.problem import Difficulty
+from spaced_repetition.domain.problem_log import Action, Result
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
 from spaced_repetition.use_cases.get_problem import ProblemGetter
+from spaced_repetition.use_cases.log_problem import ProblemLogger
 
 
 class CliController:
-    DESCRIPTION = """This is the command line interface to 'spaced_repetition'."""
+    DESCRIPTION = """This is the spaced-repetition CLI"""
 
     def __init__(self):
         self.command_mapper = {
-            'create-problem': self._add_problem,
-            'list-problems': self._list_problems}
+            'add-problem': self._add_problem,
+            'list-problems': self._list_problems,
+            'log-problem': self._log_problem,
+        }
 
         # add shortcuts
-        self.command_mapper['cp'] = self.command_mapper['create-problem']
-        self.command_mapper['l'] = self.command_mapper['list-problems']
+        self.command_mapper['add'] = self.command_mapper['add-problem']
+        self.command_mapper['list'] = self.command_mapper['list-problems']
+        self.command_mapper['log'] = self.command_mapper['log-problem']
 
     def run(self):
         args = self._parse_args()
+        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        print(type(args))
+        print(vars(args))
+
+        kwargs = {k: v for k, v in vars(args).items() if k not in self.command_mapper}
 
         # execute command
-        self.command_mapper[args.command]()
+        self.command_mapper[args.command](**kwargs)
 
     @classmethod
     def _add_problem(cls):
+        """Record a new problem"""
         prob_adder = ProblemAdder(db_gateway=DjangoGateway(),
                                   presenter=CliPresenter())
         user_input = cls._record_problem_data()
@@ -51,14 +62,57 @@ class CliController:
         return tags.split()
 
     @staticmethod
-    def _list_problems(limit: int = None):
+    def _list_problems(args):
         prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
-        prob_getter.list_problems()
+        kwargs = {}
+        if args.search:
+            kwargs['name_substr'] = args.search
+        if args.sorted_by:
+            kwargs['sorted_by'] = args.sorted_by
+        prob_getter.list_problems(**kwargs)
+
+    @classmethod
+    def _log_problem(cls):
+        """Log the execution of a problem"""
+        prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        try:
+            prob_logger.log_problem(
+                action=cls._get_user_input_action(),
+                problem_id=cls._get_user_input_problem_id(),
+                result=cls._get_user_input_result())
+        except ValueError as err:
+            print(err)
+            return
+
+    @staticmethod
+    def _get_user_input_action():
+        print('The following Action options exist:')
+        for a in Action:
+            print(a.name, a.value)
+        return input('Choose one (int): ')
+
+    @staticmethod
+    def _get_user_input_problem_id():
+        problem_id = int(input('Problem id: '))
+        if DjangoGateway.problem_exists(problem_id=problem_id):
+            return problem_id
+        raise ValueError(f'Problem with problem_id {problem_id} does not exist')
+
+    @staticmethod
+    def _get_user_input_result():
+        print('The following Result options exist:')
+        for r in Result:
+            print(r.name, r.value)
+        return input('Choose one (int): ')
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(description=CliController.DESCRIPTION)
-        parser.add_argument('command', choices=self.command_mapper.keys())
+        parser.add_argument('command',
+                            choices=self.command_mapper.keys())
+        parser.add_argument('--search')
+        parser.add_argument('--sorted_by')
         return parser.parse_args()
 
     @classmethod
@@ -69,8 +123,8 @@ class CliController:
         return {
             'name': input("Problem name: "),
             'difficulty': cls._format_difficulty(
-                input(f"Select a difficulty from {min_diff.value} ({min_diff.name})"
-                      f" to {max_diff.value} ({max_diff.name}): ")),
+                input(f"Choose a difficulty between {min_diff.value} ({min_diff.name})"
+                      f" and {max_diff.value} ({max_diff.name}): ")),
             'url': input("Url (optional): "),
             'tags': cls._format_tags(
                 input("Supply whitespace-separated tags (at least one): "))}

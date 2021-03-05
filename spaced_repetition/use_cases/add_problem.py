@@ -20,6 +20,7 @@ class ProblemAdder:
         problem = ProblemCreator.create_problem(
             name=name,
             difficulty=difficulty,
+            problem_id=None,
             tags=tags,
             url=url)
 

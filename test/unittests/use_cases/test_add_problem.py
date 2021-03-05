@@ -9,6 +9,7 @@ from spaced_repetition.use_cases.add_problem import ProblemAdder
 TEST_PROBLEM = ProblemCreator.create_problem(
     name='testname',
     difficulty=Difficulty(1),
+    problem_id=None,
     tags=['test-tag'],
     url='test-url')
 
