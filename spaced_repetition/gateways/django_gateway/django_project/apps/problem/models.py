@@ -2,10 +2,21 @@ from django.db import models
 from django.utils import timezone
 
 from spaced_repetition.domain.problem import (Difficulty,
-                                              MAX_URL_LENGTH,
-                                              MAX_NAME_LENGTH)
+                                              MAX_NAME_LENGTH,
+                                              MAX_TAG_LENGTH,
+                                              MAX_URL_LENGTH)
 from spaced_repetition.domain.problem_log import (Action,
                                                   Result)
+
+
+class Tag(models.Model):
+    tag = models.CharField(
+        blank=False,
+        max_length=MAX_TAG_LENGTH,
+        null=False)
+
+    def __str__(self):
+        return self.tag
 
 
 class Problem(models.Model):
@@ -14,15 +25,15 @@ class Problem(models.Model):
     name = models.CharField(blank=False,
                             max_length=MAX_NAME_LENGTH,
                             null=False)
-    tags = models.JSONField()
+    tags = models.ManyToManyField(Tag,
+                                  related_name='problems')
     url = models.CharField(blank=False,
                            max_length=MAX_URL_LENGTH,
                            null=True)
 
     def __str__(self):
         return f"Problem '{self.name}'," \
-            f" difficulty '{self.get_difficulty_display()}'," \
-            f" tags '{self.tags}', url '{self.url}'"
+            f" difficulty '{self.get_difficulty_display()}', url '{self.url}'"
 
 
 class ProblemLog(models.Model):

@@ -29,5 +29,5 @@ class ProblemAdder:
         self.presenter.confirm_problem_created(problem=problem)
 
     def _assert_is_unique(self, problem: Problem):
-        if len(self.repo.get_problems(name=problem.name)) > 0:
+        if self.repo.problem_exists(name=problem.name):
             raise ValueError(f"Problem name '{problem.name}' is not unique!")

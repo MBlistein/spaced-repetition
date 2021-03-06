@@ -13,8 +13,7 @@ django.setup()
 
 from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.problem_log import Action, Result
-from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (Problem,
-                                                                                          ProblemLog)
+from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import *
 
 
 LOGGER = logging.getLogger('django.db.backends')

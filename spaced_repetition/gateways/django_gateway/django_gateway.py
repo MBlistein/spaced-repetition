@@ -6,18 +6,30 @@ from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLog
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 
-from .django_project.apps.problem.models import Problem as OrmProblem
-from .django_project.apps.problem.models import ProblemLog as OrmProblemLog
+from .django_project.apps.problem.models import (Problem as OrmProblem,
+                                                 ProblemLog as OrmProblemLog,
+                                                 Tag as OrmTag)
 
 
 class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def create_problem(problem: Problem) -> None:
-        OrmProblem.objects.create(
+        existing_tags = OrmTag.objects \
+            .filter(tag__in=problem.tags)
+
+        if existing_tags.count() < len(problem.tags):
+            existing_tags = {e_t.tag for e_t in existing_tags}
+            non_existing_tags = set(problem.tags).difference(existing_tags)
+            raise ValueError("Error, tried to link problem to non-existent "
+                             f"tags {non_existing_tags}")
+
+        orm_problem = OrmProblem.objects.create(
             difficulty=problem.difficulty.value,
             url=problem.url,
-            name=problem.name,
-            tags=problem.tags)
+            name=problem.name)
+
+        orm_problem.tags.set(existing_tags)
+        orm_problem.save()
 
     @classmethod
     def get_problems(cls, name: Union[str, None] = None,
@@ -29,7 +41,7 @@ class DjangoGateway(DBGatewayInterface):
                                            sorted_by=sorted_by))
 
     @staticmethod
-    def _query_problems(name: Union[str, None],
+    def _query_problems(name: Union[str, None] = None,
                         name_substr: str = None,
                         sorted_by: List[str] = None):
         qs = OrmProblem.objects.all()
@@ -48,11 +60,11 @@ class DjangoGateway(DBGatewayInterface):
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,
-            tags=p.tags,
+            tags=[t.tag for t in p.tags.all()],
             url=p.url) for p in problem_qs]
 
     @staticmethod
-    def problem_exists(problem_id: int = None, name: str = None):
+    def problem_exists(problem_id: int = None, name: str = None) -> bool:
         if bool(problem_id) == bool(name):
             raise ValueError("Supply exactly one of 'problem_id' or 'name'!")
         if problem_id:

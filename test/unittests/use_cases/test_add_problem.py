@@ -29,7 +29,7 @@ class TestProblemAdder(unittest.TestCase):
 
     def test_assert_is_unique_raises(self):
         p_a = ProblemAdder(db_gateway=Mock(), presenter=Mock())
-        p_a.repo.get_problems.return_value = ['fake_problem']
+        p_a.repo.problem_exists.return_value = True
 
         with self.assertRaises(ValueError) as context:
             p_a._assert_is_unique(problem=TEST_PROBLEM)
@@ -37,7 +37,7 @@ class TestProblemAdder(unittest.TestCase):
         self.assertEqual("Problem name 'testname' is not unique!",
                          str(context.exception))
 
-    def test_assert_is_unique_ok(self):
+    def test_assert_is_unique(self):
         p_a = ProblemAdder(db_gateway=Mock(), presenter=Mock())
-        p_a.repo.get_problems.return_value = []
+        p_a.repo.problem_exists.return_value = False
         p_a._assert_is_unique(problem=TEST_PROBLEM)
