@@ -14,31 +14,47 @@ from spaced_repetition.use_cases.log_problem import ProblemLogger
 class CliController:
     DESCRIPTION = """This is the spaced-repetition CLI"""
 
-    def __init__(self):
-        self.command_mapper = {
-            'add-problem': self._add_problem,
-            'list-problems': self._list_problems,
-            'log-problem': self._log_problem,
-        }
-
-        # add shortcuts
-        self.command_mapper['add'] = self.command_mapper['add-problem']
-        self.command_mapper['list'] = self.command_mapper['list-problems']
-        self.command_mapper['log'] = self.command_mapper['log-problem']
-
-    def run(self):
-        args = self._parse_args()
-        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-        print(type(args))
-        print(vars(args))
-
-        kwargs = {k: v for k, v in vars(args).items() if k not in self.command_mapper}
-
-        # execute command
-        self.command_mapper[args.command](**kwargs)
+    @classmethod
+    def run(cls):
+        args = cls._parse_args()
+        args.func(args)
 
     @classmethod
-    def _add_problem(cls):
+    def _parse_args(cls):
+        parser = argparse.ArgumentParser(prog='spaced-repetition',
+                                         description=CliController.DESCRIPTION)
+        sub_parsers = parser.add_subparsers(title='Options')
+
+        # add new problem
+        add_parser = sub_parsers.add_parser('add_problem',
+                                            aliases=['ap'],
+                                            help='Add new problem')
+        add_parser.set_defaults(func=cls._add_problem)
+
+        # list problems
+        list_parser = sub_parsers.add_parser('list', help='List problems in db')
+        list_parser.add_argument('-fn', '--filter_name',
+                                 help='List only problems whose names contain '
+                                      'the provided substring')
+        list_parser.add_argument('-ft', '--filter_tags',
+                                 nargs='+',
+                                 help='List problems with the provided tags')
+        list_parser.add_argument('-s', '--sorted',
+                                 choices=['id', 'name'],
+                                 nargs=1,
+                                 help='Name attribute to sort listed problems by')
+        list_parser.set_defaults(func=cls._list_problems)
+
+        # log problem execution
+        log_parser = sub_parsers.add_parser('add_log',
+                                            aliases=['al'],
+                                            help='List problem logs')
+        log_parser.set_defaults(func=cls._log_problem)
+
+        return parser.parse_args()
+
+    @classmethod
+    def _add_problem(cls, _):
         """Record a new problem"""
         prob_adder = ProblemAdder(db_gateway=DjangoGateway(),
                                   presenter=CliPresenter())
@@ -66,14 +82,17 @@ class CliController:
         prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
         kwargs = {}
-        if args.search:
-            kwargs['name_substr'] = args.search
-        if args.sorted_by:
-            kwargs['sorted_by'] = args.sorted_by
+        if args.filter_name:
+            kwargs['name_substr'] = args.filter_name
+        if args.sorted:
+            kwargs['sorted_by'] = args.sorted
+        if args.filter_tags:
+            print(args.filter_tags)
+            kwargs['tags'] = args.filter_tags
         prob_getter.list_problems(**kwargs)
 
     @classmethod
-    def _log_problem(cls):
+    def _log_problem(cls, _):
         """Log the execution of a problem"""
         prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
@@ -88,9 +107,9 @@ class CliController:
 
     @staticmethod
     def _get_user_input_action():
-        print('The following Action options exist:')
+        print('\nThe following Action options exist:')
         for a in Action:
-            print(a.name, a.value)
+            print(f'{a.value}: {a.name}')
         return input('Choose one (int): ')
 
     @staticmethod
@@ -102,18 +121,10 @@ class CliController:
 
     @staticmethod
     def _get_user_input_result():
-        print('The following Result options exist:')
+        print('\nThe following Result options exist:')
         for r in Result:
-            print(r.name, r.value)
+            print(f'{r.value}: {r.name}')
         return input('Choose one (int): ')
-
-    def _parse_args(self):
-        parser = argparse.ArgumentParser(description=CliController.DESCRIPTION)
-        parser.add_argument('command',
-                            choices=self.command_mapper.keys())
-        parser.add_argument('--search')
-        parser.add_argument('--sorted_by')
-        return parser.parse_args()
 
     @classmethod
     def _record_problem_data(cls) -> dict:
@@ -131,8 +142,7 @@ class CliController:
 
 
 def main():
-    cli = CliController()
-    cli.run()
+    CliController.run()
 
 
 if __name__ == "__main__":
