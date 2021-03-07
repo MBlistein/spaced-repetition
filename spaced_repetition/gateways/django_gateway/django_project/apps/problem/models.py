@@ -10,13 +10,13 @@ from spaced_repetition.domain.problem_log import (Action,
 
 
 class Tag(models.Model):
-    tag = models.CharField(
+    name = models.CharField(
         blank=False,
         max_length=MAX_TAG_LENGTH,
         null=False)
 
     def __str__(self):
-        return self.tag
+        return self.name
 
 
 class Problem(models.Model):

@@ -3,6 +3,7 @@ from typing import List, Union
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.problem_log import ProblemLog
+from spaced_repetition.domain.tag import Tag
 
 
 class DBGatewayInterface(ABC):
@@ -27,4 +28,13 @@ class DBGatewayInterface(ABC):
     @staticmethod
     @abstractmethod
     def problem_exists(problem_id: int = None, name: str = None) -> bool:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def create_tag(cls, tag: Tag) -> Tag:
+        pass
+
+    @staticmethod
+    def tag_exists(name: str) -> bool:
         pass

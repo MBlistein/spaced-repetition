@@ -1,9 +1,11 @@
 from typing import List, Union
 
 from django.db.models import Count, Q, QuerySet
+from django.db.models.functions import Lower
 
 from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLog
+from spaced_repetition.domain.tag import Tag, TagCreator
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 
 from .django_project.apps.problem.models import (Problem as OrmProblem,
@@ -15,10 +17,10 @@ class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def create_problem(problem: Problem) -> None:
         existing_tags = OrmTag.objects \
-            .filter(tag__in=problem.tags)
+            .filter(name__in=problem.tags)
 
         if existing_tags.count() < len(problem.tags):
-            existing_tags = {e_t.tag for e_t in existing_tags}
+            existing_tags = {e_t.name for e_t in existing_tags}
             non_existing_tags = set(problem.tags).difference(existing_tags)
             raise ValueError("Error, tried to link problem to non-existent "
                              f"tags {non_existing_tags}")
@@ -57,7 +59,7 @@ class DjangoGateway(DBGatewayInterface):
         if tags:
             qs = qs \
                 .annotate(num_matches=Count('tags',
-                                            filter=Q(tags__tag__in=tags))) \
+                                            filter=Q(tags__name__in=tags))) \
                 .filter(num_matches=len(tags))
 
         return qs
@@ -68,7 +70,7 @@ class DjangoGateway(DBGatewayInterface):
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,
-            tags=[t.tag for t in p.tags.all()],
+            tags=[t.name for t in p.tags.all()],
             url=p.url) for p in problem_qs]
 
     @staticmethod
@@ -102,9 +104,37 @@ class DjangoGateway(DBGatewayInterface):
         return qs
 
     @staticmethod
-    def _format_problem_logs(problem_log_qs: QuerySet):
+    def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
         return [ProblemLog(problem_id=pl.problem.pk,
                            action=pl.action,
                            timestamp=pl.timestamp,
                            result=pl.result)
                 for pl in problem_log_qs]
+
+    @classmethod
+    def create_tag(cls, tag: Tag) -> Tag:
+        orm_tag = OrmTag.objects.create(name=tag.name)
+        return cls._format_tags(tags=[orm_tag])[0]
+
+    @classmethod
+    def get_tags(cls, sort: bool = False, sub_str: str = None):
+        return cls._format_tags(tags=cls._query_tags(sort=sort,
+                                                     sub_str=sub_str))
+
+    @staticmethod
+    def _query_tags(sort: bool = False, sub_str: str = None):
+        qs = OrmTag.objects.all()
+        if sub_str:
+            qs = qs.filter(name__icontains=sub_str)
+        if sort:
+            qs = qs.order_by(Lower('name'))
+        return qs
+
+    @staticmethod
+    def _format_tags(tags: Union[List, QuerySet]) -> List[Tag]:
+        return [TagCreator.create_tag(name=tag.name, tag_id=tag.pk)
+                for tag in tags]
+
+    @staticmethod
+    def tag_exists(name: str) -> bool:
+        return OrmTag.objects.filter(name=name).exists()

@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
 from spaced_repetition.domain.problem_log import Action, ProblemLog, Result
+from spaced_repetition.domain.tag import Tag
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (
     Problem as OrmProblem,
@@ -16,7 +17,7 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
 
 class TestProblemCreation(TestCase):
     def setUp(self):
-        OrmTag.objects.create(tag='tag1')
+        OrmTag.objects.create(name='tag1')
 
         self.problem = Problem(difficulty=Difficulty.EASY,
                                name='testname',
@@ -35,7 +36,7 @@ class TestProblemCreation(TestCase):
         self.assertEqual(problem.name, 'testname')
         self.assertNotEqual(problem.pk, 99)  # pk is independent of problem_id
         self.assertEqual(problem.url, 'https://testurl.com')
-        self.assertEqual([t.tag for t in problem.tags.all()], ['tag1'])
+        self.assertEqual([t.name for t in problem.tags.all()], ['tag1'])
 
     def test_create_problem_raises_missing_tag(self):
         dgw = DjangoGateway()
@@ -51,8 +52,8 @@ class TestProblemCreation(TestCase):
 
 class TestProblemQuerying(TestCase):
     def setUp(self):
-        self.tag_1 = OrmTag.objects.create(tag='tag1')
-        self.tag_2 = OrmTag.objects.create(tag='tag2')
+        self.tag_1 = OrmTag.objects.create(name='tag1')
+        self.tag_2 = OrmTag.objects.create(name='tag2')
         for name in ['name2', 'name1']:
             prob = OrmProblem.objects.create(difficulty=1,
                                              name=name,
@@ -82,7 +83,7 @@ class TestProblemQuerying(TestCase):
 
         prob_many_tags = OrmProblem.objects.create(difficulty=1,
                                                    name='many_tags')
-        additional_tag = OrmTag.objects.create(tag='additional_tag')
+        additional_tag = OrmTag.objects.create(name='additional_tag')
         prob_many_tags.tags.set([self.tag_1, self.tag_2, additional_tag])
         prob_single_tag.save()
 
@@ -206,3 +207,61 @@ class TestProblemLog(TestCase):
         self.assertEqual(orm_log.problem.name, 'testname')
         self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
         self.assertEqual(orm_log.timestamp, ts)
+
+
+class TestTagCreation(TestCase):
+    def test_create_tag(self):
+        tag = DjangoGateway.create_tag(Tag(name='tag1'))
+        self.assertIsInstance(tag, Tag)
+        self.assertEqual(tag.name, 'tag1')
+
+        tags = OrmTag.objects.all()
+        self.assertEqual(tags.count(), 1)
+        self.assertEqual(tags[0].name, 'tag1')
+
+
+class TestTagGetting(TestCase):
+    def setUp(self):
+        OrmTag.objects.create(name='tag2')
+        OrmTag.objects.create(name='Tag1')
+        OrmTag.objects.create(name='t3')
+
+    def test_query_tags(self):
+        tags = DjangoGateway._query_tags()
+
+        self.assertIsInstance(tags[0], OrmTag)
+        self.assertEqual([t.name for t in tags], ['tag2', 'Tag1', 't3'])
+
+    def test_query_tags_sort(self):
+        tags = DjangoGateway._query_tags(sort=True)
+
+        self.assertIsInstance(tags[0], OrmTag)
+        self.assertEqual([t.name for t in tags], [ 't3', 'Tag1','tag2'])
+
+    def test_query_tag_filter(self):
+        tags = DjangoGateway._query_tags(sub_str='ag')
+
+        self.assertEqual([t.name for t in tags], ['tag2', 'Tag1'])
+
+    def test_format_tag(self):
+        tags = DjangoGateway._format_tags(tags=OrmTag.objects.all())
+
+        self.assertEqual(len(tags), 3)
+        self.assertIsInstance(tags, list)
+        self.assertIsInstance(tags[0], Tag)
+
+        self.assertEqual([t.name for t in tags], ['tag2', 'Tag1', 't3'])
+        self.assertEqual([t.tag_id for t in tags],
+                         [OrmTag.objects.get(name=t.name).pk for t in tags])
+
+    def test_get_tags(self):
+        tags = DjangoGateway.get_tags()
+
+        self.assertIsInstance(tags[0], Tag)
+        self.assertEqual(len(tags), 3)
+
+    def test_tag_exists(self):
+        self.assertTrue(DjangoGateway.tag_exists(name='Tag1'))
+
+    def test_tag_does_not_exist(self):
+        self.assertFalse(DjangoGateway.tag_exists(name='not there'))
