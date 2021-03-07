@@ -27,7 +27,7 @@ class CliController:
 
         # add new problem
         add_parser = sub_parsers.add_parser('add_problem',
-                                            aliases=['ap'],
+                                            aliases=['add', 'ap'],
                                             help='Add new problem')
         add_parser.set_defaults(func=cls._add_problem)
 
@@ -48,7 +48,7 @@ class CliController:
 
         # log problem execution
         log_parser = sub_parsers.add_parser('add_log',
-                                            aliases=['al'],
+                                            aliases=['log', 'al'],
                                             help='List problem logs')
         log_parser.set_defaults(func=cls._log_problem)
 
@@ -97,13 +97,15 @@ class CliController:
         prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
         try:
-            prob_logger.log_problem(
-                action=cls._get_user_input_action(),
-                problem_id=cls._get_user_input_problem_id(),
-                result=cls._get_user_input_result())
+            problem_name = cls._get_user_input_problem_name()
         except ValueError as err:
             print(err)
             return
+
+        prob_logger.log_problem(
+            action=cls._get_user_input_action(),
+            problem_id=DjangoGateway.get_problems(name=problem_name)[0].problem_id,
+            result=cls._get_user_input_result())
 
     @staticmethod
     def _get_user_input_action():
@@ -111,6 +113,14 @@ class CliController:
         for a in Action:
             print(f'{a.value}: {a.name}')
         return input('Choose one (int): ')
+
+    @staticmethod
+    def _get_user_input_problem_name():
+        problem_name = input('Problem name: ')
+        if DjangoGateway.problem_exists(name=problem_name):
+            return problem_name
+        raise ValueError(f'Problem with name {problem_name} does not exist, ',
+                         'try searching for similar problems')
 
     @staticmethod
     def _get_user_input_problem_id():
