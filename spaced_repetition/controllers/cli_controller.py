@@ -33,16 +33,17 @@ class CliController:
 
         # list problems
         list_parser = sub_parsers.add_parser('list', help='List problems in db')
-        list_parser.add_argument('-fn', '--filter_name',
+        list_parser.add_argument('-fn', '--filter-name',
                                  help='List only problems whose names contain '
                                       'the provided substring')
-        list_parser.add_argument('-ft', '--filter_tags',
+        list_parser.add_argument('-ft', '--filter-tags',
                                  nargs='+',
                                  help='List problems with the provided tags')
-        list_parser.add_argument('-s', '--sorted',
+        list_parser.add_argument('-s', '--sort-by',
                                  choices=['id', 'name'],
                                  nargs=1,
-                                 help='Name attribute to sort listed problems by')
+                                 help='Provide space-separated attribute(s) to '
+                                      'sort listed problems by')
         list_parser.set_defaults(func=cls._list_problems)
 
         # log problem execution
@@ -84,11 +85,10 @@ class CliController:
         kwargs = {}
         if args.filter_name:
             kwargs['name_substr'] = args.filter_name
-        if args.sorted:
-            kwargs['sorted_by'] = args.sorted
         if args.filter_tags:
-            print(args.filter_tags)
             kwargs['tags'] = args.filter_tags
+        if args.sort_by:
+            kwargs['sorted_by'] = args.sort_by
         prob_getter.list_problems(**kwargs)
 
     @classmethod

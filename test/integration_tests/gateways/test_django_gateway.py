@@ -51,17 +51,13 @@ class TestProblemCreation(TestCase):
 
 class TestProblemQuerying(TestCase):
     def setUp(self):
-        tag_1 = OrmTag.objects.create(tag='tag1')
-        tag_2 = OrmTag.objects.create(tag='tag2')
+        self.tag_1 = OrmTag.objects.create(tag='tag1')
+        self.tag_2 = OrmTag.objects.create(tag='tag2')
         for name in ['name2', 'name1']:
             prob = OrmProblem.objects.create(difficulty=1,
                                              name=name,
                                              url='www.test_url.com')
-            prob.tags.set([tag_1, tag_2])
-
-    def test_get_problems(self):
-        problems = DjangoGateway.get_problems()
-        self.assertEqual(2, len(problems))
+            prob.tags.set([self.tag_1, self.tag_2])
 
     def test_query_all(self):
         self.assertEqual(2, len(DjangoGateway._query_problems(name=None)))
@@ -78,6 +74,40 @@ class TestProblemQuerying(TestCase):
             ['name1', 'name2'],
             [p.name for p in DjangoGateway._query_problems(sorted_by=['name'])])
 
+    def _create_additional_problems(self):
+        prob_single_tag = OrmProblem.objects.create(difficulty=1,
+                                                    name='single_tag')
+        prob_single_tag.tags.add(self.tag_1)
+        prob_single_tag.save()
+
+        prob_many_tags = OrmProblem.objects.create(difficulty=1,
+                                                   name='many_tags')
+        additional_tag = OrmTag.objects.create(tag='additional_tag')
+        prob_many_tags.tags.set([self.tag_1, self.tag_2, additional_tag])
+        prob_single_tag.save()
+
+    def test_query_tags(self):
+        # set up problems
+        self._create_additional_problems()
+
+        required_tags = ['tag1', 'tag2']
+
+        res = DjangoGateway._query_problems(tags=required_tags)
+
+        self.assertEqual(len(res), 3)
+        self.assertEqual([prob.name for prob in res],
+                         ['name2', 'name1', 'many_tags'])
+
+    def test_query_combined(self):
+        # set up problems
+        self._create_additional_problems()
+
+        res = DjangoGateway._query_problems(name_substr='e',           # exclude 'many_tags'
+                                            sorted_by=['name'],
+                                            tags=['tag1', 'tag2'])     # exclude 'single_tag'
+
+        self.assertEqual([p.name for p in res], ['name1', 'name2'])
+
     def test_format_problems(self):
         problems = DjangoGateway._format_problems(OrmProblem.objects.all())
 
@@ -90,6 +120,18 @@ class TestProblemQuerying(TestCase):
         self.assertEqual(problems[0].problem_id, OrmProblem.objects.first().pk)
         self.assertEqual(problems[0].tags, ['tag1', 'tag2'])
         self.assertEqual(problems[0].url, 'www.test_url.com')
+
+    def test_get_problems(self):
+        problems = DjangoGateway.get_problems()
+        self.assertEqual(2, len(problems))
+
+    def test_get_problems_filter_tags(self):
+        self._create_additional_problems()
+        res = DjangoGateway.get_problems(name_substr='e',
+                                         sorted_by=['name'],
+                                         tags=['tag1', 'tag2'])
+
+        self.assertEqual([p.name for p in res], ['name1', 'name2'])
 
     def test_problem_exists_via_name(self):
         self.assertTrue(DjangoGateway.problem_exists(name='name1'))

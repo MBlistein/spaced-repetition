@@ -11,7 +11,9 @@ class ProblemGetter:
         self.presenter = presenter
 
     def list_problems(self, name_substr: str = None,
-                      sorted_by: List[str] = None):
+                      sorted_by: List[str] = None,
+                      tags: List[str] = None):
         self.presenter.list_problems(
             self.repo.get_problems(name_substr=name_substr,
-                                   sorted_by=sorted_by))
+                                   sorted_by=sorted_by,
+                                   tags=tags))

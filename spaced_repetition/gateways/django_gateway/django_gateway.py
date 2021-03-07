@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from django.db.models import QuerySet
+from django.db.models import Count, Q, QuerySet
 
 from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLog
@@ -34,16 +34,19 @@ class DjangoGateway(DBGatewayInterface):
     @classmethod
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
-                     sorted_by: List[str] = None):
+                     sorted_by: List[str] = None,
+                     tags: List[str] = None) -> List[Problem]:
         return cls._format_problems(
             problem_qs=cls._query_problems(name=name,
                                            name_substr=name_substr,
-                                           sorted_by=sorted_by))
+                                           sorted_by=sorted_by,
+                                           tags=tags))
 
     @staticmethod
     def _query_problems(name: Union[str, None] = None,
                         name_substr: str = None,
-                        sorted_by: List[str] = None):
+                        sorted_by: List[str] = None,
+                        tags: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
         if name:
             qs = qs.filter(name=name)
@@ -51,6 +54,11 @@ class DjangoGateway(DBGatewayInterface):
             qs = qs.filter(name__icontains=name_substr)
         if sorted_by:
             qs = qs.order_by(*sorted_by)
+        if tags:
+            qs = qs \
+                .annotate(num_matches=Count('tags',
+                                            filter=Q(tags__tag__in=tags))) \
+                .filter(num_matches=len(tags))
 
         return qs
 
