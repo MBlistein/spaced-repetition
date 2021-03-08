@@ -5,8 +5,7 @@ from spaced_repetition.domain.problem import (Difficulty,
                                               MAX_NAME_LENGTH,
                                               MAX_TAG_LENGTH,
                                               MAX_URL_LENGTH)
-from spaced_repetition.domain.problem_log import (Action,
-                                                  Result)
+from spaced_repetition.domain.problem_log import Result
 
 
 class Tag(models.Model):
@@ -37,7 +36,6 @@ class Problem(models.Model):
 
 
 class ProblemLog(models.Model):
-    action = models.IntegerField(choices=((a.value, a.name) for a in Action))
     problem = models.ForeignKey(Problem,
                                 on_delete=models.CASCADE,
                                 related_name='logs')
@@ -45,5 +43,5 @@ class ProblemLog(models.Model):
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Log: {self.get_action_display()} problem '{self.problem.name}'" \
-            f" at {self.timestamp}"
+        return f"Problem '{self.problem.name}' attemted at {self.timestamp}" \
+            f"with result {self.result}"

@@ -5,11 +5,6 @@ from typing import Union
 from dataclasses import dataclass
 
 
-class Action(Enum):
-    CREATE = 0
-    ATTEMPT = 1
-
-
 class Result(Enum):
     SOLVED_OPTIMALLY_IN_UNDER_25 = 0
     SOLVED_SUBOPTIMALLY_IN_UNDER_25 = 1
@@ -24,6 +19,5 @@ class Result(Enum):
 @dataclass
 class ProblemLog:
     problem_id: int
-    action: Action
     result: Result
     timestamp: Union[dt.datetime, None] = None

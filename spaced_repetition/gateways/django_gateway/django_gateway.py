@@ -87,7 +87,6 @@ class DjangoGateway(DBGatewayInterface):
     def create_problem_log(problem_log: ProblemLog) -> None:
         orm_problem_log = OrmProblemLog(
             problem=OrmProblem.objects.get(pk=problem_log.problem_id),
-            action=problem_log.action,
             result=problem_log.result)
 
         if problem_log.timestamp:
@@ -108,7 +107,6 @@ class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
         return [ProblemLog(problem_id=pl.problem.pk,
-                           action=pl.action,
                            timestamp=pl.timestamp,
                            result=pl.result)
                 for pl in problem_log_qs]

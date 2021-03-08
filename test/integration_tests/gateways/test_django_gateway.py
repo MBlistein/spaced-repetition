@@ -6,7 +6,7 @@ from dateutil.tz import tzlocal
 from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
-from spaced_repetition.domain.problem_log import Action, ProblemLog, Result
+from spaced_repetition.domain.problem_log import ProblemLog, Result
 from spaced_repetition.domain.tag import Tag
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (
@@ -174,7 +174,6 @@ class TestProblemLog(TestCase):
     def test_create_problem_log_no_timestamp(self):
         dgw = DjangoGateway()
         log = ProblemLog(
-            action=Action.CREATE.value,
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_SLOWER.value)
 
@@ -185,7 +184,6 @@ class TestProblemLog(TestCase):
         self.assertEqual(OrmProblemLog.objects.count(), 1)
 
         orm_log = OrmProblemLog.objects.first()
-        self.assertEqual(orm_log.action, Action.CREATE.value)
         self.assertEqual(orm_log.problem.name, 'testname')
         self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
         self.assertGreater(orm_log.timestamp, ts_before)
@@ -195,7 +193,6 @@ class TestProblemLog(TestCase):
         dgw = DjangoGateway()
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
         log = ProblemLog(
-            action=Action.CREATE.value,
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_SLOWER.value,
             timestamp=ts)
@@ -205,7 +202,6 @@ class TestProblemLog(TestCase):
         self.assertEqual(OrmProblemLog.objects.count(), 1)
 
         orm_log = OrmProblemLog.objects.first()
-        self.assertEqual(orm_log.action, Action.CREATE.value)
         self.assertEqual(orm_log.problem.name, 'testname')
         self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
         self.assertEqual(orm_log.timestamp, ts)

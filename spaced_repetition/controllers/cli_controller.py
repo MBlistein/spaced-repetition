@@ -3,7 +3,7 @@
 import argparse
 
 from spaced_repetition.domain.problem import Difficulty
-from spaced_repetition.domain.problem_log import Action, Result
+from spaced_repetition.domain.problem_log import Result
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
@@ -146,16 +146,8 @@ class CliController:
             return
 
         prob_logger.log_problem(
-            action=cls._get_user_input_action(),
             problem_id=DjangoGateway.get_problems(name=problem_name)[0].problem_id,
             result=cls._get_user_input_result())
-
-    @staticmethod
-    def _get_user_input_action():
-        print('\nThe following Action options exist:')
-        for a in Action:
-            print(f'{a.value}: {a.name}')
-        return input('Choose one (int): ')
 
     @staticmethod
     def _get_user_input_problem_name():
