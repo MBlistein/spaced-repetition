@@ -30,12 +30,14 @@ class TestCliPresenter(unittest.TestCase):
                          '123  ')
 
     def test_format_table_row(self):
+        column_widths = self.column_widths
+        column_widths[2] = 10  # tags
+        column_widths[4] = 4   # url
         self.assertEqual(
             CliPresenter._format_table_row(
-                content=['01234', '0123456789', '0123456789', '0123456789', '0123456789'],
-                column_widths=self.column_widths, num_cols=self.num_cols),
-            '| 01234 | 0123456789           | 0123456789           | 0123456789 '
-            '| 0123456789                |')
+                content=['01234', '0123456789', '0123456789', '0123456', '0123'],
+                column_widths=column_widths, num_cols=self.num_cols),
+            '| 01234 | 0123456789           | 0123456789 | 0123456    | 0123 |')
 
     def test_format_table_row_raises(self):
         with self.assertRaises(ValueError) as context:
@@ -53,15 +55,19 @@ class TestCliPresenter(unittest.TestCase):
         presenter = FakePresenter
         presenter._format_table_row = Mock()
 
+        column_widths = self.column_widths
+        column_widths[2] = 8  # tags
+        column_widths[4] = 8   # url
+
         presenter.list_problems(problems=[PROBLEM, PROBLEM])
 
         calls = [
             call(content=['Id', 'Name', 'Tags', 'Difficulty', 'URL'],
-                 column_widths=self.column_widths, num_cols=self.num_cols),
+                 column_widths=column_widths, num_cols=self.num_cols),
             call(content=['1', 'testname', 'test-tag', 'EASY', 'test-url'],
-                 column_widths=self.column_widths, num_cols=self.num_cols),
+                 column_widths=column_widths, num_cols=self.num_cols),
             call(content=['1', 'testname', 'test-tag', 'EASY', 'test-url'],
-                 column_widths=self.column_widths, num_cols=self.num_cols),
+                 column_widths=column_widths, num_cols=self.num_cols),
         ]
         presenter._format_table_row.assert_has_calls(calls)
 

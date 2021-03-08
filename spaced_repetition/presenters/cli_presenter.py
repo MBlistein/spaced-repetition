@@ -1,6 +1,6 @@
 from typing import List
 
-from spaced_repetition.domain.problem import Problem
+from spaced_repetition.domain.problem import Problem, MAX_URL_LENGTH
 from spaced_repetition.domain.tag import Tag, MAX_TAG_LENGTH
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 
@@ -19,7 +19,9 @@ class CliPresenter(PresenterInterface):
     @classmethod
     def list_problems(cls, problems: List[Problem]) -> None:
         num_cols = 5
-        column_widths = [5, 20, 20, 10, 25]
+        max_url_length = min(max([len(p.url) for p in problems]), MAX_URL_LENGTH)
+        tag_col_width = min(max([len(', '.join(p.tags)) for p in problems]), 20)
+        column_widths = [5, 20, tag_col_width, 10, max_url_length]
         print('\nProblems:')
         print(cls._format_table_row(
             content=['Id', 'Name', 'Tags', 'Difficulty', 'URL'],
