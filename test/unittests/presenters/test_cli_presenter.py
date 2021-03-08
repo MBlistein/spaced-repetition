@@ -1,9 +1,9 @@
 
 import unittest
-from unittest.mock import call, Mock
+from unittest.mock import call, patch
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
-from spaced_repetition.domain.tag import Tag, TagCreator
+from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
@@ -48,18 +48,14 @@ class TestCliPresenter(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          'Need exactly 5 entries!')
 
-    def test_list_problems(self):
-        class FakePresenter(CliPresenter):
-            pass
-
-        presenter = FakePresenter
-        presenter._format_table_row = Mock()
-
+    @patch.object(CliPresenter, attribute='_format_table_row')
+    def test_list_problems(self, mock_format_table_row):
+        mock_format_table_row.return_value = None
         column_widths = self.column_widths
         column_widths[2] = 8  # tags
         column_widths[4] = 8   # url
 
-        presenter.list_problems(problems=[PROBLEM, PROBLEM])
+        CliPresenter.list_problems(problems=[PROBLEM, PROBLEM])
 
         calls = [
             call(content=['Id', 'Name', 'Tags', 'Difficulty', 'URL'],
@@ -69,7 +65,7 @@ class TestCliPresenter(unittest.TestCase):
             call(content=['1', 'testname', 'test-tag', 'EASY', 'test-url'],
                  column_widths=column_widths, num_cols=self.num_cols),
         ]
-        presenter._format_table_row.assert_has_calls(calls)
+        mock_format_table_row.assert_has_calls(calls)
 
 
 class TestCliPresenterTags(unittest.TestCase):
@@ -77,17 +73,14 @@ class TestCliPresenterTags(unittest.TestCase):
         self.num_cols = 2
         self.column_widths = [5, 10]
 
-    def test_list_tags(self):
+    @patch.object(CliPresenter, attribute='_format_table_row')
+    def test_list_tags(self, mock_format_table_row):
+        mock_format_table_row.return_value = None
+
         tag = TagCreator.create_tag(name='tag1', tag_id=1)
         tag2 = TagCreator.create_tag(name='tag2', tag_id=2)
 
-        class FakePresenter(CliPresenter):
-            pass
-
-        presenter = FakePresenter
-        presenter._format_table_row = Mock()
-
-        presenter.list_tags(tags=[tag, tag2])
+        CliPresenter.list_tags(tags=[tag, tag2])
 
         calls = [
             call(content=['Id', 'Tag'],
@@ -97,4 +90,4 @@ class TestCliPresenterTags(unittest.TestCase):
             call(content=['2', 'tag2'],
                  column_widths=self.column_widths, num_cols=self.num_cols),
         ]
-        presenter._format_table_row.assert_has_calls(calls)
+        mock_format_table_row.assert_has_calls(calls)

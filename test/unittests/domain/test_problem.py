@@ -65,22 +65,19 @@ class TestProblemCreator(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          'difficulty should be of type Difficulty')
 
-    def test_all_validators_called(self):
-        class FakeProblemCreator(ProblemCreator):
-            pass
+    @patch.object(ProblemCreator, attribute='validate_difficulty')
+    @patch.object(ProblemCreator, attribute='validate_name')
+    @patch.object(ProblemCreator, attribute='validate_tags')
+    @patch.object(ProblemCreator, attribute='validate_url')
+    def test_all_validators_called(self, mock_val_url, mock_val_tags,
+                                   mock_val_name, mock_val_difficulty):
+        ProblemCreator.create_problem(name='fake',
+                                      difficulty='fake',
+                                      tags='fake',
+                                      problem_id='fake',
+                                      url='fake')
 
-        FakeProblemCreator.validate_difficulty = Mock()
-        FakeProblemCreator.validate_name = Mock()
-        FakeProblemCreator.validate_tags = Mock()
-        FakeProblemCreator.validate_url = Mock()
-
-        FakeProblemCreator.create_problem(name='fake',
-                                          difficulty='fake',
-                                          tags='fake',
-                                          problem_id='fake',
-                                          url='fake')
-
-        FakeProblemCreator.validate_difficulty.assert_called_once()
-        FakeProblemCreator.validate_name.assert_called_once()
-        FakeProblemCreator.validate_tags.assert_called_once()
-        FakeProblemCreator.validate_url.assert_called_once()
+        mock_val_difficulty.assert_called_once()
+        mock_val_name.assert_called_once()
+        mock_val_tags.assert_called_once()
+        mock_val_url.assert_called_once()

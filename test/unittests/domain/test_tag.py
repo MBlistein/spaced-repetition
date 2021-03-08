@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import patch
 
 from spaced_repetition.domain.tag import TagCreator
 
@@ -8,29 +8,17 @@ MAX_TAG_LENGTH = 10
 
 class TestTagCreator(unittest.TestCase):
     def test_validate_name(self):
-        self.assertEqual(TagCreator.validate_name(name='tag1'),
-                         'tag1')
+        with patch('spaced_repetition.domain.tag.validate_input') as mock:
+            mock.return_value = 'validate_input_return_val'
+            self.assertEqual(TagCreator.validate_name(name='valid tag'),
+                             'validate_input_return_val')
 
-    def test_validate_name_raises_empty(self):
-        with self.assertRaises(ValueError) as context:
-            TagCreator.validate_name(name='')
+            mock.assert_called_once_with(inpt='valid tag',
+                                         max_length=MAX_TAG_LENGTH,
+                                         label='Tag')
 
-        self.assertEqual(str(context.exception),
-                         "Tag name cannot be empty.")
+    @patch.object(TagCreator, attribute='validate_name')
+    def test_all_validators_called(self, mock_validate_name):
+        TagCreator.create_tag(name='tag1')
 
-    def test_validate_name_raises_too_long(self):
-        with self.assertRaises(ValueError) as context:
-            TagCreator.validate_name(name='a' * (MAX_TAG_LENGTH + 1))
-
-        self.assertEqual(str(context.exception),
-                         f"Tag name too long, max length = {MAX_TAG_LENGTH} chars.")
-
-    def test_all_validators_called(self):
-        class FakeTagCreator(TagCreator):
-            pass
-
-        FakeTagCreator.validate_name = Mock()
-
-        FakeTagCreator.create_tag(name='tag1')
-
-        FakeTagCreator.validate_name.assert_called_once()
+        mock_validate_name.assert_called_once()

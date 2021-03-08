@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Union
 
+from .domain_helpers import validate_input
 
 MAX_TAG_LENGTH = 10
 
@@ -19,9 +20,6 @@ class TagCreator:
 
     @staticmethod
     def validate_name(name: str) -> str:
-        if len(name) < 1:
-            raise ValueError("Tag name cannot be empty.")
-        if len(name) > MAX_TAG_LENGTH:
-            raise ValueError(
-                f"Tag name too long, max length = {MAX_TAG_LENGTH} chars.")
-        return name
+        return validate_input(inpt=name,
+                              max_length=MAX_TAG_LENGTH,
+                              label='Tag')
