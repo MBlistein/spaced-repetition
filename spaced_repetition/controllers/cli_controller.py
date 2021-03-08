@@ -22,6 +22,8 @@ class CliController:
 
     @classmethod
     def _parse_args(cls):
+        # TODO: install this program to be called from the command line via
+        #  'spaced-repetition'
         parser = argparse.ArgumentParser(prog='spaced-repetition',
                                          description=CliController.DESCRIPTION)
         sub_parsers = parser.add_subparsers(title='Options')
@@ -67,7 +69,7 @@ class CliController:
         # log problem execution
         log_parser = sub_parsers.add_parser('add-log',
                                             aliases=['log', 'al'],
-                                            help='List problem logs')
+                                            help='Add new problem log')
         log_parser.set_defaults(func=cls._add_problem_log)
 
         return parser.parse_args()
@@ -81,7 +83,7 @@ class CliController:
         try:
             prob_adder.add_problem(
                 difficulty=user_input['difficulty'],
-                url=user_input['url'],
+                url=user_input['url'] or None,
                 name=user_input['name'],
                 tags=user_input['tags'])
         except ValueError as err:
@@ -160,7 +162,7 @@ class CliController:
         problem_name = input('Problem name: ')
         if DjangoGateway.problem_exists(name=problem_name):
             return problem_name
-        raise ValueError(f'Problem with name {problem_name} does not exist, ',
+        raise ValueError(f"Problem with name '{problem_name}' does not exist, "
                          'try searching for similar problems')
 
     @staticmethod

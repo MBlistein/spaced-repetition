@@ -3,6 +3,8 @@ from typing import List, Union
 
 from dataclasses import dataclass
 
+from .domain_helpers import validate_input
+
 
 MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
@@ -46,12 +48,9 @@ class ProblemCreator:
 
     @staticmethod
     def validate_name(name: str) -> str:
-        if len(name) < 1:
-            raise ValueError("Name cannot be empty.")
-        if len(name) > MAX_NAME_LENGTH:
-            raise ValueError(
-                f"Name too long, max length = {MAX_NAME_LENGTH} chars.")
-        return name
+        return validate_input(inpt=name,
+                              max_length=MAX_NAME_LENGTH,
+                              label='Name')
 
     @staticmethod
     def validate_tags(tags: List[str]) -> List[str]:
@@ -61,9 +60,8 @@ class ProblemCreator:
         for tag in tags:
             if not isinstance(tag, str):
                 raise TypeError("Tags must be strings.")
-            if len(tag) > MAX_TAG_LENGTH:
-                raise ValueError(
-                    f"Each tag must be at most {MAX_TAG_LENGTH} chars long.")
+
+            validate_input(inpt=tag, max_length=MAX_TAG_LENGTH, label='Tag')
 
         if len(tags) == 0:
             raise ValueError("Provide at least one tag.")
@@ -71,8 +69,6 @@ class ProblemCreator:
 
     @staticmethod
     def validate_url(url: Union[str, None]) -> Union[str, None]:
-        if url is None or len(url) == 0:
-            return None
-        if len(url) <= MAX_URL_LENGTH:
-            return url
-        raise ValueError(f"Url too long, max length = {MAX_URL_LENGTH} chars.")
+        if url is None:
+            return
+        return validate_input(inpt=url, max_length=MAX_URL_LENGTH, label='URL')
