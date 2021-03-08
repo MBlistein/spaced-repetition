@@ -22,12 +22,17 @@ class DBGatewayInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def create_problem_log(problem_log: ProblemLog) -> None:
+    def problem_exists(problem_id: int = None, name: str = None) -> bool:
         pass
 
     @staticmethod
     @abstractmethod
-    def problem_exists(problem_id: int = None, name: str = None) -> bool:
+    def create_problem_log(problem_log: ProblemLog) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_problem_logs(cls, problem_ids: List[int] = None) -> List[ProblemLog]:
         pass
 
     @classmethod

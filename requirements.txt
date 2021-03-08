@@ -1,5 +1,6 @@
 coverage
 django
+pandas
 pylint
 pylint-django
 python-dateutil

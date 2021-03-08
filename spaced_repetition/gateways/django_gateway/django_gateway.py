@@ -95,13 +95,17 @@ class DjangoGateway(DBGatewayInterface):
         orm_problem_log.save()
 
     @classmethod
-    def get_problem_logs(cls):
+    def get_problem_logs(cls, problem_ids: List[int] = None) -> List[ProblemLog]:
         return cls._format_problem_logs(
-            problem_qs=cls._query_problem_logs())
+            problem_qs=cls._query_problem_logs(problem_ids=problem_ids))
 
     @staticmethod
-    def _query_problem_logs():
+    def _query_problem_logs(problem_ids: List[int] = None):
         qs = OrmProblemLog.objects.all()
+
+        if problem_ids:
+            qs = qs.filter(problem__pk__in=problem_ids)
+
         return qs
 
     @staticmethod
