@@ -26,8 +26,8 @@ class ProblemAdder:
             url=url)
 
         self._assert_is_unique(problem=problem)
-        self.repo.create_problem(problem=problem)
-        self.presenter.confirm_problem_created(problem=problem)
+        created_problem = self.repo.create_problem(problem=problem)
+        self.presenter.confirm_problem_created(problem=created_problem)
 
     def _assert_is_unique(self, problem: Problem):
         if self.repo.problem_exists(name=problem.name):

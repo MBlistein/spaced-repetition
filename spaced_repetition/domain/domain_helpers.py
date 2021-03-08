@@ -1,11 +1,12 @@
 
-def validate_input(inpt: str, max_length: int, label: str = None) -> str:
+def validate_input(inpt: str, max_length: int, label: str = None,
+                   empty_allowed=False) -> str:
     label = label or 'Input'
     if not isinstance(inpt, str):
         raise TypeError(
             f"{label} should by of type 'str', but is of type {type(inpt)}")
 
-    if len(inpt) == 0:
+    if len(inpt) == 0 and not empty_allowed:
         raise ValueError(f"{label} cannot be empty.")
     if len(inpt) > max_length:
         raise ValueError(

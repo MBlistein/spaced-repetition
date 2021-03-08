@@ -10,16 +10,14 @@ MAX_TAG_LENGTH = 20
 
 
 class TestProblemCreator(unittest.TestCase):
-    def test_validate_url_none(self):
-        self.assertIsNone(ProblemCreator.validate_url(url=None))
-
     def test_validate_url_text(self):
         with patch('spaced_repetition.domain.problem.validate_input') as mock:
             ProblemCreator.validate_url(url='valid-url.com')
 
             mock.assert_called_once_with(inpt='valid-url.com',
                                          max_length=MAX_URL_LENGTH,
-                                         label='URL')
+                                         label='URL',
+                                         empty_allowed=True)
 
     def test_validate_name(self):
         with patch('spaced_repetition.domain.problem.validate_input') as mock:

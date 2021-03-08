@@ -27,16 +27,18 @@ class TestProblemCreation(TestCase):
 
     def test_create_problem(self):
         dgw = DjangoGateway()
-        dgw.create_problem(problem=self.problem)
-
-        problems = OrmProblem.objects.all()
-        self.assertEqual(problems.count(), 1)
-
-        problem = problems.first()
+        problem = dgw.create_problem(problem=self.problem)
+        self.assertIsInstance(problem, Problem)
         self.assertEqual(problem.name, 'testname')
-        self.assertNotEqual(problem.pk, 99)  # pk is independent of problem_id
-        self.assertEqual(problem.url, 'https://testurl.com')
-        self.assertEqual([t.name for t in problem.tags.all()], ['tag1'])
+
+        orm_problems = OrmProblem.objects.all()
+        self.assertEqual(orm_problems.count(), 1)
+
+        orm_problem = orm_problems.first()
+        self.assertEqual(orm_problem.name, 'testname')
+        self.assertNotEqual(orm_problem.pk, 99)  # pk is independent of problem_id
+        self.assertEqual(orm_problem.url, 'https://testurl.com')
+        self.assertEqual([t.name for t in orm_problem.tags.all()], ['tag1'])
 
     def test_create_problem_raises_missing_tag(self):
         dgw = DjangoGateway()

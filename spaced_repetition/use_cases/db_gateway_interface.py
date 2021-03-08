@@ -9,7 +9,7 @@ from spaced_repetition.domain.tag import Tag
 class DBGatewayInterface(ABC):
     @staticmethod
     @abstractmethod
-    def create_problem(problem: Problem) -> None:
+    def create_problem(problem: Problem) -> Problem:
         pass
 
     @classmethod

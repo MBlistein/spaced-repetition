@@ -27,9 +27,9 @@ class Problem(models.Model):
                             null=False)
     tags = models.ManyToManyField(Tag,
                                   related_name='problems')
-    url = models.CharField(blank=False,
+    url = models.CharField(blank=True,
                            max_length=MAX_URL_LENGTH,
-                           null=True)
+                           null=False)
 
     def __str__(self):
         return f"Problem '{self.name}'," \

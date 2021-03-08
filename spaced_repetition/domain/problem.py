@@ -69,6 +69,5 @@ class ProblemCreator:
 
     @staticmethod
     def validate_url(url: Union[str, None]) -> Union[str, None]:
-        if url is None:
-            return
-        return validate_input(inpt=url, max_length=MAX_URL_LENGTH, label='URL')
+        return validate_input(inpt=url, max_length=MAX_URL_LENGTH, label='URL',
+                              empty_allowed=True)

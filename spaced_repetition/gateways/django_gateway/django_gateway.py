@@ -14,8 +14,8 @@ from .django_project.apps.problem.models import (Problem as OrmProblem,
 
 
 class DjangoGateway(DBGatewayInterface):
-    @staticmethod
-    def create_problem(problem: Problem) -> None:
+    @classmethod
+    def create_problem(cls, problem: Problem) -> Problem:
         existing_tags = OrmTag.objects \
             .filter(name__in=problem.tags)
 
@@ -33,16 +33,18 @@ class DjangoGateway(DBGatewayInterface):
         orm_problem.tags.set(existing_tags)
         orm_problem.save()
 
+        return cls._format_problems(problems=[orm_problem])[0]
+
     @classmethod
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
                      sorted_by: List[str] = None,
                      tags: List[str] = None) -> List[Problem]:
         return cls._format_problems(
-            problem_qs=cls._query_problems(name=name,
-                                           name_substr=name_substr,
-                                           sorted_by=sorted_by,
-                                           tags=tags))
+            problems=cls._query_problems(name=name,
+                                         name_substr=name_substr,
+                                         sorted_by=sorted_by,
+                                         tags=tags))
 
     @staticmethod
     def _query_problems(name: Union[str, None] = None,
@@ -65,13 +67,13 @@ class DjangoGateway(DBGatewayInterface):
         return qs
 
     @staticmethod
-    def _format_problems(problem_qs: QuerySet):
+    def _format_problems(problems: Union[List, QuerySet]) -> List[Problem]:
         return [ProblemCreator.create_problem(
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,
             tags=[t.name for t in p.tags.all()],
-            url=p.url) for p in problem_qs]
+            url=p.url) for p in problems]
 
     @staticmethod
     def problem_exists(problem_id: int = None, name: str = None) -> bool:

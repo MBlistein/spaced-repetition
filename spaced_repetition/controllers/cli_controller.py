@@ -83,7 +83,7 @@ class CliController:
         try:
             prob_adder.add_problem(
                 difficulty=user_input['difficulty'],
-                url=user_input['url'] or None,
+                url=user_input['url'],
                 name=user_input['name'],
                 tags=user_input['tags'])
         except ValueError as err:
