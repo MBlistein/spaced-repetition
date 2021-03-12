@@ -20,9 +20,10 @@ class ProblemGetter:
                       sorted_by: List[str] = None,
                       tags: List[str] = None):
         self.presenter.list_problems(
-            self.repo.get_problems(name_substr=name_substr,
-                                   sorted_by=sorted_by,
-                                   tags=tags))
+            problems=self.get_problem_df(
+                problems=self.repo.get_problems(name_substr=name_substr,
+                                                sorted_by=sorted_by,
+                                                tags=tags)))
 
     def get_problem_logs(self, problem_ids: List[int] = None):
         return self.repo.get_problem_logs(problem_ids=problem_ids)

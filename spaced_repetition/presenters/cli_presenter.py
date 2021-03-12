@@ -1,5 +1,8 @@
 from typing import List
 
+import pandas as pd
+from tabulate import tabulate
+
 from spaced_repetition.domain.problem import Problem, MAX_URL_LENGTH
 from spaced_repetition.domain.tag import Tag, MAX_TAG_LENGTH
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
@@ -17,21 +20,28 @@ class CliPresenter(PresenterInterface):
                f"{problem.difficulty.name}', tags: {', '.join(problem.tags)})"
 
     @classmethod
-    def list_problems(cls, problems: List[Problem]) -> None:
-        num_cols = 5
-        max_url_length = min(max([len(p.url) for p in problems]), MAX_URL_LENGTH)
-        tag_col_width = min(max([len(', '.join(p.tags)) for p in problems]), 20)
-        column_widths = [5, 20, tag_col_width, 10, max_url_length]
-        print('\nProblems:')
-        print(cls._format_table_row(
-            content=['Id', 'Name', 'Tags', 'Difficulty', 'URL'],
-            column_widths=column_widths, num_cols=num_cols))
+    def list_problems(cls, problems: pd.DataFrame) -> None:
+        formatted_df = cls.format_problem_df(df=problems)
+        tabluated_df = cls.tabulate_df(df=formatted_df)
+        print(tabluated_df)
 
-        for p in problems:
-            print(cls._format_table_row(
-                content=[str(p.problem_id), p.name, ', '.join(p.tags),
-                         str(p.difficulty.name), p.url],
-                column_widths=column_widths, num_cols=num_cols))
+    @staticmethod
+    def tabulate_df(df: pd.DataFrame):
+        return tabulate(df,
+                        headers='keys',
+                        tablefmt='github')
+
+    @staticmethod
+    def format_problem_df(df: pd.DataFrame):
+        """Needs at least a column named 'problem_id'"""
+        existing_columns = df.columns
+        name_mapper = {'problem_id': 'id'}
+        order = ['name', 'tags', 'difficulty', 'score', 'rank', 'url']
+
+        return df \
+            .rename(columns=name_mapper) \
+            .set_index('id') \
+            .reindex(columns=[col for col in order if col in existing_columns])
 
     @classmethod
     def list_tags(cls, tags: List[Tag]) -> None:

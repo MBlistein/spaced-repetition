@@ -4,3 +4,4 @@ pandas
 pylint
 pylint-django
 python-dateutil
+tabulate

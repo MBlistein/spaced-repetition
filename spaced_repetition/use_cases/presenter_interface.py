@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+
+import pandas as pd
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.tag import Tag
@@ -12,7 +13,7 @@ class PresenterInterface(ABC):
         pass
 
     @classmethod
-    def list_problems(cls, problems: List[Problem]) -> None:
+    def list_problems(cls, problems: pd.DataFrame) -> None:
         pass
 
     @classmethod

@@ -1,6 +1,10 @@
 
+import io
 import unittest
 from unittest.mock import call, patch
+
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.tag import TagCreator
@@ -48,24 +52,37 @@ class TestCliPresenter(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          'Need exactly 5 entries!')
 
-    @patch.object(CliPresenter, attribute='_format_table_row')
-    def test_list_problems(self, mock_format_table_row):
-        mock_format_table_row.return_value = None
-        column_widths = self.column_widths
-        column_widths[2] = 8  # tags
-        column_widths[4] = 8   # url
+    def test_format_problem_df(self):
+        test_df = pd.DataFrame(data=[{'tags': 4,
+                                      'url': 'www',
+                                      'rank': 'b',
+                                      'score': 1,
+                                      'difficulty': 2,
+                                      'name': 'name',
+                                      'surplus_col': 'not displayed',
+                                      'problem_id': 5}])
 
-        CliPresenter.list_problems(problems=[PROBLEM, PROBLEM])
+        formatted_df = CliPresenter.format_problem_df(test_df)
 
-        calls = [
-            call(content=['Id', 'Name', 'Tags', 'Difficulty', 'URL'],
-                 column_widths=column_widths, num_cols=self.num_cols),
-            call(content=['1', 'testname', 'test-tag', 'EASY', 'test-url'],
-                 column_widths=column_widths, num_cols=self.num_cols),
-            call(content=['1', 'testname', 'test-tag', 'EASY', 'test-url'],
-                 column_widths=column_widths, num_cols=self.num_cols),
-        ]
-        mock_format_table_row.assert_has_calls(calls)
+        self.assertEqual(formatted_df.columns.tolist(),
+                         ['name', 'tags', 'difficulty', 'score', 'rank', 'url'])
+        self.assertEqual(formatted_df.index.name, 'id')
+
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_list_problems(self, mock_stdout):
+        test_df = pd.DataFrame(data=[{'tags': 'test-tag',
+                                      'url': 'www',
+                                      'rank': 1,
+                                      'problem_id': 5}])
+        expected_output = \
+            "|   id | tags     |   rank | url   |\n" \
+            "|------|----------|--------|-------|\n" \
+            "|    5 | test-tag |      1 | www   |\n"
+
+        CliPresenter.list_problems(problems=test_df)
+
+        self.assertEqual(expected_output,
+                         mock_stdout.getvalue())
 
 
 class TestCliPresenterTags(unittest.TestCase):

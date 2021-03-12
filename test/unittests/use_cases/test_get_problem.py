@@ -1,6 +1,6 @@
 import datetime as dt
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pandas as pd
 import numpy as np
@@ -15,32 +15,46 @@ from spaced_repetition.use_cases.get_problem import ProblemGetter
 class TestGetProblems(unittest.TestCase):
     def setUp(self):
         self.p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-        self.p_g.repo.get_problems.return_value = 'repo_return_val'
+        self.p_g.repo.get_problems.return_value = 'problems_from_repo'
         self.p_g.presenter = Mock()
 
-    def test_get_problem_null_args(self):
+    @patch.object(ProblemGetter, attribute='get_problem_df')
+    def test_get_problem_null_args(self, mock_get_problem_df):
+        mock_get_problem_df.return_value = 'problem_df'
+
         self.p_g.list_problems()
 
-        # noinspection PyUnresolvedReferences
-        self.p_g.presenter.list_problems.assert_called_once_with(
-            'repo_return_val')
         # noinspection PyUnresolvedReferences
         self.p_g.repo.get_problems.assert_called_once_with(
             name_substr=None, sorted_by=None, tags=None)
 
-    def test_get_problem_full_args(self):
+        mock_get_problem_df.assert_called_once_with(
+            problems='problems_from_repo')
+
+        # noinspection PyUnresolvedReferences
+        self.p_g.presenter.list_problems.assert_called_once_with(
+            problems='problem_df')
+
+    @patch.object(ProblemGetter, attribute='get_problem_df')
+    def test_get_problem_full_args(self, mock_get_problem_df):
+        mock_get_problem_df.return_value = 'problem_df'
+
         self.p_g.list_problems(name_substr='subs',
                                sorted_by=['arg1', 'arg2'],
                                tags=['tag1', 'tag2'])
 
         # noinspection PyUnresolvedReferences
-        self.p_g.presenter.list_problems.assert_called_once_with(
-            'repo_return_val')
-        # noinspection PyUnresolvedReferences
         self.p_g.repo.get_problems.assert_called_once_with(
             name_substr='subs',
             sorted_by=['arg1', 'arg2'],
             tags=['tag1', 'tag2'])
+
+        mock_get_problem_df.assert_called_once_with(
+            problems='problems_from_repo')
+
+        # noinspection PyUnresolvedReferences
+        self.p_g.presenter.list_problems.assert_called_once_with(
+            problems='problem_df')
 
 
 class TestGetProblemLogs(unittest.TestCase):
