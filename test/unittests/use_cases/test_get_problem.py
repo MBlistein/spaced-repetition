@@ -79,7 +79,13 @@ class TestGetProblemLogs(unittest.TestCase):
 
 class TestGetProblemDF(unittest.TestCase):
     def setUp(self):
-        self.p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+        mock_gateway = Mock()
+        mock_gateway.get_problem_logs.return_value = [
+            ProblemLog(problem_id=3,
+                       result=Result.NO_IDEA,
+                       timestamp=dt.datetime(2021, 1, 5, 10))]
+
+        self.p_g = ProblemGetter(db_gateway=mock_gateway, presenter=Mock())
         self.problem = ProblemCreator.create_problem(
             name='testname',
             difficulty=Difficulty(1),
@@ -92,7 +98,8 @@ class TestGetProblemDF(unittest.TestCase):
                                           'problem_id': 3,
                                           'difficulty': 'EASY',
                                           'tags': 'test-tag',
-                                          'url': 'test-url'}])
+                                          'url': 'test-url',
+                                          'score': Score.BAD.value}])
 
         assert_frame_equal(self.p_g.get_problem_df(problems=[self.problem]),
                            expected_df)

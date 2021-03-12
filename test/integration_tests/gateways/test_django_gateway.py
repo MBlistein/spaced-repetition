@@ -1,6 +1,7 @@
 """Test postgres gateway"""
 
 import datetime as dt
+from unittest.mock import patch
 
 from dateutil.tz import tzlocal
 from django.test import TestCase
@@ -165,7 +166,7 @@ class TestProblemQuerying(TestCase):
                          "Supply exactly one of 'problem_id' or 'name'!")
 
 
-class TestProblemLog(TestCase):
+class TestProblemLogCreation(TestCase):
     def setUp(self):
         OrmProblem.objects.create(difficulty=Difficulty.EASY.value,
                                   name='testname',
@@ -205,6 +206,60 @@ class TestProblemLog(TestCase):
         self.assertEqual(orm_log.problem.name, 'testname')
         self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
         self.assertEqual(orm_log.timestamp, ts)
+
+
+class TestProblemLogQuerying(TestCase):
+    def setUp(self):
+        # create Problem
+        self.prob = OrmProblem.objects.create(difficulty=1,
+                                              name='test_problem',
+                                              url='www.test_url.com')
+        prob_2 = OrmProblem.objects.create(difficulty=2,
+                                           name='test_problem_2',
+                                           url='www.test_url_2.com')
+
+        # create ProblemLogs
+        self.problem_log = OrmProblemLog.objects.create(
+            problem_id=self.prob.pk,
+            result=Result.SOLVED_SUBOPTIMALLY_SLOWER.value,
+            timestamp=dt.datetime(2021, 1, 10, 10))
+        OrmProblemLog.objects.create(
+            problem_id=self.prob.pk,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
+            timestamp=dt.datetime(2021, 1, 20, 10))
+
+        OrmProblemLog.objects.create(
+            problem_id=prob_2.pk,
+            result=Result.SOLVED_OPTIMALLY_WITH_HINT.value,
+            timestamp=dt.datetime(2021, 1, 15, 10))
+
+    def test_query_all(self):
+        self.assertEqual(3, len(DjangoGateway._query_problem_logs()))
+
+    def test_query_for_problem(self):
+        self.assertEqual(
+            2,
+            len(DjangoGateway._query_problem_logs(problem_ids=[self.prob.pk])))
+
+    def test_format_problem_logs(self):
+        expected_res = [ProblemLog(problem_id=self.prob.pk,
+                                   result=Result.SOLVED_SUBOPTIMALLY_SLOWER,
+                                   timestamp=dt.datetime(2021, 1, 10, 10))]
+
+        self.assertEqual(expected_res,
+                         DjangoGateway._format_problem_logs([self.problem_log]))
+
+    @patch.object(DjangoGateway, attribute='_format_problem_logs')
+    @patch.object(DjangoGateway, attribute='_query_problem_logs')
+    def test_get_problem_logs(self, mock_query_problem_logs,
+                              mock_format_problem_logs):
+        mock_query_problem_logs.return_value = 'fake_problems'
+
+        DjangoGateway.get_problem_logs()
+
+        mock_query_problem_logs.assert_called_once_with(problem_ids=None)
+        mock_format_problem_logs.assert_called_once_with(
+            problem_log_qs='fake_problems')
 
 
 class TestTagCreation(TestCase):

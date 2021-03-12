@@ -4,7 +4,7 @@ from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import Lower
 
 from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
-from spaced_repetition.domain.problem_log import ProblemLog
+from spaced_repetition.domain.problem_log import ProblemLog, Result
 from spaced_repetition.domain.tag import Tag, TagCreator
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 
@@ -97,7 +97,7 @@ class DjangoGateway(DBGatewayInterface):
     @classmethod
     def get_problem_logs(cls, problem_ids: List[int] = None) -> List[ProblemLog]:
         return cls._format_problem_logs(
-            problem_qs=cls._query_problem_logs(problem_ids=problem_ids))
+            problem_log_qs=cls._query_problem_logs(problem_ids=problem_ids))
 
     @staticmethod
     def _query_problem_logs(problem_ids: List[int] = None):
@@ -112,7 +112,7 @@ class DjangoGateway(DBGatewayInterface):
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
         return [ProblemLog(problem_id=pl.problem.pk,
                            timestamp=pl.timestamp,
-                           result=pl.result)
+                           result=Result(pl.result))
                 for pl in problem_log_qs]
 
     @classmethod

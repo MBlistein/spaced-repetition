@@ -28,9 +28,14 @@ class ProblemGetter:
     def get_problem_logs(self, problem_ids: List[int] = None):
         return self.repo.get_problem_logs(problem_ids=problem_ids)
 
-    @classmethod
-    def get_problem_df(cls, problems: List[Problem]) -> pd.DataFrame:
-        return pd.DataFrame(data=map(cls.problem_to_row_content, problems))
+    def get_problem_df(self, problems: List[Problem]) -> pd.DataFrame:
+        problem_df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
+        score_df = self.get_score_df(problem_ids=problem_df.problem_id.to_list())
+
+        return problem_df.merge(score_df,
+                                on='problem_id',
+                                how='outer',
+                                validate='one_to_one')
 
     @staticmethod
     def problem_to_row_content(problem: Problem) -> dict:
@@ -44,7 +49,7 @@ class ProblemGetter:
         problem_logs = self.get_problem_logs(problem_ids=problem_ids)
         score_df = self.add_scores(
             log_df=self.get_log_df(problem_logs=problem_logs))
-        return self.agg_scores(score_df=score_df, aggfunc=np.mean)
+        return self.agg_scores(score_df=score_df, aggfunc=np.mean).reset_index()
 
     @classmethod
     def get_log_df(cls, problem_logs: List[ProblemLog]) -> pd.DataFrame:
