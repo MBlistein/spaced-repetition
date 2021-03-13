@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 from tabulate import tabulate
 
-from spaced_repetition.domain.problem import Problem, MAX_URL_LENGTH
+from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.tag import Tag, MAX_TAG_LENGTH
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 

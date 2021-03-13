@@ -25,9 +25,6 @@ class ProblemGetter:
                                                 sorted_by=sorted_by,
                                                 tags=tags)))
 
-    def get_problem_logs(self, problem_ids: List[int] = None):
-        return self.repo.get_problem_logs(problem_ids=problem_ids)
-
     def get_problem_df(self, problems: List[Problem]) -> pd.DataFrame:
         problem_df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
         score_df = self.get_score_df(problem_ids=problem_df.problem_id.to_list())
@@ -49,7 +46,11 @@ class ProblemGetter:
         problem_logs = self.get_problem_logs(problem_ids=problem_ids)
         score_df = self.add_scores(
             log_df=self.get_log_df(problem_logs=problem_logs))
-        return self.agg_scores(score_df=score_df, aggfunc=np.mean).reset_index()
+        return self.last_score_per_problem(score_df=score_df) \
+            .reset_index()
+
+    def get_problem_logs(self, problem_ids: List[int] = None):
+        return self.repo.get_problem_logs(problem_ids=problem_ids)
 
     @classmethod
     def get_log_df(cls, problem_logs: List[ProblemLog]) -> pd.DataFrame:
@@ -63,14 +64,19 @@ class ProblemGetter:
 
     @staticmethod
     def add_scores(log_df: pd.DataFrame) -> pd.DataFrame:
-        """Aggregates problem scores"""
         score_df = log_df.copy()
         score_df['score'] = score_df['result'].map(
             lambda x: SCORE_MAPPER[x].value)
 
         return score_df
 
-    def agg_scores(self, score_df: pd.DataFrame, aggfunc: Union[str, Callable]):
-        """Needs a dataframe with (at least) columns 'problem_id', 'score'.
+    @staticmethod
+    def last_score_per_problem(score_df: pd.DataFrame):
+        """Needs a dataframe with (at least) columns: 'problem_id', 'score'.
         Returns a dataframe with 'score' aggregated by 'problem_id."""
-        return score_df.groupby('problem_id').agg({'score': aggfunc})
+        return score_df \
+            .loc[:, ['problem_id', 'ts_logged', 'score']] \
+            .sort_values('ts_logged') \
+            .groupby('problem_id') \
+            .tail(1) \
+            .set_index('problem_id')

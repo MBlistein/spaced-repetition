@@ -99,6 +99,7 @@ class TestGetProblemDF(unittest.TestCase):
                                           'difficulty': 'EASY',
                                           'tags': 'test-tag',
                                           'url': 'test-url',
+                                          'ts_logged': dt.datetime(2021, 1, 5, 10),
                                           'score': Score.BAD.value}])
 
         assert_frame_equal(self.p_g.get_problem_df(problems=[self.problem]),
@@ -166,19 +167,19 @@ class TestGetProblemDF(unittest.TestCase):
         assert_frame_equal(self.p_g.add_scores(log_df=log_df),
                            expected_df)
 
-    def test_agg_scores(self):
+    def test_last_score_per_problem(self):
         score_df = pd.DataFrame(data=[
-            {'problem_id': 1, 'other_col': 'some_val', 'score': 1},
-            {'problem_id': 1, 'other_col': 'some_val', 'score': 3},
-            {'problem_id': 2, 'other_col': 'some_val', 'score': 1},
-            {'problem_id': 2, 'other_col': 'some_val', 'score': 2}
+            {'problem_id': 1, 'ts_logged': dt.datetime(2021, 1, 1, 8), 'other_col': 'some_val', 'score': 1},
+            {'problem_id': 1, 'ts_logged': dt.datetime(2021, 1, 1, 9), 'other_col': 'some_val', 'score': 3},
+            {'problem_id': 2, 'ts_logged': dt.datetime(2021, 1, 1, 15), 'other_col': 'some_val', 'score': 4},
+            {'problem_id': 2, 'ts_logged': dt.datetime(2021, 1, 1, 7), 'other_col': 'some_val', 'score': 2}
         ])
 
         expected_df = pd.DataFrame(data=[
-            {'problem_id': 1, 'score': 2},
-            {'problem_id': 2, 'score': 1.5}]) \
+            {'problem_id': 1, 'ts_logged': dt.datetime(2021, 1, 1, 9), 'score': 3},
+            {'problem_id': 2, 'ts_logged': dt.datetime(2021, 1, 1, 15), 'score': 4}]) \
             .set_index('problem_id')
 
-        assert_frame_equal(self.p_g.agg_scores(score_df=score_df,
-                                               aggfunc=np.mean),
+        # set_index to problem_id to avoid differing row indices
+        assert_frame_equal(self.p_g.last_score_per_problem(score_df=score_df),
                            expected_df)
