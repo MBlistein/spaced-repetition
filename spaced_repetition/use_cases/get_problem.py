@@ -1,6 +1,8 @@
+import datetime as dt
 from typing import List
 
 import pandas as pd
+from dateutil.tz import gettz
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.problem_log import ProblemLog
@@ -93,9 +95,47 @@ class ProblemGetter:
 
     def get_tag_df(self, sub_str: str = None) -> pd.DataFrame:
         problem_df = self.get_problem_df()
-        return self.rank_tags(df=problem_df)
+        return problem_df \
+            .groupby('tags') \
+            .apply(self.prioritize) \
+            .reset_index() \
+            .sort_values(['prio', 'avg_score']) \
+            .set_index('prio')
 
-    @staticmethod
-    def rank_tags(df: pd.DataFrame) -> pd.DataFrame:
-        """Ranking algorithm for tags"""
-        return df
+    @classmethod
+    def prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
+        """Determine how urgently a certain topic (tag) should be reviewed.
+        Determine a prio-score between 1 (high need to catch up) to 10 (no
+        further study necessary).
+        Ideas:
+            * a high avg_score with high experience (solved many problems)
+              means high confidence on the topic --> low prio
+            * a high avg_score with little experience may not mean much, further
+              experience is required --> medium prio
+            * if the last time that the topic was studied has been a long time
+              ago, it should also be refreshed --> medium prio
+            * an unstudied topic should be started asap, but not as urgently
+              as a currently bad topic should be reviewed
+            * a topic with a bad avg score should be reviewed asap --> there is
+              a known deficiency. However, it should not constantly be at the
+              top to make room for other topics as well
+            * a problem's difficulty should also be taken into account; a topic
+              with good scores on hard problems should be rated less urgent
+              that a topic with very good scores on medium problems.
+            """
+        avg_score = group_df.score.mean()
+        last_ts = group_df.ts_logged.max().to_pydatetime()
+        num_problems = group_df.shape[0]
+
+        now = dt.datetime.now(tz=gettz('UTC'))
+        time_since_last_ts = now - last_ts
+
+        return pd.Series(data={
+            'prio': cls.prioritize(avg_score=avg_score,
+                                         num_problems=num_problems,
+                                         last_ts=last_ts),
+            'avg_score': avg_score,
+            'last_access': last_ts,
+            'num_problems': num_problems,
+        })
+
