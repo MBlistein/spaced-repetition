@@ -1,7 +1,6 @@
-from typing import Callable, List, Union
+from typing import List
 
 import pandas as pd
-import numpy as np
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.problem_log import ProblemLog
@@ -18,14 +17,21 @@ class ProblemGetter:
 
     def list_problems(self, name_substr: str = None,
                       sorted_by: List[str] = None,
-                      tags: List[str] = None):
+                      tag_names: List[str] = None):
         self.presenter.list_problems(
-            problems=self.get_problem_df(
-                problems=self.repo.get_problems(name_substr=name_substr,
-                                                sorted_by=sorted_by,
-                                                tags=tags)))
+            problems=self.get_problem_df(name_substr=name_substr,
+                                         sorted_by=sorted_by,
+                                         tag_names=tag_names))
 
-    def get_problem_df(self, problems: List[Problem]) -> pd.DataFrame:
+    def get_problem_df(self, name_substr: str = None,
+                       sorted_by: List[str] = None,
+                       tag_names: List[str] = None) -> pd.DataFrame:
+        problems = self.repo.get_problems(name_substr=name_substr,
+                                          sorted_by=sorted_by,
+                                          tag_names=tag_names)
+        if not problems:
+            return pd.DataFrame()
+
         problem_df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
         score_df = self.get_score_df(problem_ids=problem_df.problem_id.to_list())
 
@@ -80,3 +86,16 @@ class ProblemGetter:
             .groupby('problem_id') \
             .tail(1) \
             .set_index('problem_id')
+
+    def list_tags(self, sub_str: str = None):
+        self.presenter.list_tags(
+            tags=self.get_tag_df(sub_str=sub_str))
+
+    def get_tag_df(self, sub_str: str = None) -> pd.DataFrame:
+        problem_df = self.get_problem_df()
+        return self.rank_tags(df=problem_df)
+
+    @staticmethod
+    def rank_tags(df: pd.DataFrame) -> pd.DataFrame:
+        """Ranking algorithm for tags"""
+        return df

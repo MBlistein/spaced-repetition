@@ -127,12 +127,13 @@ class CliController:
 
     @staticmethod
     def _list_tags(args):
-        kwargs = {'sort': True}
+        kwargs = {}
         if args.filter:
             kwargs['sub_str'] = args.filter
 
-        tags = DjangoGateway.get_tags(**kwargs)
-        CliPresenter.list_tags(tags=[t for t in tags])
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        prob_getter.list_tags(**kwargs)
 
     @classmethod
     def _add_problem_log(cls, _):

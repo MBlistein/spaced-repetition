@@ -13,13 +13,16 @@ class PresenterInterface(ABC):
         pass
 
     @classmethod
+    @abstractmethod
+    def confirm_tag_created(cls, tag: Tag) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
         pass
 
     @classmethod
-    def confirm_tag_created(cls, tag: Tag) -> None:
-        pass
-
-    @staticmethod
-    def _tag_confirmation_txt(tag: Tag) -> str:
+    @abstractmethod
+    def list_tags(cls, tags: pd.DataFrame) -> None:
         pass

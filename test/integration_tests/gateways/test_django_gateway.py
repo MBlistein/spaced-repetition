@@ -96,7 +96,7 @@ class TestProblemQuerying(TestCase):
 
         required_tags = ['tag1', 'tag2']
 
-        res = DjangoGateway._query_problems(tags=required_tags)
+        res = DjangoGateway._query_problems(tag_names=required_tags)
 
         self.assertEqual(len(res), 3)
         self.assertEqual([prob.name for prob in res],
@@ -106,9 +106,9 @@ class TestProblemQuerying(TestCase):
         # set up problems
         self._create_additional_problems()
 
-        res = DjangoGateway._query_problems(name_substr='e',           # exclude 'many_tags'
+        res = DjangoGateway._query_problems(name_substr='e',  # exclude 'many_tags'
                                             sorted_by=['name'],
-                                            tags=['tag1', 'tag2'])     # exclude 'single_tag'
+                                            tag_names=['tag1', 'tag2'])     # exclude 'single_tag'
 
         self.assertEqual([p.name for p in res], ['name1', 'name2'])
 
@@ -133,7 +133,7 @@ class TestProblemQuerying(TestCase):
         self._create_additional_problems()
         res = DjangoGateway.get_problems(name_substr='e',
                                          sorted_by=['name'],
-                                         tags=['tag1', 'tag2'])
+                                         tag_names=['tag1', 'tag2'])
 
         self.assertEqual([p.name for p in res], ['name1', 'name2'])
 
@@ -284,12 +284,6 @@ class TestTagGetting(TestCase):
 
         self.assertIsInstance(tags[0], OrmTag)
         self.assertEqual([t.name for t in tags], ['tag2', 'Tag1', 't3'])
-
-    def test_query_tags_sort(self):
-        tags = DjangoGateway._query_tags(sort=True)
-
-        self.assertIsInstance(tags[0], OrmTag)
-        self.assertEqual([t.name for t in tags], [ 't3', 'Tag1','tag2'])
 
     def test_query_tag_filter(self):
         tags = DjangoGateway._query_tags(sub_str='ag')

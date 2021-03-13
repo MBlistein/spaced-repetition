@@ -1,10 +1,8 @@
-from typing import List
-
 import pandas as pd
 from tabulate import tabulate
 
 from spaced_repetition.domain.problem import Problem
-from spaced_repetition.domain.tag import Tag, MAX_TAG_LENGTH
+from spaced_repetition.domain.tag import Tag
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 
 
@@ -20,10 +18,19 @@ class CliPresenter(PresenterInterface):
                f"{problem.difficulty.name}', tags: {', '.join(problem.tags)})"
 
     @classmethod
+    def confirm_tag_created(cls, tag: Tag) -> None:
+        print(cls._tag_confirmation_txt(tag=tag))
+
+    @staticmethod
+    def _tag_confirmation_txt(tag: Tag) -> str:
+        return f"Created Tag '{tag.name}' with id '{tag.tag_id}'."
+
+    @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
+        # TODO: deal with empty problem df
         formatted_df = cls.format_problem_df(df=problems)
-        tabluated_df = cls.tabulate_df(df=formatted_df)
-        print(tabluated_df)
+        tabulated_df = cls.tabulate_df(df=formatted_df)
+        print(tabulated_df)
 
     @staticmethod
     def tabulate_df(df: pd.DataFrame):
@@ -50,40 +57,26 @@ class CliPresenter(PresenterInterface):
             .reindex(columns=[col for col in order if col in existing_columns])
 
     @classmethod
-    def list_tags(cls, tags: List[Tag]) -> None:
-        num_cols = 2
-        column_widths = [5, MAX_TAG_LENGTH]
-        print('\nTags:')
-        print(cls._format_table_row(content=['Id', 'Tag'],
-                                    column_widths=column_widths,
-                                    num_cols=num_cols))
-
-        for t in tags:
-            print(cls._format_table_row(content=[str(t.tag_id), t.name],
-                                        column_widths=column_widths,
-                                        num_cols=num_cols))
+    def list_tags(cls, tags: pd.DataFrame) -> None:
+        formatted_df = cls.format_tag_df(df=tags)
+        tabulated_df = cls.tabulate_df(df=formatted_df)
+        print(tabulated_df)
 
     @staticmethod
-    def _format_entry(entry: str, max_len: int):
-        return entry[:max_len].ljust(max_len)
+    def format_tag_df(df: pd.DataFrame):
+        """Needs at least a column named 'problem_id'"""
+        # TODO: deal with empty problem df
+        name_mapper = {'problem_id': 'id',
+                       'ts_logged': 'last_access'}
+        df = df \
+            .rename(columns=name_mapper) \
+            .set_index('id') \
 
-    @classmethod
-    def _format_table_row(cls, content: List[str], column_widths: List[int],
-                          num_cols: int) -> str:
-        if len(content) != num_cols:
-            raise ValueError(f'Need exactly {num_cols} entries!')
+        df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
 
-        row_content = []
-        for idx, entry in enumerate(content):
-            row_content.append(cls._format_entry(entry=entry,
-                                                 max_len=column_widths[idx]))
+        existing_columns = df.columns
+        order = ['name', 'tags', 'difficulty', 'last_access', 'score',
+                 'rank', 'url']
 
-        return '| ' + ' | '.join(row_content) + ' |'
-
-    @classmethod
-    def confirm_tag_created(cls, tag: Tag) -> None:
-        print(cls._tag_confirmation_txt(tag=tag))
-
-    @staticmethod
-    def _tag_confirmation_txt(tag: Tag) -> str:
-        return f"Created Tag '{tag.name}' with id '{tag.tag_id}'."
+        return df \
+            .reindex(columns=[col for col in order if col in existing_columns])

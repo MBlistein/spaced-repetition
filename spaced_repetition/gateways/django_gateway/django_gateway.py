@@ -39,18 +39,18 @@ class DjangoGateway(DBGatewayInterface):
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
                      sorted_by: List[str] = None,
-                     tags: List[str] = None) -> List[Problem]:
+                     tag_names: List[str] = None) -> List[Problem]:
         return cls._format_problems(
             problems=cls._query_problems(name=name,
                                          name_substr=name_substr,
                                          sorted_by=sorted_by,
-                                         tags=tags))
+                                         tag_names=tag_names))
 
     @staticmethod
     def _query_problems(name: Union[str, None] = None,
                         name_substr: str = None,
                         sorted_by: List[str] = None,
-                        tags: List[str] = None) -> QuerySet:
+                        tag_names: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
         if name:
             qs = qs.filter(name=name)
@@ -58,11 +58,11 @@ class DjangoGateway(DBGatewayInterface):
             qs = qs.filter(name__icontains=name_substr)
         if sorted_by:
             qs = qs.order_by(*sorted_by)
-        if tags:
+        if tag_names:
             qs = qs \
                 .annotate(num_matches=Count('tags',
-                                            filter=Q(tags__name__in=tags))) \
-                .filter(num_matches=len(tags))
+                                            filter=Q(tags__name__in=tag_names))) \
+                .filter(num_matches=len(tag_names))
 
         return qs
 
@@ -121,17 +121,14 @@ class DjangoGateway(DBGatewayInterface):
         return cls._format_tags(tags=[orm_tag])[0]
 
     @classmethod
-    def get_tags(cls, sort: bool = False, sub_str: str = None):
-        return cls._format_tags(tags=cls._query_tags(sort=sort,
-                                                     sub_str=sub_str))
+    def get_tags(cls, sub_str: str = None):
+        return cls._format_tags(tags=cls._query_tags(sub_str=sub_str))
 
     @staticmethod
-    def _query_tags(sort: bool = False, sub_str: str = None):
+    def _query_tags(sub_str: str = None):
         qs = OrmTag.objects.all()
         if sub_str:
             qs = qs.filter(name__icontains=sub_str)
-        if sort:
-            qs = qs.order_by(Lower('name'))
         return qs
 
     @staticmethod

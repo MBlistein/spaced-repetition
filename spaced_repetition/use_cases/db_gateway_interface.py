@@ -17,7 +17,7 @@ class DBGatewayInterface(ABC):
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
                      sorted_by: List[str] = None,
-                     tags: List[str] = None) -> List[Problem]:
+                     tag_names: List[str] = None) -> List[Problem]:
         pass
 
     @staticmethod
@@ -38,6 +38,11 @@ class DBGatewayInterface(ABC):
     @classmethod
     @abstractmethod
     def create_tag(cls, tag: Tag) -> Tag:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_tags(cls, sub_str: str = None):
         pass
 
     @staticmethod
