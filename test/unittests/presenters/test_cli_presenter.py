@@ -1,4 +1,4 @@
-
+import datetime as dt
 import io
 import unittest
 from unittest.mock import call, patch
@@ -53,31 +53,48 @@ class TestCliPresenter(unittest.TestCase):
                          'Need exactly 5 entries!')
 
     def test_format_problem_df(self):
-        test_df = pd.DataFrame(data=[{'tags': 4,
-                                      'url': 'www',
-                                      'rank': 'b',
-                                      'score': 1,
-                                      'difficulty': 2,
-                                      'name': 'name',
-                                      'surplus_col': 'not displayed',
-                                      'problem_id': 5}])
+        test_df = pd.DataFrame(data=[
+            {'tags': 4,
+             'url': 'www',
+             'rank': 22,
+             'score': 1,
+             'difficulty': 2,
+             'name': 'name',
+             'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 0, 1561),
+             'surplus_col': 'not displayed',
+             'problem_id': 5}])
 
         formatted_df = CliPresenter.format_problem_df(test_df)
 
-        self.assertEqual(formatted_df.columns.tolist(),
-                         ['name', 'tags', 'difficulty', 'score', 'rank', 'url'])
-        self.assertEqual(formatted_df.index.name, 'id')
+        expected_df = pd.DataFrame(data=[
+            {'name': 'name',
+             'tags': 4,
+             'difficulty': 2,
+             'last_access': '2021-01-10 08:10',
+             'score': 1,
+             'rank': 22,
+             'url': 'www',
+             'id': 5}]) \
+            .set_index('id')
+
+        assert_frame_equal(formatted_df, expected_df)
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problems(self, mock_stdout):
-        test_df = pd.DataFrame(data=[{'tags': 'test-tag',
-                                      'url': 'www',
-                                      'rank': 1,
-                                      'problem_id': 5}])
+        test_df = pd.DataFrame(data=[{
+            'tags': 'test-tag',
+            'last_access': dt.datetime(2021, 1, 10, 15, 3, 5, 5151),
+            'difficulty': 'hard',
+            'name': 'name',
+            'url': 'www',
+            'rank': 1,
+            'score': 3,
+            'problem_id': 5}])
+
         expected_output = \
-            "|   id | tags     |   rank | url   |\n" \
-            "|------|----------|--------|-------|\n" \
-            "|    5 | test-tag |      1 | www   |\n"
+            "|   id | name   | tags     | difficulty   | last_access      |   score |   rank | url   |\n" \
+            "|------|--------|----------|--------------|------------------|---------|--------|-------|\n" \
+            "|    5 | name   | test-tag | hard         | 2021-01-10 15:03 |       3 |      1 | www   |\n"
 
         CliPresenter.list_problems(problems=test_df)
 

@@ -34,13 +34,19 @@ class CliPresenter(PresenterInterface):
     @staticmethod
     def format_problem_df(df: pd.DataFrame):
         """Needs at least a column named 'problem_id'"""
-        existing_columns = df.columns
-        name_mapper = {'problem_id': 'id'}
-        order = ['name', 'tags', 'difficulty', 'score', 'rank', 'url']
-
-        return df \
+        name_mapper = {'problem_id': 'id',
+                       'ts_logged': 'last_access'}
+        df = df \
             .rename(columns=name_mapper) \
             .set_index('id') \
+
+        df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
+
+        existing_columns = df.columns
+        order = ['name', 'tags', 'difficulty', 'last_access', 'score',
+                 'rank', 'url']
+
+        return df \
             .reindex(columns=[col for col in order if col in existing_columns])
 
     @classmethod
