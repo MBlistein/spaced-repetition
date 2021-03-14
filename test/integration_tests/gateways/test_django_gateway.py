@@ -176,7 +176,7 @@ class TestProblemLogCreation(TestCase):
         dgw = DjangoGateway()
         log = ProblemLog(
             problem_id=1,
-            result=Result.SOLVED_OPTIMALLY_SLOWER.value)
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
 
         ts_before = dt.datetime.now(tz=tzlocal())
         dgw.create_problem_log(problem_log=log)
@@ -186,7 +186,7 @@ class TestProblemLogCreation(TestCase):
 
         orm_log = OrmProblemLog.objects.first()
         self.assertEqual(orm_log.problem.name, 'testname')
-        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
+        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
         self.assertGreater(orm_log.timestamp, ts_before)
         self.assertLess(orm_log.timestamp, ts_after)
 
@@ -195,7 +195,7 @@ class TestProblemLogCreation(TestCase):
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
         log = ProblemLog(
             problem_id=1,
-            result=Result.SOLVED_OPTIMALLY_SLOWER.value,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
             timestamp=ts)
 
         dgw.create_problem_log(problem_log=log)
@@ -204,7 +204,7 @@ class TestProblemLogCreation(TestCase):
 
         orm_log = OrmProblemLog.objects.first()
         self.assertEqual(orm_log.problem.name, 'testname')
-        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_SLOWER.value)
+        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
         self.assertEqual(orm_log.timestamp, ts)
 
 
@@ -221,7 +221,7 @@ class TestProblemLogQuerying(TestCase):
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
             problem_id=self.prob.pk,
-            result=Result.SOLVED_SUBOPTIMALLY_SLOWER.value,
+            result=Result.SOLVED_SUBOPTIMALLY.value,
             timestamp=dt.datetime(2021, 1, 10, 10))
         OrmProblemLog.objects.create(
             problem_id=self.prob.pk,
@@ -243,7 +243,7 @@ class TestProblemLogQuerying(TestCase):
 
     def test_format_problem_logs(self):
         expected_res = [ProblemLog(problem_id=self.prob.pk,
-                                   result=Result.SOLVED_SUBOPTIMALLY_SLOWER,
+                                   result=Result.SOLVED_SUBOPTIMALLY,
                                    timestamp=dt.datetime(2021, 1, 10, 10))]
 
         self.assertEqual(expected_res,

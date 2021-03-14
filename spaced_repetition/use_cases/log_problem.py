@@ -19,3 +19,5 @@ class ProblemLogger:
             problem_id=problem_id,
             result=result,
             timestamp=timestamp))
+
+    # TODO: calc interval and spaced rep

@@ -57,6 +57,12 @@ class ProblemGetter:
         return self.last_score_per_problem(score_df=score_df) \
             .reset_index()
 
+    @staticmethod
+    def get_prio_df(scored_logs: pd.DataFrame) -> pd.DataFrame:
+        """Calculates a prio score per problem as described in the docs:"""
+
+
+
     def get_problem_logs(self, problem_ids: List[int] = None):
         return self.repo.get_problem_logs(problem_ids=problem_ids)
 
@@ -95,6 +101,10 @@ class ProblemGetter:
 
     def get_tag_df(self, sub_str: str = None) -> pd.DataFrame:
         problem_df = self.get_problem_df()
+
+        if problem_df.empty:
+            return problem_df
+
         return problem_df \
             .groupby('tags') \
             .apply(self.prioritize) \
@@ -105,37 +115,37 @@ class ProblemGetter:
     @classmethod
     def prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
         """Determine how urgently a certain topic (tag) should be reviewed.
-        Determine a prio-score between 1 (high need to catch up) to 10 (no
-        further study necessary).
-        Ideas:
-            * a high avg_score with high experience (solved many problems)
-              means high confidence on the topic --> low prio
-            * a high avg_score with little experience may not mean much, further
-              experience is required --> medium prio
-            * if the last time that the topic was studied has been a long time
-              ago, it should also be refreshed --> medium prio
-            * an unstudied topic should be started asap, but not as urgently
-              as a currently bad topic should be reviewed
-            * a topic with a bad avg score should be reviewed asap --> there is
-              a known deficiency. However, it should not constantly be at the
-              top to make room for other topics as well
-            * a problem's difficulty should also be taken into account; a topic
-              with good scores on hard problems should be rated less urgent
-              that a topic with very good scores on medium problems.
-            """
+        Returns a prio-score between 1 (high need to catch up) to 10 (no
+        study necessary).
+          1) Avg. weighted problem prio
+             Problems are rated in three categories: easy, medium, hard.
+             The total avg_weighted_prio is calculated as the weighted
+             sum of the avg_prio in each of these categories.
+             It is reasoned that:
+               - easy problems signify the introduction of a topic
+               - medium problems are more representative of actual
+                 topic knowledge as well as interview questions
+               - hard problems are rather edge-cases or advanced interview
+                 questions and therefore not as essential as medium ones
+             Therefore, the total average score for a tag is determined as:
+             avg_score = 0.25 * avg_easy + 0.5 * avg_med + 0.25 * avg_hard
+          2) Experience
+              It does make sense to choose topics as fine-grained as possible.
+              Per topic, a minimum of 5 questions is necessary to reach full
+              'experience'. The necessary experience per topic could be
+              chosen individually in the future.
+        """
         avg_score = group_df.score.mean()
         last_ts = group_df.ts_logged.max().to_pydatetime()
         num_problems = group_df.shape[0]
 
         now = dt.datetime.now(tz=gettz('UTC'))
         time_since_last_ts = now - last_ts
+        prio = 1
 
         return pd.Series(data={
-            'prio': cls.prioritize(avg_score=avg_score,
-                                         num_problems=num_problems,
-                                         last_ts=last_ts),
+            'prio': prio,
             'avg_score': avg_score,
             'last_access': last_ts,
             'num_problems': num_problems,
         })
-

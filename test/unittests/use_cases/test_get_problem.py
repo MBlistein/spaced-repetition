@@ -240,3 +240,20 @@ class TestGetTagDF(unittest.TestCase):
 
         assert_frame_equal(p_g.get_tag_df(),
                            expected_df)
+
+
+class TestGetPrioDf(unittest.TestCase):
+    def setUp(self):
+        self.p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+
+    def test_get_prio_df(self):
+        ts = dt.datetime(2021, 3, 18, 11)
+
+        scored_logs = pd.DataFrame(data=[
+            {'problem_id': 1,
+             'ts_logged': dt.datetime(2021, 3, 10),
+             'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
+             'score': Score.MEDIUM.value,
+             'interval': 10,
+             'easyness_factor': 2}
+        ])

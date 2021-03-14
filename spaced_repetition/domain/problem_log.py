@@ -1,18 +1,18 @@
 import datetime as dt
-from enum import Enum
+from enum import Enum, unique
 from typing import Union
 
 from dataclasses import dataclass
 
 
+@unique
 class Result(Enum):
-    SOLVED_OPTIMALLY_IN_UNDER_25 = 0
-    SOLVED_OPTIMALLY_SLOWER = 1
-    SOLVED_OPTIMALLY_WITH_HINT = 2
-    SOLVED_SUBOPTIMALLY_IN_UNDER_25 = 3
-    SOLVED_SUBOPTIMALLY_SLOWER = 4
-    SOLVED_SUBOPTIMALLY_WITH_HINT = 5
-    NO_IDEA = 6
+    KNEW_BY_HEART = 0
+    SOLVED_OPTIMALLY_IN_UNDER_25 = 1
+    SOLVED_OPTIMALLY_SLOWER = 2
+    SOLVED_OPTIMALLY_WITH_HINT = 3
+    SOLVED_SUBOPTIMALLY = 4
+    NO_IDEA = 5
 
 
 @dataclass
