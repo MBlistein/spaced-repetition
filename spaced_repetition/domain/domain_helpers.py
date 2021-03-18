@@ -1,17 +1,17 @@
 
-def validate_input(inpt: str, max_length: int, label: str = None,
+def validate_param(param: str, max_length: int, label: str = None,
                    empty_allowed=False) -> str:
     label = label or 'Input'
-    if not isinstance(inpt, str):
+    if not isinstance(param, str):
         raise TypeError(
-            f"{label} should by of type 'str', but is of type {type(inpt)}")
+            f"{label} should by of type 'str', but is of type {type(param)}")
 
-    if len(inpt) == 0 and not empty_allowed:
+    if len(param) == 0 and not empty_allowed:
         raise ValueError(f"{label} cannot be empty.")
-    if len(inpt) > max_length:
+    if len(param) > max_length:
         raise ValueError(
             f"{label} too long, max length = {max_length} chars.")
-    if len(inpt) > len(inpt.strip()):
+    if len(param) > len(param.strip()):
         raise ValueError(
-            f"Error: {label} '{inpt}' has whitespace on either end.")
-    return inpt
+            f"Error: {label} '{param}' has whitespace on either end.")
+    return param

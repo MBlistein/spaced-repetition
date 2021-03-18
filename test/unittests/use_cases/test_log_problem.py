@@ -17,3 +17,4 @@ TEST_PROBLEM = ProblemCreator.create_problem(
 class TestProblemAdder(unittest.TestCase):
     def test_add_log(self):
         # TODO: add interval and easiness
+        pass

@@ -84,8 +84,10 @@ class ProblemGetter:
 
     @staticmethod
     def log_to_row_content(log: ProblemLog) -> dict:
-        return {'problem_id': log.problem_id,
+        return {'ease': log.ease,
+                'problem_id': log.problem_id,
                 'result': log.result.value,
+                'interval': log.interval,
                 'ts_logged': log.timestamp}
 
     @staticmethod

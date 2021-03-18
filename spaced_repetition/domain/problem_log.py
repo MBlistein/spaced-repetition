@@ -17,6 +17,8 @@ class Result(Enum):
 
 @dataclass
 class ProblemLog:
+    ease: float  # factor for spacing interval
+    interval: int  # in days
     problem_id: int
     result: Result
     timestamp: Union[dt.datetime, None] = None

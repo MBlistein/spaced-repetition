@@ -3,7 +3,7 @@ from typing import List, Union
 
 from dataclasses import dataclass
 
-from .domain_helpers import validate_input
+from .domain_helpers import validate_param
 
 
 MAX_URL_LENGTH = 255
@@ -48,7 +48,7 @@ class ProblemCreator:
 
     @staticmethod
     def validate_name(name: str) -> str:
-        return validate_input(inpt=name,
+        return validate_param(param=name,
                               max_length=MAX_NAME_LENGTH,
                               label='Name')
 
@@ -61,7 +61,7 @@ class ProblemCreator:
             if not isinstance(tag, str):
                 raise TypeError("Tags must be strings.")
 
-            validate_input(inpt=tag, max_length=MAX_TAG_LENGTH, label='Tag')
+            validate_param(param=tag, max_length=MAX_TAG_LENGTH, label='Tag')
 
         if len(tags) == 0:
             raise ValueError("Provide at least one tag.")
@@ -69,5 +69,5 @@ class ProblemCreator:
 
     @staticmethod
     def validate_url(url: Union[str, None]) -> Union[str, None]:
-        return validate_input(inpt=url, max_length=MAX_URL_LENGTH, label='URL',
+        return validate_param(param=url, max_length=MAX_URL_LENGTH, label='URL',
                               empty_allowed=True)

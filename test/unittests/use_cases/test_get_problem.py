@@ -253,7 +253,7 @@ class TestGetPrioDf(unittest.TestCase):
              'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
              'score': 4,
              'interval': 10,
-             'easyness_factor': 2}
+             'ease': 2}
         ])
 
         expected_res = scored_logs.copy()

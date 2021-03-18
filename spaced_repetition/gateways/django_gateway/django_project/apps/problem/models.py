@@ -36,6 +36,8 @@ class Problem(models.Model):
 
 
 class ProblemLog(models.Model):
+    ease = models.FloatField(null=False)
+    interval = models.IntegerField(null=False)
     problem = models.ForeignKey(Problem,
                                 on_delete=models.CASCADE,
                                 related_name='logs')

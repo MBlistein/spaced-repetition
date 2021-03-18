@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Union
 
-from .domain_helpers import validate_input
+from .domain_helpers import validate_param
 
 MAX_TAG_LENGTH = 10
 
@@ -20,6 +20,6 @@ class TagCreator:
 
     @staticmethod
     def validate_name(name: str) -> str:
-        return validate_input(inpt=name,
+        return validate_param(param=name,
                               max_length=MAX_TAG_LENGTH,
                               label='Tag')
