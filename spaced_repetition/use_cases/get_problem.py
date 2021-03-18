@@ -1,4 +1,5 @@
 import datetime as dt
+from math import exp, log
 from typing import List
 
 import pandas as pd
@@ -36,8 +37,9 @@ class ProblemGetter:
 
         problem_df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
         score_df = self.get_score_df(problem_ids=problem_df.problem_id.to_list())
+        prio_df = self.get_prio_df(scored_logs=score_df)
 
-        return problem_df.merge(score_df,
+        return problem_df.merge(prio_df,
                                 on='problem_id',
                                 how='outer',
                                 validate='one_to_one')
@@ -58,10 +60,20 @@ class ProblemGetter:
             .reset_index()
 
     @staticmethod
-    def get_prio_df(scored_logs: pd.DataFrame) -> pd.DataFrame:
-        """Calculates a prio score per problem as described in the docs:"""
+    def get_prio_df(scored_logs: pd.DataFrame,
+                    ts: dt.datetime = dt.datetime.now(tz=gettz('UTC')))\
+            -> pd.DataFrame:
+        """Calculates the knowledge score KS per problem"""
+        df = scored_logs.copy()
 
+        def retention_score(df_row: pd.Series) -> float:
+            days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()).days
+            days_over = days_since_last_study - df_row.interval
+            return exp(log(1/2) * days_over / df_row.interval)
 
+        df['RF'] = df.apply(retention_score, axis='columns')
+        df['KS'] = df.RF * df.score
+        return df
 
     def get_problem_logs(self, problem_ids: List[int] = None):
         return self.repo.get_problem_logs(problem_ids=problem_ids)

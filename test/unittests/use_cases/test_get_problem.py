@@ -247,13 +247,26 @@ class TestGetPrioDf(unittest.TestCase):
         self.p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
 
     def test_get_prio_df(self):
-        ts = dt.datetime(2021, 3, 18, 11)
-
         scored_logs = pd.DataFrame(data=[
             {'problem_id': 1,
-             'ts_logged': dt.datetime(2021, 3, 10),
+             'ts_logged': dt.datetime(2021, 1, 1, tzinfo=gettz('UTC')),
              'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
-             'score': Score.MEDIUM.value,
+             'score': 4,
              'interval': 10,
              'easyness_factor': 2}
         ])
+
+        expected_res = scored_logs.copy()
+        expected_res['RF'] = pd.Series(data=[0.5])
+        expected_res['KS'] = pd.Series(data=[2.0])
+
+        ts = dt.datetime(2021, 1, 21, tzinfo=gettz('UTC'))
+
+        res = self.p_g.get_prio_df(scored_logs=scored_logs, ts=ts)
+
+        self.assertAlmostEqual(res.RF.iloc[0],
+                               expected_res.RF.iloc[0])
+        self.assertAlmostEqual(res.KS.iloc[0],
+                               expected_res.KS.iloc[0])
+
+        assert_frame_equal(expected_res, res)
