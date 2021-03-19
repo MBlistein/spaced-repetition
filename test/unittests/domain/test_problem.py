@@ -1,6 +1,6 @@
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 
@@ -11,19 +11,19 @@ MAX_TAG_LENGTH = 20
 
 class TestProblemCreator(unittest.TestCase):
     def test_validate_url_text(self):
-        with patch('spaced_repetition.domain.problem.validate_input') as mock:
+        with patch('spaced_repetition.domain.problem.validate_param') as mock:
             ProblemCreator.validate_url(url='valid-url.com')
 
-            mock.assert_called_once_with(inpt='valid-url.com',
+            mock.assert_called_once_with(param='valid-url.com',
                                          max_length=MAX_URL_LENGTH,
                                          label='URL',
                                          empty_allowed=True)
 
     def test_validate_name(self):
-        with patch('spaced_repetition.domain.problem.validate_input') as mock:
+        with patch('spaced_repetition.domain.problem.validate_param') as mock:
             ProblemCreator.validate_name(name='valid name')
 
-            mock.assert_called_once_with(inpt='valid name',
+            mock.assert_called_once_with(param='valid name',
                                          max_length=MAX_NAME_LENGTH,
                                          label='Name')
 
@@ -46,10 +46,10 @@ class TestProblemCreator(unittest.TestCase):
                          "Provide at least one tag.")
 
     def test_validate_tag_input_validated(self):
-        with patch('spaced_repetition.domain.problem.validate_input') as mock:
+        with patch('spaced_repetition.domain.problem.validate_param') as mock:
             ProblemCreator.validate_tags(tags=['test_tag'])
 
-            mock.assert_called_once_with(inpt='test_tag',
+            mock.assert_called_once_with(param='test_tag',
                                          max_length=MAX_TAG_LENGTH,
                                          label='Tag')
 

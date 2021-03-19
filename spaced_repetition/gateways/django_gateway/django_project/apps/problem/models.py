@@ -42,8 +42,9 @@ class ProblemLog(models.Model):
                                 on_delete=models.CASCADE,
                                 related_name='logs')
     result = models.IntegerField(choices=((r.value, r.name) for r in Result))
-    timestamp = models.DateTimeField(default=timezone.now)
+    timestamp = models.DateTimeField(null=False)
 
     def __str__(self):
-        return f"Problem '{self.problem.name}' attemted at {self.timestamp}" \
-            f"with result {self.result}"
+        return f"Problem '{self.problem.name}' attemted at {self.timestamp} " \
+            f"with result {self.result}.\nCurrent spacing: " \
+            f"Ease: {self.ease}, Interval: {self.interval}, "

@@ -1,6 +1,7 @@
-import datetime as dt
+from typing import Union
 
-from spaced_repetition.domain.problem_log import ProblemLog, Result
+from spaced_repetition.domain.problem_log import (ProblemLog, ProblemLogCreator,
+                                                  Result)
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 
@@ -11,13 +12,17 @@ class ProblemLogger:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def log_problem(self,
-                    problem_id: int,
-                    result: Result,
-                    timestamp: dt.datetime = None):
-        self.repo.create_problem_log(problem_log=ProblemLog(
-            problem_id=problem_id,
-            result=result,
-            timestamp=timestamp))
+    def log_problem(self, problem_id: int, result: Result):
+        last_log = self.get_last_log_for_problem(problem_id=problem_id)
 
-    # TODO: calc interval and spaced rep
+        problem_log = ProblemLogCreator.create(
+            last_log=last_log,
+            problem_id=problem_id,
+            result=result)
+
+        self.repo.create_problem_log(problem_log=problem_log)
+
+    def get_last_log_for_problem(self, problem_id: int) -> Union[ProblemLog, None]:
+        previous_logs = self.repo.get_problem_logs(problem_ids=[problem_id])
+        if previous_logs:
+            return max(previous_logs, key=lambda p: p.timestamp)

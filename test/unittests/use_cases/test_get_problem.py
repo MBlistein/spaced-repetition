@@ -8,7 +8,9 @@ from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.tag import Tag
-from spaced_repetition.domain.problem_log import ProblemLog, Result
+from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL,
+                                                  ProblemLog, ProblemLogCreator,
+                                                  Result)
 from spaced_repetition.domain.score import Score
 from spaced_repetition.use_cases.get_problem import ProblemGetter
 
@@ -16,7 +18,6 @@ from spaced_repetition.use_cases.get_problem import ProblemGetter
 class TestListProblems(unittest.TestCase):
     def setUp(self):
         self.p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-        self.p_g.presenter = Mock()
 
     @patch.object(ProblemGetter, attribute='get_problem_df')
     def test_get_problem(self, mock_get_problem_df):
@@ -61,24 +62,45 @@ class TestGetProblemDF(unittest.TestCase):
             tags=['test-tag'],
             url='test-url')
 
-    def test_get_problem_df(self):
+    @patch.object(ProblemGetter, 'get_prio_df')
+    def test_get_problem_df(self, mock_get_prio_df):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems = Mock()
         p_g.repo.get_problems.return_value = [self.problem]
 
         p_g.repo.get_problem_logs = Mock()
         p_g.repo.get_problem_logs.return_value = [
-            ProblemLog(problem_id=3,
-                       result=Result.NO_IDEA,
-                       timestamp=dt.datetime(2021, 1, 5, 10))]
+            ProblemLogCreator.create(
+                last_log=None,
+                problem_id=3,
+                result=Result.NO_IDEA,
+                timestamp=dt.datetime(2021, 1, 5, 10, tzinfo=gettz('UTC')))]
 
-        expected_df = pd.DataFrame(data=[{'name': 'testname',
-                                          'problem_id': 3,
-                                          'difficulty': 'EASY',
-                                          'tags': 'test-tag',
-                                          'url': 'test-url',
-                                          'ts_logged': dt.datetime(2021, 1, 5, 10),
-                                          'score': Score.BAD.value}])
+        mock_get_prio_df.return_value = pd.DataFrame(data=[{
+            'problem_id': self.problem.problem_id,
+            'KS': 1.5
+        }])
+
+        expected_df = pd.DataFrame(data=[{
+            'KS': 1.5,
+            'difficulty': 'EASY',
+            'name': 'testname',
+            'problem_id': self.problem.problem_id,
+            'result': Result.NO_IDEA.value,
+            'RF': 2.11758e-22,
+            'tags': 'test-tag',
+            'ts_logged': dt.datetime(2021, 1, 5, 10),
+            'url': 'test-url'}])
+        print('33333333333333333333333333333333333333')
+        from tabulate import tabulate
+        print(tabulate(expected_df, headers='keys'))
+        print(sorted(expected_df.columns))
+        print('goooooooooooooooooooooooooooooooooooo')
+        got = p_g.get_problem_df(name_substr='a',
+                                              sorted_by=['b'],
+                                              tag_names=['c'])
+        print(sorted(got.columns))
+        print(tabulate(got, headers='keys'))
 
         assert_frame_equal(p_g.get_problem_df(name_substr='a',
                                               sorted_by=['b'],
@@ -97,7 +119,7 @@ class TestGetProblemDF(unittest.TestCase):
         assert_frame_equal(p_g.get_problem_df(),
                            pd.DataFrame())
 
-    def test__problem_to_row_content(self):
+    def test_problem_to_row_content(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         expected_res = {'name': self.problem.name,
                         'problem_id': self.problem.problem_id,
@@ -112,19 +134,27 @@ class TestGetProblemDF(unittest.TestCase):
         time_1 = dt.datetime(2021, 1, 10, 1)
         time_2 = dt.datetime(2021, 1, 10, 5)
         problem_logs = [
-            ProblemLog(problem_id=1,
-                       result=Result.NO_IDEA,
-                       timestamp=time_1),
-            ProblemLog(problem_id=2,
-                       result=Result.SOLVED_OPTIMALLY_SLOWER,
-                       timestamp=time_2)]
+            ProblemLogCreator.create(
+                last_log=None,
+                problem_id=1,
+                result=Result.NO_IDEA,
+                timestamp=time_1),
+            ProblemLogCreator.create(
+                last_log=None,
+                problem_id=2,
+                result=Result.SOLVED_OPTIMALLY_WITH_HINT,
+                timestamp=time_2)]
 
         expected_res = pd.DataFrame([
-            {'problem_id': 1,
+            {'ease': DEFAULT_EASE,
+             'interval': DEFAULT_INTERVAL,
+             'problem_id': 1,
              'result': Result.NO_IDEA.value,
              'ts_logged': time_1},
-            {'problem_id': 2,
-             'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
+            {'ease': DEFAULT_EASE,
+             'interval': DEFAULT_INTERVAL,
+             'problem_id': 2,
+             'result': Result.SOLVED_OPTIMALLY_WITH_HINT.value,
              'ts_logged': time_2}])
 
         assert_frame_equal(p_g.get_log_df(problem_logs=problem_logs),
@@ -133,13 +163,18 @@ class TestGetProblemDF(unittest.TestCase):
     def test_format_log_to_df_row(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         time_1 = dt.datetime(2021, 1, 10, 1)
-        problem_log = ProblemLog(problem_id=1,
-                                 result=Result.NO_IDEA,
-                                 timestamp=time_1)
+        problem_log = ProblemLogCreator.create(
+            last_log=None,
+            problem_id=1,
+            result=Result.NO_IDEA,
+            timestamp=time_1)
 
-        expected_res = {'problem_id': problem_log.problem_id,
-                        'result': problem_log.result.value,
-                        'ts_logged': problem_log.timestamp}
+        expected_res = {
+            'ease': DEFAULT_EASE,
+            'interval': DEFAULT_INTERVAL,
+            'problem_id': 1,
+            'result': Result.NO_IDEA.value,
+            'ts_logged': time_1}
         self.assertEqual(p_g.log_to_row_content(log=problem_log),
                          expected_res)
 
@@ -262,7 +297,7 @@ class TestGetPrioDf(unittest.TestCase):
 
         ts = dt.datetime(2021, 1, 21, tzinfo=gettz('UTC'))
 
-        res = self.p_g.get_prio_df(scored_logs=scored_logs, ts=ts)
+        res = self.p_g.get_prio_df(problem_logs=scored_logs, ts=ts)
 
         self.assertAlmostEqual(res.RF.iloc[0],
                                expected_res.RF.iloc[0])

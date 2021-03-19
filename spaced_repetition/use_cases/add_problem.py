@@ -5,7 +5,6 @@ from spaced_repetition.domain.problem import (Difficulty,
                                               ProblemCreator)
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
-from spaced_repetition.use_cases.helpers import clean_name
 
 
 class ProblemAdder:
@@ -19,7 +18,7 @@ class ProblemAdder:
                     tags: List[str],
                     url: str = None):
         problem = ProblemCreator.create_problem(
-            name=clean_name(name=name),
+            name=name,
             difficulty=difficulty,
             problem_id=None,
             tags=tags,

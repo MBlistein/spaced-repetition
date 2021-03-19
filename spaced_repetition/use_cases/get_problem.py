@@ -35,9 +35,12 @@ class ProblemGetter:
         if not problems:
             return pd.DataFrame()
 
-        problem_df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
-        score_df = self.get_score_df(problem_ids=problem_df.problem_id.to_list())
-        prio_df = self.get_prio_df(scored_logs=score_df)
+        problem_df = pd.DataFrame(data=map(self.problem_to_row_content,
+                                           problems))
+        problem_logs = self.get_log_df(problem_logs=self.get_problem_logs(
+            problem_ids=problem_df.problem_id.to_list()))
+
+        prio_df = self.get_prio_df(problem_logs=problem_logs)
 
         return problem_df.merge(prio_df,
                                 on='problem_id',
@@ -52,24 +55,30 @@ class ProblemGetter:
                 'tags': ', '.join(sorted(problem.tags)),
                 'url': problem.url}
 
-    def get_score_df(self, problem_ids=None):
-        problem_logs = self.get_problem_logs(problem_ids=problem_ids)
-        score_df = self.add_scores(
-            log_df=self.get_log_df(problem_logs=problem_logs))
-        return self.last_score_per_problem(score_df=score_df) \
-            .reset_index()
+    # def get_score_df(self, problem_ids=None):
+    #     problem_logs = self.get_problem_logs(problem_ids=problem_ids)
+    #     score_df = self.add_scores(
+    #         log_df=self.get_log_df(problem_logs=problem_logs))
+    #     return self.last_score_per_problem(score_df=score_df) \
+    #         .reset_index()
 
     @staticmethod
-    def get_prio_df(scored_logs: pd.DataFrame,
+    def get_prio_df(problem_logs: pd.DataFrame,
                     ts: dt.datetime = dt.datetime.now(tz=gettz('UTC')))\
             -> pd.DataFrame:
         """Calculates the knowledge score KS per problem"""
-        df = scored_logs.copy()
+        df = problem_logs.copy()
 
         def retention_score(df_row: pd.Series) -> float:
+            """Calulates the 'retention score', i.e. what percentage of
+            knowledge is still remembered after a time period delta_t"""
+            retention_fraction = 0.5  # after one period of length delta_t
+            delta_t = df_row.interval
+
             days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()).days
             days_over = days_since_last_study - df_row.interval
-            return exp(log(1/2) * days_over / df_row.interval)
+
+            return exp(log(retention_fraction) * days_over / delta_t)
 
         df['RF'] = df.apply(retention_score, axis='columns')
         df['KS'] = df.RF * df.score
@@ -85,9 +94,9 @@ class ProblemGetter:
     @staticmethod
     def log_to_row_content(log: ProblemLog) -> dict:
         return {'ease': log.ease,
+                'interval': log.interval,
                 'problem_id': log.problem_id,
                 'result': log.result.value,
-                'interval': log.interval,
                 'ts_logged': log.timestamp}
 
     @staticmethod
@@ -99,11 +108,9 @@ class ProblemGetter:
         return score_df
 
     @staticmethod
-    def last_score_per_problem(score_df: pd.DataFrame):
-        """Needs a dataframe with (at least) columns: 'problem_id', 'score'.
-        Returns a dataframe with 'score' aggregated by 'problem_id."""
-        return score_df \
-            .loc[:, ['problem_id', 'ts_logged', 'score']] \
+    def last_log_per_problem(log_df: pd.DataFrame):
+        return  log_df \
+            .loc[:, ['problem_id', 'ts_logged', 'result', 'ease', 'interval']] \
             .sort_values('ts_logged') \
             .groupby('problem_id') \
             .tail(1) \

@@ -49,19 +49,17 @@ one when I have time.
 Therefore, upon revision of a problem at time t_0, I do calculate the intended
 spacing interval T via SM2, and assume that I remember the studied problem until
 then. When reaching a time t_1 > t_0 + T, I assume that I start to forget
-exponentially. Concretely, I assume that I have forgotten half of my knowledge
-required to solve the problem when I am one spacing Interval past the intended
-repetition time, at:  
-```t_0.5 = t_0 + 2 * T```.
+exponentially. Concretely, I assume that I only remember fraction '**a**' of my
+knowledge required to solve the problem when I am '**T**' days past the intended
+repetition time.
 
 Hence the **Retention Factor RF** is introduced, which calculates exactly that:
 
 ![Alt text](./docs/RF.svg)
 
 Where:
-* **T** is the intended spacing interval after the last repetition as calculated
-  by SM2
-* **delta_t** is the time that has gone by since the last revision of the problem
+* **a** is the fraction of remembered knowledge **T** days after the last repetition
+* **t** is the time that has gone by since the last repetition
  
 ##### Spacing Interval T
 Note: In typical spaced repetition programs, one first has to complete a

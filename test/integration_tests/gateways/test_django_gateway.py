@@ -3,11 +3,12 @@
 import datetime as dt
 from unittest.mock import patch
 
-from dateutil.tz import tzlocal
+from dateutil.tz import tzlocal, gettz
 from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
-from spaced_repetition.domain.problem_log import ProblemLog, Result
+from spaced_repetition.domain.problem_log import (ProblemLog, ProblemLogCreator,
+                                                  Result)
 from spaced_repetition.domain.tag import Tag
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (
@@ -168,34 +169,18 @@ class TestProblemQuerying(TestCase):
 
 class TestProblemLogCreation(TestCase):
     def setUp(self):
-        OrmProblem.objects.create(difficulty=Difficulty.EASY.value,
-                                  name='testname',
-                                  url='https://testurl.com')
+        self.problem = OrmProblem.objects.create(
+            difficulty=Difficulty.EASY.value,
+            name='testname',
+            url='https://testurl.com')
 
-    def test_create_problem_log_no_timestamp(self):
-        dgw = DjangoGateway()
-        log = ProblemLog(
-            problem_id=1,
-            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
-
-        ts_before = dt.datetime.now(tz=tzlocal())
-        dgw.create_problem_log(problem_log=log)
-        ts_after = dt.datetime.now(tz=tzlocal())
-
-        self.assertEqual(OrmProblemLog.objects.count(), 1)
-
-        orm_log = OrmProblemLog.objects.first()
-        self.assertEqual(orm_log.problem.name, 'testname')
-        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
-        self.assertGreater(orm_log.timestamp, ts_before)
-        self.assertLess(orm_log.timestamp, ts_after)
-
-    def test_create_problem_log_with_timestamp(self):
+    def test_create_problem_log(self):
         dgw = DjangoGateway()
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
-        log = ProblemLog(
+        log = ProblemLogCreator.create(
+            last_log=None,
             problem_id=1,
-            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
             timestamp=ts)
 
         dgw.create_problem_log(problem_log=log)
@@ -204,7 +189,8 @@ class TestProblemLogCreation(TestCase):
 
         orm_log = OrmProblemLog.objects.first()
         self.assertEqual(orm_log.problem.name, 'testname')
-        self.assertEqual(orm_log.result, Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
+        self.assertEqual(orm_log.result,
+                         Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
         self.assertEqual(orm_log.timestamp, ts)
 
 
@@ -220,18 +206,25 @@ class TestProblemLogQuerying(TestCase):
 
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
+            ease=1,
+            interval=1,
             problem_id=self.prob.pk,
             result=Result.SOLVED_SUBOPTIMALLY.value,
-            timestamp=dt.datetime(2021, 1, 10, 10))
-        OrmProblemLog.objects.create(
-            problem_id=self.prob.pk,
-            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
-            timestamp=dt.datetime(2021, 1, 20, 10))
+            timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))
 
         OrmProblemLog.objects.create(
+            ease=1,
+            interval=1,
+            problem_id=self.prob.pk,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
+            timestamp=dt.datetime(2021, 1, 20, 10, tzinfo=gettz('UTC')))
+
+        OrmProblemLog.objects.create(
+            ease=1,
+            interval=1,
             problem_id=prob_2.pk,
             result=Result.SOLVED_OPTIMALLY_WITH_HINT.value,
-            timestamp=dt.datetime(2021, 1, 15, 10))
+            timestamp=dt.datetime(2021, 1, 15, 10, tzinfo=gettz('UTC')))
 
     def test_query_all(self):
         self.assertEqual(3, len(DjangoGateway._query_problem_logs()))
@@ -242,9 +235,12 @@ class TestProblemLogQuerying(TestCase):
             len(DjangoGateway._query_problem_logs(problem_ids=[self.prob.pk])))
 
     def test_format_problem_logs(self):
-        expected_res = [ProblemLog(problem_id=self.prob.pk,
-                                   result=Result.SOLVED_SUBOPTIMALLY,
-                                   timestamp=dt.datetime(2021, 1, 10, 10))]
+        expected_res = [
+            ProblemLogCreator.create(
+                last_log=None,
+                problem_id=self.prob.pk,
+                result=Result.SOLVED_SUBOPTIMALLY,
+                timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))]
 
         self.assertEqual(expected_res,
                          DjangoGateway._format_problem_logs([self.problem_log]))

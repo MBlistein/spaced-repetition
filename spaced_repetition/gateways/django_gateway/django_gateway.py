@@ -1,10 +1,10 @@
 from typing import List, Union
 
 from django.db.models import Count, Q, QuerySet
-from django.db.models.functions import Lower
 
 from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
-from spaced_repetition.domain.problem_log import ProblemLog, Result
+from spaced_repetition.domain.problem_log import (ProblemLog, ProblemLogCreator,
+                                                  Result)
 from spaced_repetition.domain.tag import Tag, TagCreator
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 
@@ -85,14 +85,12 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def create_problem_log(problem_log: ProblemLog) -> None:
-        orm_problem_log = OrmProblemLog(
+        OrmProblemLog.objects.create(
+            ease=problem_log.ease,
+            interval=problem_log.interval,
             problem=OrmProblem.objects.get(pk=problem_log.problem_id),
-            result=problem_log.result)
-
-        if problem_log.timestamp:
-            orm_problem_log.timestamp = problem_log.timestamp
-
-        orm_problem_log.save()
+            result=problem_log.result.value,
+            timestamp=problem_log.timestamp)
 
     @classmethod
     def get_problem_logs(cls, problem_ids: List[int] = None) -> List[ProblemLog]:
@@ -110,10 +108,19 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
-        return [ProblemLog(problem_id=pl.problem.pk,
-                           timestamp=pl.timestamp,
-                           result=Result(pl.result))
-                for pl in problem_log_qs]
+        orm_problem_logs = list(problem_log_qs.order_by('timestamp'))
+        # TODO: test
+
+        res = []
+        for idx, p_l in enumerate(orm_problem_logs):
+            last_log = None if idx == 0 else orm_problem_logs[idx-1]
+            res.append(ProblemLogCreator.create(
+                last_log=last_log,
+                problem_id=p_l.problem.pk,
+                timestamp=p_l.timestamp,
+                result=Result(p_l.result)))
+
+        return res
 
     @classmethod
     def create_tag(cls, tag: Tag) -> Tag:
