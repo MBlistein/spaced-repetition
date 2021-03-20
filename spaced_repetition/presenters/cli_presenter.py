@@ -50,7 +50,7 @@ class CliPresenter(PresenterInterface):
         df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
 
         existing_columns = df.columns
-        order = ['name', 'tags', 'difficulty', 'last_access', 'score',
+        order = ['name', 'tags', 'difficulty', 'last_access',
                  'rank', 'url']
 
         return df \

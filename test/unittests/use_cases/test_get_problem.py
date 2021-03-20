@@ -1,10 +1,13 @@
+import datetime as dt
 import unittest
 from unittest.mock import Mock, patch
 
 import pandas as pd
+from dateutil.tz import gettz
 from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
+from spaced_repetition.domain.problem_log import Result
 from spaced_repetition.use_cases.get_problem import ProblemGetter
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 
@@ -17,19 +20,21 @@ class TestListProblems(unittest.TestCase):
                                              tags=['tag_2', 'tag_1'],
                                              url='some_url.com')
 
-    def test_get_problem_problems(self):
-        p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-        p_g.repo.get_problems.return_value = [self.problem]
-
-        problem_df = p_g.get_problems(name_substr='aa', tag_names=['cc'])
-
-        expected_df = pd.DataFrame(data=[{
+        self.problem_df = pd.DataFrame(data=[{
             'name': 'test_problem',
             'problem_id': 1,
             'difficulty': Difficulty.EASY,
             'url': 'some_url.com',
             'tags': 'tag_1, tag_2'
         }])
+
+    def test_get_problem_problems(self):
+        p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+        p_g.repo.get_problems.return_value = [self.problem]
+
+        problem_df = p_g.get_problems(name_substr='aa', tag_names=['cc'])
+
+        expected_df = self.problem_df
         cols_in_order = sorted(expected_df.columns)
 
         # noinspection PyUnresolvedReferences
@@ -48,65 +53,45 @@ class TestListProblems(unittest.TestCase):
 
         self.assertTrue(p_g.get_problems().empty)
 
-    @patch.object(ProblemLogGetter, 'get_problem_priorities'
-    def test_get_prioritized_problems(self):
+    @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
+    @patch.object(ProblemGetter, 'get_problems')
+    def test_get_prioritized_problems(self, mock_get_problems,
+                                      mock_get_problem_knowledge_scores):
+        mock_get_problems.return_value = self.problem_df
+        knowledge_score_df = pd.DataFrame(data=[{
+            'problem_id': 1,
+            'ts_logged': dt.datetime(2021, 1, 1, tzinfo=gettz('UTC')),
+            'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
+            'interval': 10,
+            'ease': 2,
+            'RF': 0.5,
+            'KS': 2.0}])
+        mock_get_problem_knowledge_scores.return_value = knowledge_score_df
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-        p_g.repo.get_problems.return_value = [self.problem]
 
+        res = p_g.get_prioritized_problems(name_substr='aa',
+                                           sorted_by=['bb'],
+                                           tag_names=['cc'])
+
+        expected_res = knowledge_score_df
+        expected_res['difficulty'] = self.problem.difficulty
+        expected_res['name'] = self.problem.name
+        expected_res['tags'] = 'tag_1, tag_2'
+        expected_res['url'] = self.problem.url
+        ordered_cols = sorted(expected_res.columns)
+
+        mock_get_problems.assert_called_once_with(name_substr='aa',
+                                                  tag_names=['cc'])
+        mock_get_problem_knowledge_scores.assert_called_once_with(
+            problem_ids=[1])
+
+        self.assertEqual(ordered_cols, sorted(res.columns))
+
+        assert_frame_equal(expected_res.reindex(columns=ordered_cols),
+                           res.reindex(columns=ordered_cols))
 
     def test_get_prioritized_problems_none_found(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = []
 
         self.assertTrue(p_g.get_prioritized_problems().empty)
-
-#     @patch.object(ProblemGetter, 'get_prio_df')
-#     def test_get_problem_df(self, mock_get_prio_df):
-#         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-#         p_g.repo.get_problems = Mock()
-#         p_g.repo.get_problems.return_value = [self.problem]
-#
-#         p_g.repo.get_problem_logs = Mock()
-#         p_g.repo.get_problem_logs.return_value = [
-#             ProblemLogCreator.create(
-#                 last_log=None,
-#                 problem_id=3,
-#                 result=Result.NO_IDEA,
-#                 timestamp=dt.datetime(2021, 1, 5, 10, tzinfo=gettz('UTC')))]
-#
-#         mock_get_prio_df.return_value = pd.DataFrame(data=[{
-#             'problem_id': self.problem.problem_id,
-#             'KS': 1.5
-#         }])
-#
-#         expected_df = pd.DataFrame(data=[{
-#             'KS': 1.5,
-#             'difficulty': 'EASY',
-#             'name': 'testname',
-#             'problem_id': self.problem.problem_id,
-#             'result': Result.NO_IDEA.value,
-#             'RF': 2.11758e-22,
-#             'tags': 'test-tag',
-#             'ts_logged': dt.datetime(2021, 1, 5, 10),
-#             'url': 'test-url'}])
-#         print('33333333333333333333333333333333333333')
-#         from tabulate import tabulate
-#         print(tabulate(expected_df, headers='keys'))
-#         print(sorted(expected_df.columns))
-#         print('goooooooooooooooooooooooooooooooooooo')
-#         got = p_g.get_problem_df(name_substr='a',
-#                                               sorted_by=['b'],
-#                                               tag_names=['c'])
-#         print(sorted(got.columns))
-#         print(tabulate(got, headers='keys'))
-#
-#         assert_frame_equal(p_g.get_problem_df(name_substr='a',
-#                                               sorted_by=['b'],
-#                                               tag_names=['c']),
-#                            expected_df)
-#         # noinspection PyUnresolvedReferences
-#         p_g.repo.get_problems.assert_called_once_with(
-#             name_substr='a', sorted_by=['b'], tag_names=['c'])
-#
-#
-#
