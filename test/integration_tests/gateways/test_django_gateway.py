@@ -4,11 +4,11 @@ import datetime as dt
 from unittest.mock import patch
 
 from dateutil.tz import tzlocal, gettz
+from django.db.models import QuerySet
 from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
-from spaced_repetition.domain.problem_log import (ProblemLog, ProblemLogCreator,
-                                                  Result)
+from spaced_repetition.domain.problem_log import (ProblemLogCreator, Result)
 from spaced_repetition.domain.tag import Tag
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (
@@ -242,8 +242,17 @@ class TestProblemLogQuerying(TestCase):
                 result=Result.SOLVED_SUBOPTIMALLY,
                 timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))]
 
+        print('eeeeeeeeeeeeeeeeeeeeeeeee')
+        print(expected_res)
+
+        orm_problem_logs = QuerySet(self.problem_log)
+
+        res = DjangoGateway._format_problem_logs(orm_problem_logs)
+        print('rrrrrrrrrrrrrrrrrrrrrrrrrr')
+        print(res)
+
         self.assertEqual(expected_res,
-                         DjangoGateway._format_problem_logs([self.problem_log]))
+                         res)
 
     @patch.object(DjangoGateway, attribute='_format_problem_logs')
     @patch.object(DjangoGateway, attribute='_query_problem_logs')

@@ -47,11 +47,12 @@ class CliPresenter(PresenterInterface):
             .rename(columns=name_mapper) \
             .set_index('id') \
 
+        df.difficulty = df.difficulty.map(lambda x: x.name)
         df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
 
         existing_columns = df.columns
         order = ['name', 'tags', 'difficulty', 'last_access',
-                 'rank', 'url']
+                 'KS', 'RF', 'url', 'ease', 'interval']
 
         return df \
             .reindex(columns=[col for col in order if col in existing_columns])

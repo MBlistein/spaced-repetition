@@ -109,6 +109,7 @@ class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
         orm_problem_logs = list(problem_log_qs.order_by('timestamp'))
+        # TODO: group by problem, only then take prev. one
         # TODO: test
 
         res = []
