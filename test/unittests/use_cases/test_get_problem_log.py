@@ -71,7 +71,7 @@ class TestProblemLogGetter(unittest.TestCase):
     @patch.object(ProblemLogGetter, 'get_problem_logs')
     def test_get_last_log_per_problem(self, mock_get_problem_logs):
         self.plg.get_last_log_per_problem(problem_ids=[1, 2, 3])
-        
+
         mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
 
     def test_last_log_per_problem(self):
@@ -123,5 +123,5 @@ class TestProblemLogGetter(unittest.TestCase):
              'score': Score.MEDIUM.value}
         ])
 
-        assert_frame_equal(ProblemLogGetter.add_scores(log_df=log_df),
+        assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
                            expected_df)

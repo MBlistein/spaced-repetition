@@ -41,7 +41,7 @@ class ProblemLogGetter:
             .set_index('problem_id')
 
     @staticmethod
-    def add_scores(log_df: pd.DataFrame) -> pd.DataFrame:
+    def _add_scores(log_df: pd.DataFrame) -> pd.DataFrame:
         score_df = log_df.copy()
         score_df['score'] = score_df['result'].map(
             lambda x: SCORE_MAPPER[x].value)
