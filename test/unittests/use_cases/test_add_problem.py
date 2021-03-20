@@ -6,7 +6,7 @@ from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.use_cases.add_problem import ProblemAdder
 
 
-TEST_PROBLEM = ProblemCreator.create_problem(
+TEST_PROBLEM = ProblemCreator.create(
     name='testname',
     difficulty=Difficulty(1),
     problem_id=None,

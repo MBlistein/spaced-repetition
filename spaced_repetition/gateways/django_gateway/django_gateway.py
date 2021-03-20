@@ -68,7 +68,7 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def _format_problems(problems: Union[List, QuerySet]) -> List[Problem]:
-        return [ProblemCreator.create_problem(
+        return [ProblemCreator.create(
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,

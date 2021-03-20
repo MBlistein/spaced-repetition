@@ -3,12 +3,15 @@ import unittest
 from unittest.mock import Mock, patch
 
 import pandas as pd
+from dateutil.tz import gettz
 from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL,
                                                   ProblemLogCreator, Result)
 from spaced_repetition.domain.score import Score
-from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
+from spaced_repetition.use_cases.get_problem_log import (
+    ProblemLogGetter,
+    RETENTION_FRACTION_PER_T)
 
 
 class TestProblemLogGetter(unittest.TestCase):
@@ -68,11 +71,16 @@ class TestProblemLogGetter(unittest.TestCase):
             ProblemLogGetter._log_to_row_content(p_log=self.problem_log_1),
             expected_res)
 
+    @patch.object(ProblemLogGetter, '_last_log_per_problem')
     @patch.object(ProblemLogGetter, 'get_problem_logs')
-    def test_get_last_log_per_problem(self, mock_get_problem_logs):
+    def test_get_last_log_per_problem(self, mock_get_problem_logs,
+                                      mock_last_log_per_problem):
+        mock_get_problem_logs.return_value = 'dummy_return'
+
         self.plg.get_last_log_per_problem(problem_ids=[1, 2, 3])
 
         mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
+        mock_last_log_per_problem.assert_called_once_with('dummy_return')
 
     def test_last_log_per_problem(self):
         p1_log_data = {'ease': 2.5,
@@ -125,3 +133,49 @@ class TestProblemLogGetter(unittest.TestCase):
 
         assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
                            expected_df)
+
+    @patch.object(ProblemLogGetter, 'get_knowledge_scores')
+    @patch.object(ProblemLogGetter, 'get_problem_logs')
+    def test_get_problem_knowledge_scores(self, mock_get_problem_logs,
+                                          mock_get_knowledge_scores):
+        mock_get_problem_logs.return_value = 'dummy_return'
+
+        self.plg.get_problem_knowledge_scores(problem_ids=[1, 2, 3])
+
+        mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
+        mock_get_knowledge_scores.assert_called_once_with(log_df='dummy_return')
+
+    def test_retention_score(self):
+        interval = 10
+        ts_logged = dt.datetime(2021, 1, 1, tzinfo=gettz('UTC'))
+        df_row = pd.Series(data={
+            'interval': interval,
+            'ts_logged': pd.Timestamp(ts_logged)})
+
+        # Being one interval late should lead to RETENTION_FRACTION_PER_T
+        ts = ts_logged + 2 * dt.timedelta(days=interval)
+
+        self.assertEqual(RETENTION_FRACTION_PER_T,
+                         ProblemLogGetter.retention_score(df_row=df_row, ts=ts))
+
+    def test_get_knowledge_scores(self):
+        log_df = pd.DataFrame(data=[
+            {'problem_id': 1,
+             'ts_logged': dt.datetime(2021, 1, 1, tzinfo=gettz('UTC')),
+             'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
+             'score': 4,
+             'interval': 10,
+             'ease': 2}
+        ])
+        ts = dt.datetime(2021, 1, 21, tzinfo=gettz('UTC'))
+
+        expected_df = log_df.copy()
+        expected_df['RF'] = pd.Series(data=[0.5])
+        expected_df['KS'] = pd.Series(data=[2.0])
+
+        cols_in_order = sorted(expected_df.columns)
+
+        res = ProblemLogGetter.get_knowledge_scores(problem_log_data=log_df, ts=ts)
+
+        assert_frame_equal(expected_df.reindex(columns=cols_in_order),
+                           res.reindex(columns=cols_in_order))

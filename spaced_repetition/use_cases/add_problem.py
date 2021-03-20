@@ -17,7 +17,7 @@ class ProblemAdder:
                     difficulty: Difficulty,
                     tags: List[str],
                     url: str = None):
-        problem = ProblemCreator.create_problem(
+        problem = ProblemCreator.create(
             name=name,
             difficulty=difficulty,
             problem_id=None,

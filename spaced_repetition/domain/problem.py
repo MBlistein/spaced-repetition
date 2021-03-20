@@ -28,11 +28,11 @@ class Problem:
 
 class ProblemCreator:
     @classmethod
-    def create_problem(cls, name: str,
-                       difficulty: Difficulty,
-                       tags: List[str],
-                       problem_id: int = None,
-                       url: str = None):
+    def create(cls, name: str,
+               difficulty: Difficulty,
+               tags: List[str],
+               problem_id: int = None,
+               url: str = None):
         return Problem(
             difficulty=cls.validate_difficulty(difficulty),
             name=cls.validate_name(name),

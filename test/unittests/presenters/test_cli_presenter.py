@@ -11,7 +11,7 @@ from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
-PROBLEM = ProblemCreator.create_problem(
+PROBLEM = ProblemCreator.create(
     name='testname',
     difficulty=Difficulty(1),
     problem_id=1,

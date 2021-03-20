@@ -71,11 +71,11 @@ class TestProblemCreator(unittest.TestCase):
     @patch.object(ProblemCreator, attribute='validate_url')
     def test_all_validators_called(self, mock_val_url, mock_val_tags,
                                    mock_val_name, mock_val_difficulty):
-        ProblemCreator.create_problem(name='fake',
-                                      difficulty='fake',
-                                      tags='fake',
-                                      problem_id='fake',
-                                      url='fake')
+        ProblemCreator.create(name='fake',
+                              difficulty='fake',
+                              tags='fake',
+                              problem_id='fake',
+                              url='fake')
 
         mock_val_difficulty.assert_called_once()
         mock_val_name.assert_called_once()

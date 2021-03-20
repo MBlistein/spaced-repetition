@@ -1,13 +1,18 @@
 import dataclasses
+import datetime as dt
+from math import exp, log
 from typing import List
 
 import pandas as pd
-
+from dateutil.tz import gettz
 
 from spaced_repetition.domain.problem_log import ProblemLog
 from spaced_repetition.domain.score import SCORE_MAPPER
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
+
+
+RETENTION_FRACTION_PER_T = 0.5  # Fraction of remembered content after time T
 
 
 class ProblemLogGetter:
@@ -47,3 +52,29 @@ class ProblemLogGetter:
             lambda x: SCORE_MAPPER[x].value)
 
         return score_df
+
+    def get_problem_knowledge_scores(self, problem_ids: List[int] = None):
+        return self.get_knowledge_scores(
+            log_df=self.get_problem_logs(problem_ids=problem_ids))
+
+    @classmethod
+    def get_knowledge_scores(cls, problem_log_data: pd.DataFrame,
+                             ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) \
+            -> pd.DataFrame:
+        """Calculates the knowledge score 'KS' per problem"""
+        df = problem_log_data.copy()
+
+        df['RF'] = df.apply(cls.retention_score,
+                            axis='columns',
+                            args=(ts,))
+        df['KS'] = df.RF * df.score
+        return df
+
+    @staticmethod
+    def retention_score(df_row: pd.Series, ts: dt.datetime) -> float:
+        """Calculates the 'retention score', i.e. what percentage of
+        knowledge is still remembered after a time period delta_t"""
+        days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()).days
+        days_over = days_since_last_study - df_row.interval
+
+        return exp(log(RETENTION_FRACTION_PER_T) * days_over / df_row.interval)
