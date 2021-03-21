@@ -28,13 +28,15 @@ class ProblemLogGetter:
     @staticmethod
     def _log_to_row_content(p_log: ProblemLog) -> dict:
         row_content = dataclasses.asdict(p_log)
-        row_content['result'] = p_log.result.value
+        row_content['result'] = p_log.result
         row_content['ts_logged'] = row_content.pop('timestamp')
         return row_content
 
     def get_last_log_per_problem(self, problem_ids: List[int] = None):
         log_df = self.get_problem_logs(problem_ids=problem_ids)
-        return self._last_log_per_problem(log_df)
+        res = self._last_log_per_problem(log_df)
+        print(res)
+        return res
 
     @staticmethod
     def _last_log_per_problem(log_df: pd.DataFrame):
@@ -55,19 +57,20 @@ class ProblemLogGetter:
 
     def get_problem_knowledge_scores(self, problem_ids: List[int] = None):
         return self.get_knowledge_scores(
-            log_df=self.get_problem_logs(problem_ids=problem_ids))
+            log_data=self.get_last_log_per_problem(problem_ids=problem_ids))
 
     @classmethod
-    def get_knowledge_scores(cls, problem_log_data: pd.DataFrame,
+    def get_knowledge_scores(cls, log_data: pd.DataFrame,
                              ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) \
             -> pd.DataFrame:
         """Calculates the knowledge score 'KS' per problem"""
-        df = problem_log_data.copy()
+        df = log_data.copy()
 
         df['RF'] = df.apply(cls.retention_score,
                             axis='columns',
                             args=(ts,))
-        df['KS'] = df.RF * df.score
+
+        df['KS'] = df.RF * df.result.map(lambda x: x.value)
         return df
 
     @staticmethod

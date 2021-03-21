@@ -41,12 +41,12 @@ class TestProblemLogGetter(unittest.TestCase):
             {'ease': DEFAULT_EASE,
              'interval': DEFAULT_INTERVAL,
              'problem_id': 1,
-             'result': Result.NO_IDEA.value,
+             'result': Result.NO_IDEA,
              'ts_logged': self.time_1},
             {'ease': DEFAULT_EASE,
              'interval': DEFAULT_INTERVAL,
              'problem_id': 2,
-             'result': Result.SOLVED_OPTIMALLY_WITH_HINT.value,
+             'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
 
         assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
@@ -64,7 +64,7 @@ class TestProblemLogGetter(unittest.TestCase):
             'ease': DEFAULT_EASE,
             'interval': DEFAULT_INTERVAL,
             'problem_id': 1,
-            'result': Result.NO_IDEA.value,
+            'result': Result.NO_IDEA,
             'ts_logged': self.time_1}
 
         self.assertEqual(
@@ -86,7 +86,7 @@ class TestProblemLogGetter(unittest.TestCase):
         p1_log_data = {'ease': 2.5,
                        'interval': 10,
                        'problem_id': 1,
-                       'result': 4,
+                       'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
                        'ts_logged': dt.datetime(2021, 1, 1, 8),
                        'other_col': 'some_val'}
         p1_log_data_2 = p1_log_data.copy()
@@ -106,12 +106,12 @@ class TestProblemLogGetter(unittest.TestCase):
             {'ease': 2.5,
              'interval': 10,
              'problem_id': 1,
-             'result': 4,
+             'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
              'ts_logged': dt.datetime(2021, 1, 1, 9)},
             {'ease': 2.5,
              'interval': 10,
              'problem_id': 2,
-             'result': 4,
+             'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
              'ts_logged': dt.datetime(2021, 1, 1, 15)}]) \
             .set_index('problem_id') \
             .reindex(columns=['ts_logged', 'result', 'ease', 'interval'])
@@ -134,16 +134,17 @@ class TestProblemLogGetter(unittest.TestCase):
         assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
                            expected_df)
 
-    @patch.object(ProblemLogGetter, 'get_knowledge_scores')
+    @patch.object(ProblemLogGetter, 'get_knowledge_scores', autospec=True)
     @patch.object(ProblemLogGetter, 'get_problem_logs')
     def test_get_problem_knowledge_scores(self, mock_get_problem_logs,
                                           mock_get_knowledge_scores):
         mock_get_problem_logs.return_value = 'dummy_return'
+        print(dir(mock_get_knowledge_scores))
 
         self.plg.get_problem_knowledge_scores(problem_ids=[1, 2, 3])
 
         mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
-        mock_get_knowledge_scores.assert_called_once_with(log_df='dummy_return')
+        mock_get_knowledge_scores.assert_called_once_with(log_data='dummy_return')
 
     def test_retention_score(self):
         interval = 10
@@ -159,23 +160,23 @@ class TestProblemLogGetter(unittest.TestCase):
                          ProblemLogGetter.retention_score(df_row=df_row, ts=ts))
 
     def test_get_knowledge_scores(self):
-        log_df = pd.DataFrame(data=[
+        last_log_data = pd.DataFrame(data=[
             {'problem_id': 1,
              'ts_logged': dt.datetime(2021, 1, 1, tzinfo=gettz('UTC')),
-             'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
-             'score': 4,
+             'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
              'interval': 10,
              'ease': 2}
         ])
         ts = dt.datetime(2021, 1, 21, tzinfo=gettz('UTC'))
 
-        expected_df = log_df.copy()
+        expected_df = last_log_data.copy()
         expected_df['RF'] = pd.Series(data=[0.5])
         expected_df['KS'] = pd.Series(data=[2.0])
 
         cols_in_order = sorted(expected_df.columns)
 
-        res = ProblemLogGetter.get_knowledge_scores(problem_log_data=log_df, ts=ts)
+        res = ProblemLogGetter.get_knowledge_scores(log_data=last_log_data,
+                                                    ts=ts)
 
         assert_frame_equal(expected_df.reindex(columns=cols_in_order),
                            res.reindex(columns=cols_in_order))
