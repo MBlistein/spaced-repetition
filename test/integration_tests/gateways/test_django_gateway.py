@@ -245,7 +245,11 @@ class TestProblemLogQuerying(TestCase):
         print('eeeeeeeeeeeeeeeeeeeeeeeee')
         print(expected_res)
 
-        orm_problem_logs = QuerySet(self.problem_log)
+        print('pppppppppppppppppppppppppppppppppppppppppppp')
+        print(self.problem_log)
+        orm_problem_logs = QuerySet([self.problem_log])
+        print('oooooooooooooooooooooooooooo')
+        print(orm_problem_logs)
 
         res = DjangoGateway._format_problem_logs(orm_problem_logs)
         print('rrrrrrrrrrrrrrrrrrrrrrrrrr')

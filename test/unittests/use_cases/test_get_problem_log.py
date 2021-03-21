@@ -135,11 +135,10 @@ class TestProblemLogGetter(unittest.TestCase):
                            expected_df)
 
     @patch.object(ProblemLogGetter, 'get_knowledge_scores', autospec=True)
-    @patch.object(ProblemLogGetter, 'get_problem_logs')
+    @patch.object(ProblemLogGetter, 'get_last_log_per_problem')
     def test_get_problem_knowledge_scores(self, mock_get_problem_logs,
                                           mock_get_knowledge_scores):
         mock_get_problem_logs.return_value = 'dummy_return'
-        print(dir(mock_get_knowledge_scores))
 
         self.plg.get_problem_knowledge_scores(problem_ids=[1, 2, 3])
 

@@ -42,16 +42,18 @@ class CliPresenter(PresenterInterface):
     def format_problem_df(df: pd.DataFrame):
         """Needs at least a column named 'problem_id'"""
         name_mapper = {'problem_id': 'id',
+                       'result': 'last_result',
                        'ts_logged': 'last_access'}
         df = df \
             .rename(columns=name_mapper) \
-            .set_index('id') \
+            .set_index('id')
 
-        df.difficulty = df.difficulty.map(lambda x: x.name)
+        df.difficulty = df.difficulty.map(lambda x: x.name, na_action='ignore')
+        df.last_result = df.last_result.map(lambda x: x.name, na_action='ignore')
         df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
 
         existing_columns = df.columns
-        order = ['name', 'tags', 'difficulty', 'last_access',
+        order = ['name', 'tags', 'difficulty', 'last_access', 'last_result',
                  'KS', 'RF', 'url', 'ease', 'interval']
 
         return df \

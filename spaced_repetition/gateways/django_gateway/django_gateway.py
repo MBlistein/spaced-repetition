@@ -114,6 +114,7 @@ class DjangoGateway(DBGatewayInterface):
 
         res = []
         for idx, p_l in enumerate(orm_problem_logs):
+            print(idx, p_l)
             last_log = None if idx == 0 else orm_problem_logs[idx-1]
             res.append(ProblemLogCreator.create(
                 last_log=last_log,

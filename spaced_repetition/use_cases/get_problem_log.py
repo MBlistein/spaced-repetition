@@ -35,7 +35,6 @@ class ProblemLogGetter:
     def get_last_log_per_problem(self, problem_ids: List[int] = None):
         log_df = self.get_problem_logs(problem_ids=problem_ids)
         res = self._last_log_per_problem(log_df)
-        print(res)
         return res
 
     @staticmethod

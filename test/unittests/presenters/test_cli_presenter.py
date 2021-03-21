@@ -1,12 +1,13 @@
 import datetime as dt
 import io
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
+from spaced_repetition.domain.problem_log import Result
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
@@ -30,6 +31,7 @@ class TestCliPresenter(unittest.TestCase):
             'KS': 2.0,
             'name': 'name',
             'problem_id': 5,
+            'result': Result.NO_IDEA,
             'RF': 0.7,
             'surplus_col': 'not displayed',
             'tags': 'test-tag',
@@ -44,10 +46,7 @@ class TestCliPresenter(unittest.TestCase):
 
     def test_format_problem_df(self):
         intended_order = ['name', 'tags', 'difficulty', 'last_access',
-                          'KS', 'RF', 'url', 'ease', 'interval']
-
-        formatted_df = CliPresenter.format_problem_df(self.problem_df)
-
+                          'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
         expected_df = pd.DataFrame(data=[{
             'difficulty': 'MEDIUM',
             'ease': 2.5,
@@ -56,11 +55,14 @@ class TestCliPresenter(unittest.TestCase):
             'KS': 2.0,
             'last_access': '2021-01-10 08:10',
             'name': 'name',
+            'last_result': Result.NO_IDEA.name,
             'RF': 0.7,
             'tags': 'test-tag',
             'url': 'www.test.com'}]) \
             .set_index('id') \
             .reindex(columns=intended_order)
+
+        formatted_df = CliPresenter.format_problem_df(self.problem_df)
 
         assert_frame_equal(expected_df, formatted_df)
 
@@ -68,9 +70,9 @@ class TestCliPresenter(unittest.TestCase):
     def test_list_problems(self, mock_stdout):
         # pep8: disable=line-too-long
         expected_output = \
-            "|   id | name   | tags     | difficulty   | last_access      |   KS |   RF | url          |   ease |   interval |\n" \
-            "|------|--------|----------|--------------|------------------|------|------|--------------|--------|------------|\n" \
-            "|    5 | name   | test-tag | MEDIUM       | 2021-01-10 08:10 |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
+            "|   id | name   | tags     | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
+            "|------|--------|----------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
+            "|    5 | name   | test-tag | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
