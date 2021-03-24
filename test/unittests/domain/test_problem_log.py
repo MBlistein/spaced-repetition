@@ -10,6 +10,37 @@ from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL
 
 
 class TestProblemLogCreator(unittest.TestCase):
+    @patch.object(ProblemLogCreator, 'calc_ease')
+    @patch.object(ProblemLogCreator, 'calc_interval')
+    def test_create_spacing_calc_calls(self, mock_calc_int, mock_calc_ease):
+        params = [
+            (2.3, 17, [mock_calc_int.assert_not_called,
+                       mock_calc_ease.assert_not_called]),
+            (None, None, [mock_calc_int.assert_called_once,
+                          mock_calc_ease.assert_called_once]),
+        ]
+
+        with self.subTest():
+            for ease, interval, assert_expressions in params:
+                ProblemLogCreator.create(problem_id=1, result=Result.NO_IDEA,
+                                         ease=ease, interval=interval)
+
+                for assert_expr in assert_expressions:
+                    assert_expr()
+
+    @patch.object(ProblemLogCreator, attribute='validate_problem_id')
+    @patch.object(ProblemLogCreator, attribute='validate_result')
+    @patch.object(ProblemLogCreator, attribute='validate_or_create_timestamp')
+    def test_create_all_validators_called(self, mock_val_ts, mock_val_result,
+                                          mock_val_problem_id):
+        pl = ProblemLogCreator.create(last_log=None,
+                                      problem_id=1,
+                                      result=Result.NO_IDEA)
+        self.assertIsInstance(pl, ProblemLog)
+        mock_val_ts.assert_called_once()
+        mock_val_result.assert_called_once()
+        mock_val_problem_id.assert_called_once()
+
     def test_calc_ease(self):
         last_log = ProblemLogCreator.create(
             last_log=None,
@@ -62,7 +93,7 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_validate_problem_id_raises_wrong_type(self):
         with self.assertRaises(TypeError) as context:
-            ProblemLogCreator.validate_problem_id(problem_id='1')
+            ProblemLogCreator.validate_problem_id(problem_id='1')  # noqa
 
         self.assertEqual(str(context.exception),
                          "problem_id should be of type 'int'!")
@@ -74,7 +105,7 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_validate_result_raises_wrong_type(self):
         with self.assertRaises(TypeError) as context:
-            ProblemLogCreator.validate_result(result=1)
+            ProblemLogCreator.validate_result(result=1)  # noqa
 
         self.assertEqual(str(context.exception),
                          "result should be of type 'Result'!")
@@ -89,25 +120,13 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_validate_timestamp(self):
         ts = dt.datetime(2021, 3, 10)
-        self.assertEqual(ts, ProblemLogCreator.validate_or_create_timestamp(ts=ts))
+        self.assertEqual(ts, ProblemLogCreator.validate_or_create_timestamp(
+            ts=ts))
 
     def test_validate_timestamp_raises_wrong_type(self):
         with self.assertRaises(TypeError) as context:
-            ProblemLogCreator.validate_or_create_timestamp(ts='2021-01-03')
+            ProblemLogCreator.validate_or_create_timestamp(ts='2021-01-03')  # noqa
 
         self.assertEqual(
             str(context.exception),
             f"timestamp should be of type dt.datetime, but is <class 'str'>!")
-
-    @patch.object(ProblemLogCreator, attribute='validate_problem_id')
-    @patch.object(ProblemLogCreator, attribute='validate_result')
-    @patch.object(ProblemLogCreator, attribute='validate_or_create_timestamp')
-    def test_all_validators_called(self, mock_val_ts, mock_val_result,
-                                   mock_val_problem_id):
-        pl = ProblemLogCreator.create(last_log=None,
-                                      problem_id=1,
-                                      result=Result.NO_IDEA)
-        self.assertIsInstance(pl, ProblemLog)
-        mock_val_ts.assert_called_once()
-        mock_val_result.assert_called_once()
-        mock_val_problem_id.assert_called_once()

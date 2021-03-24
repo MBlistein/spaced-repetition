@@ -108,16 +108,11 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
-        orm_problem_logs = list(problem_log_qs.order_by('timestamp'))
-        # TODO: group by problem, only then take prev. one
-        # TODO: test
-
         res = []
-        for idx, p_l in enumerate(orm_problem_logs):
-            print(idx, p_l)
-            last_log = None if idx == 0 else orm_problem_logs[idx-1]
+        for idx, p_l in enumerate(problem_log_qs):
             res.append(ProblemLogCreator.create(
-                last_log=last_log,
+                ease=p_l.ease,
+                interval=p_l.interval,
                 problem_id=p_l.problem.pk,
                 timestamp=p_l.timestamp,
                 result=Result(p_l.result)))

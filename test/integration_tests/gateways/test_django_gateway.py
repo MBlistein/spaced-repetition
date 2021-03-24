@@ -4,7 +4,6 @@ import datetime as dt
 from unittest.mock import patch
 
 from dateutil.tz import tzlocal, gettz
-from django.db.models import QuerySet
 from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
@@ -237,26 +236,17 @@ class TestProblemLogQuerying(TestCase):
     def test_format_problem_logs(self):
         expected_res = [
             ProblemLogCreator.create(
-                last_log=None,
+                ease=1,
+                interval=1,
                 problem_id=self.prob.pk,
                 result=Result.SOLVED_SUBOPTIMALLY,
                 timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))]
 
-        print('eeeeeeeeeeeeeeeeeeeeeeeee')
-        print(expected_res)
+        problem_log_qs = OrmProblemLog.objects.filter(pk=self.problem_log.pk)
 
-        print('pppppppppppppppppppppppppppppppppppppppppppp')
-        print(self.problem_log)
-        orm_problem_logs = QuerySet([self.problem_log])
-        print('oooooooooooooooooooooooooooo')
-        print(orm_problem_logs)
+        res = DjangoGateway._format_problem_logs(problem_log_qs=problem_log_qs)
 
-        res = DjangoGateway._format_problem_logs(orm_problem_logs)
-        print('rrrrrrrrrrrrrrrrrrrrrrrrrr')
-        print(res)
-
-        self.assertEqual(expected_res,
-                         res)
+        self.assertEqual(expected_res, res)
 
     @patch.object(DjangoGateway, attribute='_format_problem_logs')
     @patch.object(DjangoGateway, attribute='_query_problem_logs')

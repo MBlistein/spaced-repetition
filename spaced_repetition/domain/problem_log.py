@@ -1,3 +1,15 @@
+""" ProblemLogs trace problem execution over time and contain information
+regarding the optimal repetition intervals for each problem. This information
+can be used to schedule repetition dates according to the SuperMemo2 algorithm,
+see: https://en.wikipedia.org/wiki/SuperMemo
+
+Calculation of a problem's ease and interval is adapted from the original:
+  - ease: simpler logic (linear curve) with a stronger incline, but similarly
+          linear effect as the original
+  - interval: Custom default intervals depending on initial problem result,
+              otherwise similar logic
+"""
+
 import datetime as dt
 from dataclasses import dataclass
 from enum import Enum, unique
@@ -32,23 +44,26 @@ class ProblemLog:
 class ProblemLogCreator:
     @classmethod
     def create(cls,
-               last_log: Union[ProblemLog, None],
                problem_id: int,
                result: Result,
+               ease: float = None,
+               interval: int = None,
+               last_log: ProblemLog = None,
                timestamp: dt.datetime = None):
-        ease = cls.calc_ease(last_log=last_log, result=result)
 
+        ease = ease or cls.calc_ease(last_log=last_log, result=result)
+        interval = interval or cls.calc_interval(ease=ease,
+                                                 last_log=last_log,
+                                                 result=result)
         return ProblemLog(
             ease=ease,
-            interval=cls.calc_interval(ease=ease, last_log=last_log,
-                                       result=result),
+            interval=interval,
             problem_id=cls.validate_problem_id(problem_id),
             result=cls.validate_result(result),
             timestamp=cls.validate_or_create_timestamp(timestamp))
 
     @staticmethod
-    def calc_ease(last_log: ProblemLog, result: Result) -> float:
-        """Simpler logic with stronger, but similarly linear effect as SM2"""
+    def calc_ease(last_log: Union[ProblemLog, None], result: Result) -> float:
         if not last_log:
             return DEFAULT_EASE
 
@@ -66,7 +81,6 @@ class ProblemLogCreator:
     @staticmethod
     def calc_interval(ease: float, last_log: Union[ProblemLog, None],
                       result: Result) -> int:
-        """Adapted from https://en.wikipedia.org/wiki/SuperMemo"""
         if result.value >= Result.SOLVED_OPTIMALLY_SLOWER.value:
             # eventually reached the optimal result without help
             if not last_log:
