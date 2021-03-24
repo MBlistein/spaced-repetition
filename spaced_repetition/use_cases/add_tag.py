@@ -12,7 +12,7 @@ class TagAdder:
         self.presenter = presenter
 
     def add_tag(self, name: str):
-        tag = TagCreator.create_tag(name=name)
+        tag = TagCreator.create(name=name)
 
         self._assert_is_unique(tag=tag)
         new_tag = self.repo.create_tag(tag=tag)

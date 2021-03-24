@@ -9,6 +9,7 @@ from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
 from spaced_repetition.use_cases.add_tag import TagAdder
 from spaced_repetition.use_cases.get_problem import ProblemGetter
+from spaced_repetition.use_cases.get_tag import TagGetter
 from spaced_repetition.use_cases.log_problem import ProblemLogger
 
 
@@ -190,9 +191,9 @@ class CliController:
         if args.filter:
             kwargs['sub_str'] = args.filter
 
-        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
-                                    presenter=CliPresenter())
-        prob_getter.list_tags(**kwargs)
+        tag_getter = TagGetter(db_gateway=DjangoGateway(),
+                               presenter=CliPresenter())
+        tag_getter.list_tags(**kwargs)
 
 
 def main():

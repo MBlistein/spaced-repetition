@@ -14,7 +14,7 @@ class Tag:
 
 class TagCreator:
     @classmethod
-    def create_tag(cls, name: str, tag_id: int = None):
+    def create(cls, name: str, tag_id: int = None):
         return Tag(name=cls.validate_name(name),
                    tag_id=tag_id)
 

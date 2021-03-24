@@ -80,56 +80,55 @@ class TestCliPresenter(unittest.TestCase):
                          mock_stdout.getvalue())
 
 
-# class TestCliPresenterTags(unittest.TestCase):
-#     def setUp(self):
-#         self.num_cols = 2
-#         self.column_widths = [5, 10]
-#
-#     def test_format_tag_df(self):
-#         test_df = pd.DataFrame(data=[
-#             {'tags': 4,
-#              'url': 'www',
-#              'rank': 22,
-#              'score': 1,
-#              'difficulty': 2,
-#              'name': 'name',
-#              'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 0, 1561),
-#              'surplus_col': 'not displayed',
-#              'problem_id': 5}])
-#
-#         formatted_df = CliPresenter.format_problem_df(test_df)
-#
-#         expected_df = pd.DataFrame(data=[
-#             {'name': 'name',
-#              'tags': 4,
-#              'difficulty': 2,
-#              'last_access': '2021-01-10 08:10',
-#              'score': 1,
-#              'rank': 22,
-#              'url': 'www',
-#              'id': 5}]) \
-#             .set_index('id')
-#
-#         assert_frame_equal(formatted_df, expected_df)
-#
-#     @patch('sys.stdout', new_callable=io.StringIO)
-#     def test_list_tags(self, mock_stdout):
-#         test_df = pd.DataFrame(data=[{
-#             'tags': 'test-tag',
-#             'last_access': dt.datetime(2021, 1, 10, 15, 3, 5, 5151),
-#             'difficulty': 'hard',
-#             'name': 'name',
-#             'url': 'www',
-#             'rank': 1,
-#             'score': 3,
-#             'problem_id': 5}])
-#
-#         expected_output = \
-#             "|   id | name   | tags     | difficulty   | last_access      |   score |   rank | url   |\n" \
-#             "|------|--------|----------|--------------|------------------|---------|--------|-------|\n" \
-#             "|    5 | name   | test-tag | hard         | 2021-01-10 15:03 |       3 |      1 | www   |\n"
-#
-#         CliPresenter.list_problems(problems=test_df)
-#
-#         self.assertEqual(expected_output,
-#                          mock_stdout.getvalue())
+class TestCliPresenterTags(unittest.TestCase):
+    def setUp(self):
+        self.num_cols = 2
+        self.column_widths = [5, 10]
+
+    def test_format_tag_df(self):
+        test_df = pd.DataFrame(data=[
+            {'tags': 'test-tag',
+             'experience': 0.8,
+             'KS (weighted avg)': 5.0,
+             'priority': 4.0,
+             'num_problems': 4,
+             'surplus_col': 'not displayed'}
+        ])
+
+        formatted_df = CliPresenter.format_tag_df(test_df)
+
+        expected_df = pd.DataFrame(
+            data=[
+                {'tags': 'test-tag',
+                 'experience': 0.8,
+                 'KS (weighted avg)': 5.0,
+                 'priority': 4.0,
+                 'num_problems': 4}],
+            columns=['tags', 'priority', 'KS (weighted avg)', 'experience',
+                     'num_problems']) \
+            .set_index('tags')
+
+        assert_frame_equal(formatted_df, expected_df)
+
+    def test_format_tag_df_empty(self):
+        self.assertIsNone(CliPresenter.format_tag_df(pd.DataFrame()))
+
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_list_tags(self, mock_stdout):
+        test_df = pd.DataFrame(
+            data=[
+                {'tags': 'test-tag',
+                 'experience': 0.8,
+                 'KS (weighted avg)': 5.0,
+                 'priority': 4.0,
+                 'num_problems': 4}])
+
+        expected_output = \
+            "| tags     |   priority |   KS (weighted avg) |   experience |   num_problems |\n" \
+            "|----------|------------|---------------------|--------------|----------------|\n" \
+            "| test-tag |          4 |                   5 |          0.8 |              4 |\n"
+
+        CliPresenter.list_tags(tags=test_df)
+
+        self.assertEqual(expected_output,
+                         mock_stdout.getvalue())

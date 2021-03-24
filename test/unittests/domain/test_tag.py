@@ -19,6 +19,6 @@ class TestTagCreator(unittest.TestCase):
 
     @patch.object(TagCreator, attribute='validate_name')
     def test_all_validators_called(self, mock_validate_name):
-        TagCreator.create_tag(name='tag1')
+        TagCreator.create(name='tag1')
 
         mock_validate_name.assert_called_once()

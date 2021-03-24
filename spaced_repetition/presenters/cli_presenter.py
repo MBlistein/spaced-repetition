@@ -68,11 +68,13 @@ class CliPresenter(PresenterInterface):
     @staticmethod
     def format_tag_df(df: pd.DataFrame):
         """Needs at least a column named 'problem_id'"""
-        # TODO: deal with empty problem df
-        df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
+        if df.empty:
+            return
 
         existing_columns = df.columns
-        order = ['prio', 'tags', 'avg_score', 'last_access', 'num_problems']
+        order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
+                 'num_problems']
 
         return df \
-            .reindex(columns=[col for col in order if col in existing_columns])
+            .reindex(columns=[col for col in order if col in existing_columns]) \
+            .set_index('tags')

@@ -4,9 +4,9 @@ from typing import List
 import pandas as pd
 
 from spaced_repetition.domain.problem import Problem
-from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
-from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
-from spaced_repetition.use_cases.presenter_interface import PresenterInterface
+from .db_gateway_interface import DBGatewayInterface
+from .get_problem_log import ProblemLogGetter
+from .presenter_interface import PresenterInterface
 
 
 class ProblemGetter:

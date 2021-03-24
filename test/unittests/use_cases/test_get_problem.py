@@ -28,7 +28,7 @@ class TestListProblems(unittest.TestCase):
             'tags': 'tag_1, tag_2'
         }])
 
-    def test_get_problem_problems(self):
+    def test_get_problems(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = [self.problem]
 

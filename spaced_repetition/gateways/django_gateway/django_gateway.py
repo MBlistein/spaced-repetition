@@ -137,7 +137,7 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def _format_tags(tags: Union[List, QuerySet]) -> List[Tag]:
-        return [TagCreator.create_tag(name=tag.name, tag_id=tag.pk)
+        return [TagCreator.create(name=tag.name, tag_id=tag.pk)
                 for tag in tags]
 
     @staticmethod
