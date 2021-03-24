@@ -66,8 +66,8 @@ class TagGetter:
 
     @classmethod
     def _prioritize_tags(cls, problem_data: pd.DataFrame):
-        # if problem_data.empty:
-        #     return pd.DataFrame  TODO: decide if this should be here or in get_prioritized_tags
+        if problem_data.empty:
+            return pd.DataFrame
 
         return problem_data \
             .groupby('tags') \

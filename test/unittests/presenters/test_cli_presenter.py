@@ -111,7 +111,12 @@ class TestCliPresenterTags(unittest.TestCase):
         assert_frame_equal(formatted_df, expected_df)
 
     def test_format_tag_df_empty(self):
-        self.assertIsNone(CliPresenter.format_tag_df(pd.DataFrame()))
+        order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
+                 'num_problems']
+        expected_res = pd.DataFrame(columns=order).set_index('tags')
+        
+        assert_frame_equal(expected_res,
+                           CliPresenter.format_tag_df(pd.DataFrame()))
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_tags(self, mock_stdout):
