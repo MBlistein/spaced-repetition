@@ -52,13 +52,13 @@ class DjangoGateway(DBGatewayInterface):
                         sorted_by: List[str] = None,
                         tag_names: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
-        if name:
+        if name is not None:
             qs = qs.filter(name=name)
         if name_substr:
             qs = qs.filter(name__icontains=name_substr)
-        if sorted_by:
+        if sorted_by is not None:
             qs = qs.order_by(*sorted_by)
-        if tag_names:
+        if tag_names is not None:
             qs = qs \
                 .annotate(num_matches=Count('tags',
                                             filter=Q(tags__name__in=tag_names))) \

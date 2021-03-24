@@ -90,8 +90,7 @@ class TestProblemQuerying(TestCase):
         prob_many_tags.tags.set([self.tag_1, self.tag_2, additional_tag])
         prob_single_tag.save()
 
-    def test_query_tags(self):
-        # set up problems
+    def test_query_filter_by_tags(self):
         self._create_additional_problems()
 
         required_tags = ['tag1', 'tag2']
@@ -101,6 +100,19 @@ class TestProblemQuerying(TestCase):
         self.assertEqual(len(res), 3)
         self.assertEqual([prob.name for prob in res],
                          ['name2', 'name1', 'many_tags'])
+
+    def test_get_problems_filter_by_tags_empty(self):
+        self._create_additional_problems()
+
+        params = [
+            ({'name': ''}, []),
+            ({'tag_names': []}, [])
+        ]
+
+        for kwargs, expected_res in params:
+            with self.subTest():
+                res = DjangoGateway.get_problems(**kwargs)
+                self.assertEqual(res, expected_res)
 
     def test_query_combined(self):
         # set up problems
