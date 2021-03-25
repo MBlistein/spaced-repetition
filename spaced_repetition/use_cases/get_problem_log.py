@@ -65,7 +65,7 @@ class ProblemLogGetter:
         """Calculates the knowledge score 'KS' per problem"""
         df = log_data.copy()
 
-        df['RF'] = df.apply(cls.retention_score,
+        df['RF'] = df.apply(cls.retention_score,  # noqa --> pycharm bug, remove noqa in v2021.1
                             axis='columns',
                             args=(ts,))
 
@@ -74,9 +74,11 @@ class ProblemLogGetter:
 
     @staticmethod
     def retention_score(df_row: pd.Series, ts: dt.datetime) -> float:
-        """Calculates the 'retention score', i.e. what percentage of
-        knowledge is still remembered after a time period delta_t"""
+        """Calculates the 'retention score' 0 <= RF <= 1,
+        the percentage of knowledge retained at time ts"""
         days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()).days
-        days_over = days_since_last_study - df_row.interval
+
+        # negative days_over would make RF > 1
+        days_over = max(0, days_since_last_study - df_row.interval)
 
         return exp(log(RETENTION_FRACTION_PER_T) * days_over / df_row.interval)

@@ -9,9 +9,7 @@ from pandas.testing import assert_frame_equal
 from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL,
                                                   ProblemLogCreator, Result)
 from spaced_repetition.domain.score import Score
-from spaced_repetition.use_cases.get_problem_log import (
-    ProblemLogGetter,
-    RETENTION_FRACTION_PER_T)
+from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 
 
 class TestProblemLogGetter(unittest.TestCase):
@@ -146,17 +144,25 @@ class TestProblemLogGetter(unittest.TestCase):
         mock_get_knowledge_scores.assert_called_once_with(log_data='dummy_return')
 
     def test_retention_score(self):
-        interval = 10
+        interval = 5
         ts_logged = dt.datetime(2021, 1, 1, tzinfo=gettz('UTC'))
-        df_row = pd.Series(data={
-            'interval': interval,
-            'ts_logged': pd.Timestamp(ts_logged)})
+        df_row = pd.Series(data={'interval': interval,
+                                 'ts_logged': pd.Timestamp(ts_logged)})
 
-        # Being one interval late should lead to RETENTION_FRACTION_PER_T
-        ts = ts_logged + 2 * dt.timedelta(days=interval)
+        params = [
+            (dt.timedelta(days=-interval), 1.0),
+            (dt.timedelta(days=interval), 1.0),
+            (dt.timedelta(days=2 * interval), 0.5),
+            (dt.timedelta(days=3 * interval), 0.25),
+        ]
 
-        self.assertEqual(RETENTION_FRACTION_PER_T,
-                         ProblemLogGetter.retention_score(df_row=df_row, ts=ts))
+        for days_late, expected_rf in params:
+            with self.subTest(days_late=days_late, expected_rf=expected_rf):
+                ts = ts_logged + days_late
+
+                self.assertAlmostEqual(
+                    expected_rf,
+                    ProblemLogGetter.retention_score(df_row=df_row, ts=ts))
 
     def test_get_knowledge_scores(self):
         last_log_data = pd.DataFrame(data=[
