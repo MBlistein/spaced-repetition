@@ -39,18 +39,18 @@ class DjangoGateway(DBGatewayInterface):
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
                      sorted_by: List[str] = None,
-                     tag_names: List[str] = None) -> List[Problem]:
+                     tags_must_have: List[str] = None) -> List[Problem]:
         return cls._format_problems(
             problems=cls._query_problems(name=name,
                                          name_substr=name_substr,
                                          sorted_by=sorted_by,
-                                         tag_names=tag_names))
+                                         tags_must_have=tags_must_have))
 
     @staticmethod
     def _query_problems(name: Union[str, None] = None,
                         name_substr: str = None,
                         sorted_by: List[str] = None,
-                        tag_names: List[str] = None) -> QuerySet:
+                        tags_must_have: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
         if name is not None:
             qs = qs.filter(name=name)
@@ -58,11 +58,12 @@ class DjangoGateway(DBGatewayInterface):
             qs = qs.filter(name__icontains=name_substr)
         if sorted_by is not None:
             qs = qs.order_by(*sorted_by)
-        if tag_names is not None:
+        if tags_must_have is not None:
             qs = qs \
-                .annotate(num_matches=Count('tags',
-                                            filter=Q(tags__name__in=tag_names))) \
-                .filter(num_matches=len(tag_names))
+                .annotate(num_matches=Count(
+                    'tags',
+                    filter=Q(tags__name__in=tags_must_have))) \
+                .filter(num_matches=len(tags_must_have))
 
         return qs
 
@@ -129,7 +130,7 @@ class DjangoGateway(DBGatewayInterface):
         return cls._format_tags(tags=cls._query_tags(sub_str=sub_str))
 
     @staticmethod
-    def _query_tags(sub_str: str = None):
+    def _query_tags(sub_str: Union[str, None]):
         qs = OrmTag.objects.all()
         if sub_str:
             qs = qs.filter(name__icontains=sub_str)

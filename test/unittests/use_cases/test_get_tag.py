@@ -121,7 +121,7 @@ class TestGetTagDF(unittest.TestCase):
 
         tag_getter.repo.get_tags.assert_called_once_with(sub_str='test_str')  # noqa
         mock_get_prio_problems.assert_called_once_with(
-            tag_names=['tag_1', 'tag_2'])
+            tags_must_have=['tag_1', 'tag_2'])
         mock_prioritize_tags.assert_called_once_with(
             problem_data=fake_problem_data)
         self.assertEqual('correct', res)
@@ -129,12 +129,14 @@ class TestGetTagDF(unittest.TestCase):
     @patch.object(ProblemGetter, 'get_prioritized_problems')
     def test_get_prioritized_tags_no_data(self, mock_get_prioritized_problems):
         mock_get_prioritized_problems.return_value = pd.DataFrame()
+
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
         tag_getter.repo.get_tags.return_value = []
 
         res = tag_getter.get_prioritized_tags()
 
         tag_getter.repo.get_tags.assert_not_called()  # noqa
-        mock_get_prioritized_problems.assert_called_once_with(tag_names=None)
+        mock_get_prioritized_problems.assert_called_once_with(
+            tags_must_have=None)
         assert_frame_equal(pd.DataFrame(),
                            res)

@@ -95,7 +95,7 @@ class TestProblemQuerying(TestCase):
 
         required_tags = ['tag1', 'tag2']
 
-        res = DjangoGateway._query_problems(tag_names=required_tags)
+        res = DjangoGateway._query_problems(tags_must_have=required_tags)
 
         self.assertEqual(len(res), 3)
         self.assertEqual([prob.name for prob in res],
@@ -106,11 +106,11 @@ class TestProblemQuerying(TestCase):
 
         params = [
             ({'name': ''}, []),
-            ({'tag_names': []}, [])
+            ({'tags_must_have': []}, [])
         ]
 
         for kwargs, expected_res in params:
-            with self.subTest():
+            with self.subTest(kwargs=kwargs, expected_res=expected_res):
                 res = DjangoGateway.get_problems(**kwargs)
                 self.assertEqual(res, expected_res)
 
@@ -120,7 +120,7 @@ class TestProblemQuerying(TestCase):
 
         res = DjangoGateway._query_problems(name_substr='e',  # exclude 'many_tags'
                                             sorted_by=['name'],
-                                            tag_names=['tag1', 'tag2'])     # exclude 'single_tag'
+                                            tags_must_have=['tag1', 'tag2'])     # exclude 'single_tag'
 
         self.assertEqual([p.name for p in res], ['name1', 'name2'])
 
@@ -145,7 +145,7 @@ class TestProblemQuerying(TestCase):
         self._create_additional_problems()
         res = DjangoGateway.get_problems(name_substr='e',
                                          sorted_by=['name'],
-                                         tag_names=['tag1', 'tag2'])
+                                         tags_must_have=['tag1', 'tag2'])
 
         self.assertEqual([p.name for p in res], ['name1', 'name2'])
 
@@ -291,7 +291,7 @@ class TestTagGetting(TestCase):
         OrmTag.objects.create(name='t3')
 
     def test_query_tags(self):
-        tags = DjangoGateway._query_tags()
+        tags = DjangoGateway._query_tags(sub_str=None)
 
         self.assertIsInstance(tags[0], OrmTag)
         self.assertEqual([t.name for t in tags], ['tag2', 'Tag1', 't3'])

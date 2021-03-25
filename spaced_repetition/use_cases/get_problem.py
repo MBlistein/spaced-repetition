@@ -17,17 +17,17 @@ class ProblemGetter:
 
     def list_problems(self, name_substr: str = None,
                       sorted_by: List[str] = None,
-                      tag_names: List[str] = None):
+                      tags_must_have: List[str] = None):
         self.presenter.list_problems(
             problems=self.get_prioritized_problems(name_substr=name_substr,
                                                    sorted_by=sorted_by,
-                                                   tag_names=tag_names))
+                                                   tags_must_have=tags_must_have))
 
     def get_prioritized_problems(self, name_substr: str = None,
                                  sorted_by: List[str] = None,
-                                 tag_names: List[str] = None) -> pd.DataFrame:
+                                 tags_must_have: List[str] = None) -> pd.DataFrame:
         problem_df = self.get_problems(name_substr=name_substr,
-                                       tag_names=tag_names)
+                                       tags_must_have=tags_must_have)
         if problem_df.empty:
             return pd.DataFrame()
 
@@ -41,9 +41,9 @@ class ProblemGetter:
                                 validate='one_to_one')
 
     def get_problems(self, name_substr: str = None,
-                     tag_names: List[str] = None) -> pd.DataFrame:
+                     tags_must_have: List[str] = None) -> pd.DataFrame:
         problems = self.repo.get_problems(name_substr=name_substr,
-                                          tag_names=tag_names)
+                                          tags_must_have=tags_must_have)
         return pd.DataFrame(data=map(self.problem_to_row_content, problems))
 
     @staticmethod

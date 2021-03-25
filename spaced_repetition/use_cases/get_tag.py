@@ -57,7 +57,7 @@ class TagGetter:
 
         problem_getter = ProblemGetter(db_gateway=self.repo,
                                        presenter=self.presenter)
-        problem_df = problem_getter.get_prioritized_problems(tag_names=tags)
+        problem_df = problem_getter.get_prioritized_problems(tags_must_have=tags)
 
         return self._prioritize_tags(problem_data=problem_df)
 
