@@ -37,6 +37,8 @@ class ProblemGetter:
         problem_priorities = plg.get_problem_knowledge_scores(
             problem_ids=problem_df.problem_id.to_list())
 
+        if problem_priorities.empty:
+            return problem_df
         return problem_df.merge(problem_priorities,
                                 on='problem_id',
                                 how='outer',

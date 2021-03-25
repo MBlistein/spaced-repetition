@@ -50,27 +50,23 @@ class CliPresenter(PresenterInterface):
     @staticmethod
     def format_problem_df(df: pd.DataFrame):
         """Needs at least a column named 'problem_id'"""
-        order = ['id', 'name', 'tags', 'difficulty', 'last_access',
-                 'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
-
-        if df.empty:
-            return pd.DataFrame(columns=order).set_index('id')
-
         name_mapper = {'problem_id': 'id',
                        'result': 'last_result',
                        'ts_logged': 'last_access'}
         df = df \
             .rename(columns=name_mapper)
 
+        order = ['id', 'name', 'tags', 'difficulty', 'last_access',
+                 'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
+        df = df.reindex(columns=order).set_index('id')
+
         df.difficulty = df.difficulty.map(lambda x: x.name, na_action='ignore')
         df.last_result = df.last_result.map(lambda x: x.name, na_action='ignore')
-        df.last_access = df.last_access.dt.strftime('%Y-%m-%d %H:%M')
 
-        existing_columns = df.columns
-
-        return df \
-            .reindex(columns=[col for col in order if col in existing_columns]) \
-            .set_index('id')
+        # if df.last_access is full of np.NaN, needs to be cast to datetime
+        df.last_access = pd.to_datetime(df.last_access) \
+            .dt.strftime('%Y-%m-%d %H:%M')
+        return df
 
     @classmethod
     def list_tags(cls, tags: pd.DataFrame) -> None:

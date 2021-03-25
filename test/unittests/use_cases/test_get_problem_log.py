@@ -50,6 +50,13 @@ class TestProblemLogGetter(unittest.TestCase):
         assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
                            expected_res)
 
+    def test_get_problem_logs_no_problems(self):
+        plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
+        plg.repo.get_problem_logs.return_value = []
+
+        assert_frame_equal(plg.get_problem_logs(),
+                           pd.DataFrame())
+
     def test_get_problem_logs_for_specific_problems(self):
         self.plg.get_problem_logs(problem_ids=[1])
 
@@ -116,6 +123,11 @@ class TestProblemLogGetter(unittest.TestCase):
 
         assert_frame_equal(ProblemLogGetter._last_log_per_problem(log_df=log_df),
                            expected_df)
+
+    def test_last_log_per_problem_no_data(self):
+        assert_frame_equal(
+            pd.DataFrame(),
+            ProblemLogGetter._last_log_per_problem(log_df=pd.DataFrame()))
 
     def test_add_scores(self):
         log_df = pd.DataFrame(data=[

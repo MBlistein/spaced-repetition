@@ -34,13 +34,16 @@ class ProblemLogGetter:
 
     def get_last_log_per_problem(self, problem_ids: List[int] = None):
         log_df = self.get_problem_logs(problem_ids=problem_ids)
-        res = self._last_log_per_problem(log_df)
-        return res
+        return self._last_log_per_problem(log_df)
 
     @staticmethod
     def _last_log_per_problem(log_df: pd.DataFrame):
+        if log_df.empty:
+            return pd.DataFrame()
+
+        columns = ['problem_id', 'ts_logged', 'result', 'ease', 'interval']
         return log_df \
-            .loc[:, ['problem_id', 'ts_logged', 'result', 'ease', 'interval']] \
+            .loc[:, columns] \
             .sort_values('ts_logged') \
             .groupby('problem_id') \
             .tail(1) \
@@ -63,6 +66,9 @@ class ProblemLogGetter:
                              ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) \
             -> pd.DataFrame:
         """Calculates the knowledge score 'KS' per problem"""
+        if log_data.empty:
+            return pd.DataFrame()
+
         df = log_data.copy()
 
         df['RF'] = df.apply(cls.retention_score,  # noqa --> pycharm bug, remove noqa in v2021.1

@@ -3,6 +3,7 @@ import io
 import unittest
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
@@ -31,9 +32,11 @@ class TestCliPresenter(unittest.TestCase):
             'url': 'www.test.com'
         }])
 
+        self.intended_order = ['name', 'tags', 'difficulty', 'last_access',
+                               'last_result', 'KS', 'RF', 'url', 'ease',
+                               'interval']
+
     def test_format_problem_df(self):
-        intended_order = ['name', 'tags', 'difficulty', 'last_access',
-                          'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
         expected_df = pd.DataFrame(data=[{
             'difficulty': 'MEDIUM',
             'ease': 2.5,
@@ -47,11 +50,40 @@ class TestCliPresenter(unittest.TestCase):
             'tags': 'test-tag',
             'url': 'www.test.com'}]) \
             .set_index('id') \
-            .reindex(columns=intended_order)
+            .reindex(columns=self.intended_order)
 
         formatted_df = CliPresenter.format_problem_df(self.problem_df)
 
         assert_frame_equal(expected_df, formatted_df)
+
+    def test_format_problem_df_missing_cols(self):
+        data_df = self.problem_df \
+                      .loc[:, ['name', 'problem_id', 'ts_logged']] \
+            .copy()
+
+        expected_df = pd.DataFrame(data=[{
+            'difficulty': np.nan,
+            'ease': np.nan,
+            'interval': np.nan,
+            'id': 5,
+            'KS': np.nan,
+            'last_access': '2021-01-10 08:10',
+            'name': 'name',
+            'last_result': np.nan,
+            'RF': np.nan,
+            'tags': np.nan,
+            'url': np.nan}]) \
+            .set_index('id') \
+            .reindex(columns=self.intended_order)
+
+        formatted_df = CliPresenter.format_problem_df(data_df)
+
+        assert_frame_equal(expected_df, formatted_df)
+
+    def test_format_problem_df_empty_smoke_test(self):
+        """ Too much trouble with getting the dtypes right; smoke test
+        suffices for now """
+        CliPresenter.format_problem_df(pd.DataFrame())
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problems(self, mock_stdout):
