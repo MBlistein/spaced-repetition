@@ -16,6 +16,7 @@ class DBGatewayInterface(ABC):
     @abstractmethod
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
+                     tags_any: List[str] = None,
                      tags_must_have: List[str] = None) -> List[Problem]:
         pass
 

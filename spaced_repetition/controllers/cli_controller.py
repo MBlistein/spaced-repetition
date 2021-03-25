@@ -42,9 +42,14 @@ class CliController:
         list_parser.add_argument('-fn', '--filter-name',
                                  help='List only problems whose names contain '
                                       'the provided substring')
-        list_parser.add_argument('-ft', '--filter-tags',
-                                 nargs='+',
-                                 help='List problems with the provided tags')
+        list_parser.add_argument(
+            '-ftl', '--filter-tags-all',
+            nargs='+',
+            help='List problems containing all provided tags')
+        list_parser.add_argument(
+            '-fty', '--filter-tags-any',
+            nargs='+',
+            help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
                                  choices=['id', 'name'],
                                  nargs=1,
@@ -171,8 +176,10 @@ class CliController:
         kwargs = {}
         if args.filter_name:
             kwargs['name_substr'] = args.filter_name
-        if args.filter_tags:
-            kwargs['tags'] = args.filter_tags
+        if args.filter_tags_all:
+            kwargs['tags_must_have'] = args.filter_tags_all
+        if args.filter_tags_any:
+            kwargs['tags_any'] = args.filter_tags_any
         if args.sort_by:
             kwargs['sorted_by'] = args.sort_by
         prob_getter.list_problems(**kwargs)

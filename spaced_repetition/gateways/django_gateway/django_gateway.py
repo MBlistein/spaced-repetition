@@ -38,21 +38,28 @@ class DjangoGateway(DBGatewayInterface):
     @classmethod
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
+                     tags_any: List[str] = None,
                      tags_must_have: List[str] = None) -> List[Problem]:
         return cls._format_problems(
             problems=cls._query_problems(name=name,
                                          name_substr=name_substr,
+                                         tags_any=tags_any,
                                          tags_must_have=tags_must_have))
 
     @staticmethod
-    def _query_problems(name: Union[str, None] = None,
+    def _query_problems(name: str = None,
                         name_substr: str = None,
+                        tags_any: List[str] = None,
                         tags_must_have: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
         if name is not None:
             qs = qs.filter(name=name)
         if name_substr:
             qs = qs.filter(name__icontains=name_substr)
+        if tags_any is not None:
+            qs = qs \
+                .filter(tags__name__in=tags_any) \
+                .distinct()
         if tags_must_have is not None:
             qs = qs \
                 .annotate(num_matches=Count(
