@@ -12,15 +12,25 @@ class ProblemLogger:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def log_problem(self, problem_id: int, result: Result):
-        last_log = self.get_last_log_for_problem(problem_id=problem_id)
+    def log_problem(self, problem_name: str, result: Result):
+        try:
+            problem = self.repo.get_problems(name=problem_name)[0]
+        except IndexError:
+            raise ValueError(
+                f"Problem with name '{problem_name}' does not exist, "
+                "try searching for similar problems.")
+
+        last_log = self.get_last_log_for_problem(problem_id=problem.problem_id)
 
         problem_log = ProblemLogCreator.create(
             last_log=last_log,
-            problem_id=problem_id,
+            problem_id=problem.problem_id,
             result=result)
 
         self.repo.create_problem_log(problem_log=problem_log)
+
+        self.presenter.confirm_problem_logged(problem=problem,
+                                              problem_log=problem_log)
 
     def get_last_log_for_problem(self, problem_id: int) -> Union[ProblemLog, None]:
         previous_logs = self.repo.get_problem_logs(problem_ids=[problem_id])

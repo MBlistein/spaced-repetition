@@ -3,7 +3,7 @@
 import argparse
 
 from spaced_repetition.domain.problem import Difficulty
-from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
+from spaced_repetition.domain.problem_log import Result
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
@@ -104,28 +104,20 @@ class CliController:
     @classmethod
     def _add_problem_log(cls, _):
         """Log the execution of a problem"""
-        prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
-                                    presenter=CliPresenter())
         problem_name = cls._get_problem_name()
-        try:
-            problem = DjangoGateway.get_problems(name=problem_name)[0]
-        except IndexError as err:
-            print(f"Problem with name '{problem_name}' does not exist, "
-                  "try searching for similar problems."
-                  f"Error msg: {err}")
-            return
-
         try:
             result = cls._get_user_input_result()
         except ValueError as err:
             print(f"\nSupplied invalid Result!\n{err}")
             return
 
-        problem_log = ProblemLogCreator.create(
-            problem_id=problem.problem_id,
-            result=result)
-
-        prob_logger.log_problem(problem_log=problem_log)
+        prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        try:
+            prob_logger.log_problem(problem_name=problem_name,
+                                    result=result)
+        except ValueError as err:
+            print(err)
 
     # -------------------- add tag --------------------
 

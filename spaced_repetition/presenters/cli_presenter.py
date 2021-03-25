@@ -2,8 +2,10 @@ import pandas as pd
 from tabulate import tabulate
 
 from spaced_repetition.domain.problem import Problem
+from spaced_repetition.domain.problem_log import ProblemLog
 from spaced_repetition.domain.tag import Tag
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
+from spaced_repetition.use_cases.helpers import serialize_ts
 
 
 class CliPresenter(PresenterInterface):
@@ -17,6 +19,12 @@ class CliPresenter(PresenterInterface):
         return f"Created Problem '{problem.name}' with id " \
                f"'{problem.problem_id}' (difficulty '" \
                f"{problem.difficulty.name}', tags: {', '.join(problem.tags)})"
+
+    @staticmethod
+    def confirm_problem_logged(problem: Problem, problem_log: ProblemLog):
+        print(f"Logged execution of Problem '{problem.name}' with "
+              f"result '{problem_log.result.name}' at "
+              f"{serialize_ts(problem_log.timestamp)}.")
 
     @classmethod
     def confirm_tag_created(cls, tag: Tag) -> None:

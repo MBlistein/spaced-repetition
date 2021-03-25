@@ -7,16 +7,8 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
-from spaced_repetition.domain.problem_log import Result
+from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
 from spaced_repetition.presenters.cli_presenter import CliPresenter
-
-
-PROBLEM = ProblemCreator.create(
-    name='testname',
-    difficulty=Difficulty(1),
-    problem_id=1,
-    tags=['test-tag'],
-    url='test-url')
 
 
 class TestCliPresenter(unittest.TestCase):
@@ -38,11 +30,6 @@ class TestCliPresenter(unittest.TestCase):
             'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 0, 1561),
             'url': 'www.test.com'
         }])
-
-    def test_problem_confirmation_txt(self):
-        self.assertEqual("Created Problem 'testname' with id '1' "
-                         "(difficulty 'EASY', tags: test-tag)",
-                         CliPresenter._problem_confirmation_txt(problem=PROBLEM))
 
     def test_format_problem_df(self):
         intended_order = ['name', 'tags', 'difficulty', 'last_access',
@@ -114,7 +101,7 @@ class TestCliPresenterTags(unittest.TestCase):
         order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
                  'num_problems']
         expected_res = pd.DataFrame(columns=order).set_index('tags')
-        
+
         assert_frame_equal(expected_res,
                            CliPresenter.format_tag_df(pd.DataFrame()))
 
@@ -137,3 +124,34 @@ class TestCliPresenterTags(unittest.TestCase):
 
         self.assertEqual(expected_output,
                          mock_stdout.getvalue())
+
+
+class TestCliPresenterConfirmation(unittest.TestCase):
+    def setUp(self) -> None:
+        self.problem = ProblemCreator.create(
+            name='testname',
+            difficulty=Difficulty(1),
+            problem_id=1,
+            tags=['test-tag'],
+            url='test-url')
+
+        self.problem_log = ProblemLogCreator.create(
+            problem_id=1, result=Result.SOLVED_OPTIMALLY_IN_UNDER_25)
+
+    def test_problem_confirmation_txt(self):
+        expected_txt = "Created Problem 'testname' with id '1' " \
+                       "(difficulty 'EASY', tags: test-tag)"
+        self.assertEqual(
+            expected_txt,
+            CliPresenter._problem_confirmation_txt(problem=self.problem))
+
+    def test_problem_log_confirmation(self):
+        expected_txt = \
+            "Logged execution of Problem 'testname' with result " \
+            "'SOLVED_OPTIMALLY_IN_UNDER_25' at "
+
+        with patch('sys.stdout', new_callable=io.StringIO) as mock_stdout:
+            CliPresenter.confirm_problem_logged(problem=self.problem,
+                                                problem_log=self.problem_log)
+            res = mock_stdout.getvalue()
+            self.assertTrue(res.startswith(expected_txt))

@@ -25,3 +25,11 @@ class TestProblemAdder(unittest.TestCase):
         p_l = ProblemLogger(db_gateway=mock_gateway, presenter=Mock())
         self.assertEqual(pl_2,
                          p_l.get_last_log_for_problem(problem_id=1))
+
+    def test_get_last_log_for_problem_no_log_found(self):
+        mock_gateway = Mock()
+        mock_gateway.get_problem_logs.return_value = []
+
+        p_l = ProblemLogger(db_gateway=mock_gateway, presenter=Mock())
+        self.assertEqual(None,
+                         p_l.get_last_log_for_problem(problem_id=1))
