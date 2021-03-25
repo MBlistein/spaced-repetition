@@ -9,9 +9,9 @@ The spaced-repetition toolbox should let one find out:
 * on which problem inside a topic I should work most urgently (or add a new one)
 
 ### Problems
-Problems are ranked via a **knowledge score K** between 1 and 10, where:
+Problems are ranked via a **knowledge score K** between 1 and 5, where:
 * 1  --> no knowledge, highest priority topic
-* 10 --> perfect knowledge, no further study necessary  
+* 5 --> perfect knowledge, no further study necessary
 
 **K** is computed as the product of the **Correctness Score C** achieved when
 solving the problem, and the **Retention Factor RF**:  
