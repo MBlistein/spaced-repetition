@@ -25,17 +25,17 @@ class TestCliController(unittest.TestCase):
 
     # ------------------------ test user input --------------------------
     @patch('builtins.input', return_value=' 0')
-    def test_get_user_input_result(self, mock_input):
+    def test_get_user_input_result(self, _):
         self.assertEqual(Result.NO_IDEA,
                          CliController._get_user_input_result())
 
     @patch('builtins.input', return_value='55 ')
-    def test_get_user_input_result_raises_invalid_problem(self, mock_input):
+    def test_get_user_input_result_raises_invalid_problem(self, _):
         with self.assertRaises(ValueError):
             CliController._get_user_input_result()
 
     @patch('builtins.input', return_value=' some_name ')
-    def test_get_user_input_problem_name(self, mock_input):
+    def test_get_user_input_problem_name(self, _):
         self.assertEqual('some_name',
                          CliController._get_problem_name())
 
