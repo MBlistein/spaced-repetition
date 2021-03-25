@@ -59,15 +59,12 @@ class TagGetter:
                                        presenter=self.presenter)
         problem_df = problem_getter.get_prioritized_problems(tag_names=tags)
 
-        if problem_df.empty:
-            return problem_df
-
         return self._prioritize_tags(problem_data=problem_df)
 
     @classmethod
     def _prioritize_tags(cls, problem_data: pd.DataFrame):
         if problem_data.empty:
-            return pd.DataFrame
+            return pd.DataFrame()
 
         return problem_data \
             .groupby('tags') \
