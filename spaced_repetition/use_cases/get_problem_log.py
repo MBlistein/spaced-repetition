@@ -62,9 +62,9 @@ class ProblemLogGetter:
             log_data=self.get_last_log_per_problem(problem_ids=problem_ids))
 
     @classmethod
-    def get_knowledge_scores(cls, log_data: pd.DataFrame,
-                             ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) \
-            -> pd.DataFrame:
+    def get_knowledge_scores(
+            cls, log_data: pd.DataFrame,
+            ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) -> pd.DataFrame:
         """Calculates the knowledge score 'KS' per problem"""
         if log_data.empty:
             return pd.DataFrame()

@@ -31,6 +31,7 @@ where:
         experience = max(1, num_problems/ 5)
 """
 
+import dataclasses
 import numpy as np
 import pandas as pd
 
@@ -61,6 +62,13 @@ class TagGetter:
 
         return self._prioritize_tags(problem_data=problem_df)
 
+    def get_tags(self, sub_str: str = None) -> pd.DataFrame:
+        tags = self.repo.get_tags(sub_str=sub_str)
+
+        tag_df = pd.DataFrame(data=[dataclasses.asdict(tag) for tag in tags]) \
+            .reindex(columns=['name', 'tag_id'])  # ensure cols exist when empty
+        return tag_df
+
     @classmethod
     def _prioritize_tags(cls, problem_data: pd.DataFrame):
         if problem_data.empty:
@@ -77,6 +85,8 @@ class TagGetter:
         """ see docstring for description """
         if group_df.empty:
             return pd.Series(dtype='object')
+
+        print(group_df)
 
         easy_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.EASY)

@@ -11,7 +11,32 @@ from spaced_repetition.use_cases.get_tag import TagGetter
 from spaced_repetition.use_cases.get_problem import ProblemGetter
 
 
-class TestGetTagDF(unittest.TestCase):
+class TestGetTags(unittest.TestCase):
+    def test_get_tags(self):
+        tag_1 = TagCreator.create(name='tag_1')
+        tag_2 = TagCreator.create(name='tag_2')
+
+        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
+        tag_getter.repo.get_tags.return_value = [tag_1, tag_2]
+
+        expected_df = pd.DataFrame(data={'name': ['tag_1', 'tag_2'],
+                                         'tag_id': [None, None]})
+
+        tag_df = tag_getter.get_tags()
+
+        assert_frame_equal(expected_df, tag_df)
+
+    def test_get_tags_no_data(self):
+        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
+        tag_getter.repo.get_tags.return_value = []
+
+        tag_df = tag_getter.get_tags()
+
+        self.assertTrue(tag_df.empty)
+        self.assertEqual(['name', 'tag_id'], tag_df.columns.to_list())
+
+
+class TestGetPrioritizedTags(unittest.TestCase):
     def setUp(self) -> None:
         self.prob_data_easy_1 = {
             'name': 'easy_problem_1',
