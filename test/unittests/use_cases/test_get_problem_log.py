@@ -118,15 +118,21 @@ class TestProblemLogGetter(unittest.TestCase):
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
              'ts_logged': dt.datetime(2021, 1, 1, 15)}]) \
-            .set_index('problem_id') \
-            .reindex(columns=['ts_logged', 'result', 'ease', 'interval'])
+            .reindex(columns=['problem_id', 'ts_logged', 'result', 'ease', 'interval'])
 
-        assert_frame_equal(ProblemLogGetter._last_log_per_problem(log_df=log_df),
-                           expected_df)
+        res = ProblemLogGetter._last_log_per_problem(log_df=log_df)
+
+        # drop numeric index, which depends on the order of log_df entries
+        res.reset_index(drop=True, inplace=True)
+
+        assert_frame_equal(expected_df, res)
 
     def test_last_log_per_problem_no_data(self):
+        columns = ['problem_id', 'ts_logged', 'result', 'ease', 'interval']
+        expected_df = pd.DataFrame(columns=columns, dtype='float64')
+
         assert_frame_equal(
-            pd.DataFrame(),
+            expected_df,
             ProblemLogGetter._last_log_per_problem(log_df=pd.DataFrame()))
 
     def test_add_scores(self):
@@ -197,3 +203,15 @@ class TestProblemLogGetter(unittest.TestCase):
 
         assert_frame_equal(expected_df.reindex(columns=cols_in_order),
                            res.reindex(columns=cols_in_order))
+
+    def test_get_knowledge_scores_empty_input(self):
+        columns_log_data = ['problem_id', 'ts_logged', 'result', 'ease',
+                            'interval']
+        last_log_data = pd.DataFrame(columns=columns_log_data)
+
+        columns_knowledge_df = columns_log_data + ['RF', 'KS']
+        expected_df = pd.DataFrame(columns=columns_knowledge_df)
+
+        res = ProblemLogGetter.get_knowledge_scores(log_data=last_log_data)
+
+        assert_frame_equal(expected_df, res)

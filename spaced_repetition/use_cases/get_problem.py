@@ -30,15 +30,11 @@ class ProblemGetter:
         problem_df = self.get_problems(name_substr=name_substr,
                                        tags_any=tags_any,
                                        tags_all=tags_all)
-        if problem_df.empty:
-            return pd.DataFrame()
 
         plg = ProblemLogGetter(db_gateway=self.repo, presenter=self.presenter)
         problem_priorities = plg.get_problem_knowledge_scores(
             problem_ids=problem_df.problem_id.to_list())
 
-        if problem_priorities.empty:
-            return problem_df
         return problem_df.merge(problem_priorities,
                                 on='problem_id',
                                 how='outer',
@@ -50,6 +46,11 @@ class ProblemGetter:
         problems = self.repo.get_problems(name_substr=name_substr,
                                           tags_any=tags_any,
                                           tags_all=tags_all)
+        if not problems:
+            # Ensure expected columns exist
+            return pd.DataFrame(columns=[
+                'difficulty', 'name', 'problem_id', 'tags', 'url'])
+
         return pd.DataFrame(data=map(self.problem_to_row_content, problems))
 
     @staticmethod

@@ -21,14 +21,13 @@ class ProblemLogGetter:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def get_problem_logs(self, problem_ids: List[int] = None):
+    def get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs(problem_ids=problem_ids)
         return pd.DataFrame(data=map(self._log_to_row_content, problem_logs))
 
     @staticmethod
     def _log_to_row_content(p_log: ProblemLog) -> dict:
         row_content = dataclasses.asdict(p_log)
-        row_content['result'] = p_log.result
         row_content['ts_logged'] = row_content.pop('timestamp')
         return row_content
 
@@ -38,16 +37,13 @@ class ProblemLogGetter:
 
     @staticmethod
     def _last_log_per_problem(log_df: pd.DataFrame):
-        if log_df.empty:
-            return pd.DataFrame()
-
         columns = ['problem_id', 'ts_logged', 'result', 'ease', 'interval']
+
         return log_df \
-            .loc[:, columns] \
+            .reindex(columns=columns) \
             .sort_values('ts_logged') \
             .groupby('problem_id') \
-            .tail(1) \
-            .set_index('problem_id')
+            .tail(1)
 
     @staticmethod
     def _add_scores(log_df: pd.DataFrame) -> pd.DataFrame:
@@ -66,10 +62,13 @@ class ProblemLogGetter:
             cls, log_data: pd.DataFrame,
             ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) -> pd.DataFrame:
         """Calculates the knowledge score 'KS' per problem"""
-        if log_data.empty:
-            return pd.DataFrame()
-
         df = log_data.copy()
+
+        if df.empty:
+            # add expected result columns
+            df['RF'] = None
+            df['KS'] = None
+            return df
 
         df['RF'] = df.apply(cls.retention_score,  # noqa --> pycharm bug, remove noqa in v2021.1
                             axis='columns',

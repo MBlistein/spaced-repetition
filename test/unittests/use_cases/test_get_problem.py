@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 from dateutil.tz import gettz
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_index_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import Result
@@ -20,13 +20,16 @@ class TestListProblems(unittest.TestCase):
                                              tags=['tag_2', 'tag_1'],
                                              url='some_url.com')
 
-        self.problem_df = pd.DataFrame(data=[{
-            'name': 'test_problem',
-            'problem_id': 1,
-            'difficulty': Difficulty.EASY,
-            'url': 'some_url.com',
-            'tags': 'tag_1, tag_2'
-        }])
+        self.problem_columns = ['difficulty', 'name', 'problem_id', 'tags',
+                                'url']
+        self.problem_df = pd.DataFrame(
+            data=[{
+                'name': 'test_problem',
+                'problem_id': 1,
+                'difficulty': Difficulty.EASY,
+                'url': 'some_url.com',
+                'tags': 'tag_1, tag_2'}],
+            columns=self.problem_columns)
 
     def test_get_problems(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
@@ -37,23 +40,23 @@ class TestListProblems(unittest.TestCase):
                                       tags_all=['cc'])
 
         expected_df = self.problem_df
-        cols_in_order = sorted(expected_df.columns)
 
         # noinspection PyUnresolvedReferences
         p_g.repo.get_problems.assert_called_once_with(
             name_substr='aa', tags_any=['bb'], tags_all=['cc'])
 
-        self.assertEqual(sorted(problem_df.columns),
-                         sorted(expected_df.columns))
-
-        assert_frame_equal(problem_df.reindex(columns=cols_in_order),
-                           expected_df.reindex(columns=cols_in_order))
+        assert_index_equal(problem_df.columns, expected_df.columns)
+        assert_frame_equal(problem_df, expected_df)
 
     def test_get_problems_none_found(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = []
 
-        self.assertTrue(p_g.get_problems().empty)
+        expected_df = pd.DataFrame(columns=self.problem_columns)
+
+        res = p_g.get_problems()
+
+        assert_frame_equal(expected_df, res)
 
     @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
     @patch.object(ProblemGetter, 'get_problems')
@@ -96,4 +99,16 @@ class TestListProblems(unittest.TestCase):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = []
 
-        self.assertTrue(p_g.get_prioritized_problems().empty)
+        expected_res = pd.DataFrame(columns=[
+            'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
+            'result', 'ease', 'interval', 'RF', 'KS'])
+
+        with patch.object(ProblemLogGetter, 'get_problem_knowledge_scores') as \
+                mock_ks_scores:
+            mock_ks_scores.return_value = pd.DataFrame(columns=[
+                'problem_id', 'ts_logged', 'result', 'ease', 'interval',
+                'RF', 'KS'])
+
+            res = p_g.get_prioritized_problems()
+
+            assert_frame_equal(expected_res, res)

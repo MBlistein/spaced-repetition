@@ -52,13 +52,13 @@ class TagGetter:
             tags=self.get_prioritized_tags(sub_str=sub_str))
 
     def get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
-        tags = None
-        if sub_str:
-            tags = [tag.name for tag in self.repo.get_tags(sub_str=sub_str)]
+        tag_df = self.get_tags(sub_str=sub_str)
 
         problem_getter = ProblemGetter(db_gateway=self.repo,
                                        presenter=self.presenter)
-        problem_df = problem_getter.get_prioritized_problems(tags_all=tags)
+        filter_tags = tag_df.name.to_list() if sub_str else None
+        problem_df = problem_getter.get_prioritized_problems(
+            tags_any=filter_tags)
 
         return self._prioritize_tags(problem_data=problem_df)
 
@@ -72,7 +72,9 @@ class TagGetter:
     @classmethod
     def _prioritize_tags(cls, problem_data: pd.DataFrame):
         if problem_data.empty:
-            return pd.DataFrame()
+            return pd.DataFrame(
+                columns=['tags', 'experience', 'KW (weighted avg)',
+                         'num_problems', 'priority'])
 
         return problem_data \
             .groupby('tags') \
@@ -84,9 +86,9 @@ class TagGetter:
     def _prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
         """ see docstring for description """
         if group_df.empty:
-            return pd.Series(dtype='object')
-
-        print(group_df)
+            return pd.Series(index=['experience', 'KW (weighted avg)',
+                                    'num_problems', 'priority'],
+                             dtype='object')
 
         easy_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.EASY)
@@ -103,8 +105,9 @@ class TagGetter:
             data={
                 'experience': experience,
                 'KS (weighted avg)': weighted_ks,
-                'priority': priority,
-                'num_problems': len(group_df)},
+                'num_problems': len(group_df),
+                'priority': priority
+            },
             dtype='object')
 
     @staticmethod

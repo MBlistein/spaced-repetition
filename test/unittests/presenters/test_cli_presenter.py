@@ -135,7 +135,8 @@ class TestCliPresenterTags(unittest.TestCase):
         expected_res = pd.DataFrame(columns=order).set_index('tags')
 
         assert_frame_equal(expected_res,
-                           CliPresenter.format_tag_df(pd.DataFrame()))
+                           CliPresenter.format_tag_df(pd.DataFrame()),
+                           check_dtype=False, check_index_type=False)
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_tags(self, mock_stdout):

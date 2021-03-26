@@ -79,11 +79,6 @@ class CliPresenter(PresenterInterface):
         order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
                  'num_problems']
 
-        if df.empty:
-            return pd.DataFrame(columns=order).set_index('tags')
-
-        existing_columns = df.columns
-
         return df \
-            .reindex(columns=[col for col in order if col in existing_columns]) \
+            .reindex(columns=order) \
             .set_index('tags')

@@ -73,6 +73,14 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'KS': 3,
             'tags': 'tag_2'}
 
+        self.empty_problem_df = pd.DataFrame(columns=[
+            'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
+            'result', 'ease', 'interval', 'RF', 'KS'])
+
+        self.empty_tag_df = pd.DataFrame(columns=[
+            'tags', 'experience', 'KW (weighted avg)', 'num_problems',
+            'priority'])
+
     def test_prioritize(self):
         test_df = pd.DataFrame(data=[
             self.prob_data_easy_1,
@@ -93,9 +101,11 @@ class TestGetPrioritizedTags(unittest.TestCase):
                             res.reindex(index=expected_res.index))
 
     def test_prioritize_empty_data(self):
-        expected_res = pd.Series(dtype='object')
+        expected_res = pd.Series(index=[
+            'experience', 'KW (weighted avg)', 'num_problems', 'priority'],
+            dtype='object')
 
-        res = TagGetter._prioritize(group_df=pd.DataFrame())
+        res = TagGetter._prioritize(group_df=self.empty_problem_df)
 
         assert_series_equal(expected_res, res)
 
@@ -127,9 +137,9 @@ class TestGetPrioritizedTags(unittest.TestCase):
                            res.reindex(columns=expected_res.columns))
 
     def test_prioritize_tags_empty_data(self):
-        res = TagGetter._prioritize_tags(problem_data=pd.DataFrame())
+        res = TagGetter._prioritize_tags(problem_data=self.empty_problem_df)
 
-        self.assertTrue(res.empty)
+        assert_frame_equal(self.empty_tag_df, res)
 
     @patch.object(ProblemGetter, 'get_prioritized_problems')
     @patch.object(TagGetter, '_prioritize_tags')
@@ -146,21 +156,20 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
         tag_getter.repo.get_tags.assert_called_once_with(sub_str='test_str')  # noqa
         mock_get_prio_problems.assert_called_once_with(
-            tags_all=['tag_1', 'tag_2'])
+            tags_any=['tag_1', 'tag_2'])
         mock_prioritize_tags.assert_called_once_with(
             problem_data=fake_problem_data)
         self.assertEqual('correct', res)
 
     @patch.object(ProblemGetter, 'get_prioritized_problems')
     def test_get_prioritized_tags_no_data(self, mock_get_prioritized_problems):
-        mock_get_prioritized_problems.return_value = pd.DataFrame()
+        mock_get_prioritized_problems.return_value = self.empty_problem_df
 
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
         tag_getter.repo.get_tags.return_value = []
 
         res = tag_getter.get_prioritized_tags()
 
-        tag_getter.repo.get_tags.assert_not_called()  # noqa
-        mock_get_prioritized_problems.assert_called_once_with(tags_all=None)
-        assert_frame_equal(pd.DataFrame(),
-                           res)
+        tag_getter.repo.get_tags.assert_called_once_with(sub_str=None)  # noqa
+        mock_get_prioritized_problems.assert_called_once_with(tags_any=None)
+        assert_frame_equal(self.empty_tag_df, res)
