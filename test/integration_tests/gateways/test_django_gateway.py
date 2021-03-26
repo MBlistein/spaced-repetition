@@ -92,7 +92,7 @@ class TestProblemQuerying(TestCase):
     def test_query_filter_for_tags_all(self):
         required_tags = ['tag1', 'tag2']
 
-        res = DjangoGateway._query_problems(tags_must_have=required_tags)
+        res = DjangoGateway._query_problems(tags_all=required_tags)
 
         self.assertEqual(len(res), 3)
         self.assertEqual(sorted([prob.name for prob in res]),
@@ -110,7 +110,7 @@ class TestProblemQuerying(TestCase):
     def test_get_problems_filter_by_empty_params(self):
         params = [
             ({'name': ''}, []),
-            ({'tags_must_have': []}, [])
+            ({'tags_all': []}, [])
         ]
 
         for kwargs, expected_res in params:
@@ -121,7 +121,7 @@ class TestProblemQuerying(TestCase):
     def test_query_combined(self):
         res = DjangoGateway._query_problems(
             name_substr='b',  # exclude 'many_tags'
-            tags_must_have=['tag1', 'tag2'])  # exclude 'single_tag'
+            tags_all=['tag1', 'tag2'])  # exclude 'single_tag'
 
         self.assertEqual(['prob_1', 'prob_2'],
                          sorted([p.name for p in res]))
@@ -154,9 +154,9 @@ class TestProblemGetting(TestCase):
         problems = DjangoGateway.get_problems()
         self.assertEqual(2, len(problems))
 
-    def test_get_problems_filter_tags_must_have_and_name(self):
+    def test_get_problems_filter_tags_all_and_name(self):
         res = DjangoGateway.get_problems(name_substr='e',
-                                         tags_must_have=['tag1', 'tag2'])
+                                         tags_all=['tag1', 'tag2'])
 
         self.assertEqual(['name1', 'name2'],
                          sorted([p.name for p in res]))

@@ -39,18 +39,18 @@ class DjangoGateway(DBGatewayInterface):
     def get_problems(cls, name: Union[str, None] = None,
                      name_substr: str = None,
                      tags_any: List[str] = None,
-                     tags_must_have: List[str] = None) -> List[Problem]:
+                     tags_all: List[str] = None) -> List[Problem]:
         return cls._format_problems(
             problems=cls._query_problems(name=name,
                                          name_substr=name_substr,
                                          tags_any=tags_any,
-                                         tags_must_have=tags_must_have))
+                                         tags_all=tags_all))
 
     @staticmethod
     def _query_problems(name: str = None,
                         name_substr: str = None,
                         tags_any: List[str] = None,
-                        tags_must_have: List[str] = None) -> QuerySet:
+                        tags_all: List[str] = None) -> QuerySet:
         qs = OrmProblem.objects.all()
         if name is not None:
             qs = qs.filter(name=name)
@@ -60,12 +60,12 @@ class DjangoGateway(DBGatewayInterface):
             qs = qs \
                 .filter(tags__name__in=tags_any) \
                 .distinct()
-        if tags_must_have is not None:
+        if tags_all is not None:
             qs = qs \
                 .annotate(num_matches=Count(
                     'tags',
-                    filter=Q(tags__name__in=tags_must_have))) \
-                .filter(num_matches=len(tags_must_have))
+                    filter=Q(tags__name__in=tags_all))) \
+                .filter(num_matches=len(tags_all))
 
         return qs
 

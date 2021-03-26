@@ -177,7 +177,7 @@ class CliController:
         if args.filter_name:
             kwargs['name_substr'] = args.filter_name
         if args.filter_tags_all:
-            kwargs['tags_must_have'] = args.filter_tags_all
+            kwargs['tags_all'] = args.filter_tags_all
         if args.filter_tags_any:
             kwargs['tags_any'] = args.filter_tags_any
         if args.sort_by:

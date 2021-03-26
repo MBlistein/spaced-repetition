@@ -34,14 +34,14 @@ class TestListProblems(unittest.TestCase):
 
         problem_df = p_g.get_problems(name_substr='aa',
                                       tags_any=['bb'],
-                                      tags_must_have=['cc'])
+                                      tags_all=['cc'])
 
         expected_df = self.problem_df
         cols_in_order = sorted(expected_df.columns)
 
         # noinspection PyUnresolvedReferences
         p_g.repo.get_problems.assert_called_once_with(
-            name_substr='aa', tags_any=['bb'], tags_must_have=['cc'])
+            name_substr='aa', tags_any=['bb'], tags_all=['cc'])
 
         self.assertEqual(sorted(problem_df.columns),
                          sorted(expected_df.columns))
@@ -72,7 +72,7 @@ class TestListProblems(unittest.TestCase):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
 
         res = p_g.get_prioritized_problems(name_substr='aa',
-                                           tags_must_have=['cc'])
+                                           tags_all=['cc'])
 
         expected_res = knowledge_score_df
         expected_res['difficulty'] = self.problem.difficulty
@@ -83,7 +83,7 @@ class TestListProblems(unittest.TestCase):
 
         mock_get_problems.assert_called_once_with(name_substr='aa',
                                                   tags_any=None,
-                                                  tags_must_have=['cc'])
+                                                  tags_all =['cc'])
         mock_get_problem_knowledge_scores.assert_called_once_with(
             problem_ids=[1])
 
