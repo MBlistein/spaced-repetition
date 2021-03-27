@@ -114,7 +114,8 @@ class TagGetter:
                                                 difficulty=Difficulty.HARD)
 
         weighted_ks = 0.25 * easy_avg_ks + 0.5 * med_avg_ks + 0.25 * hard_avg_ks
-        experience = min(1.0, len(group_df) / 5)
+        # experience = min(1.0, len(group_df) / 5)
+        experience = min(1.0, group_df.ts_logged.count() / 5)
         priority = weighted_ks * experience
 
         return pd.Series(

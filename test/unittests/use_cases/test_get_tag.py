@@ -1,6 +1,8 @@
+import datetime as dt
 import unittest
 from unittest.mock import patch, Mock
 
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal
 
@@ -42,36 +44,49 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'name': 'easy_problem_1',
             'difficulty': Difficulty.EASY,
             'KS': 3,
-            'tag': 'tag_1'}
+            'tag': 'tag_1',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.prob_data_easy_2 = {
             'name': 'easy_problem_2',
             'difficulty': Difficulty.EASY,
             'KS': 5,
-            'tag': 'tag_1'}
+            'tag': 'tag_1',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.prob_data_medium = {
             'name': 'medium_problem',
             'difficulty': Difficulty.MEDIUM,
             'KS': 2,
-            'tag': 'tag_1'}
+            'tag': 'tag_1',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
         self.prob_data_tag_2_easy = {
             'name': 'easy_problem_3',
             'difficulty': Difficulty.EASY,
             'KS': 5,
-            'tag': 'tag_2'}
+            'tag': 'tag_2',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.prob_data_tag_2_medium = {
             'name': 'medium_problem_2',
             'difficulty': Difficulty.MEDIUM,
             'KS': 4,
-            'tag': 'tag_2'}
+            'tag': 'tag_2',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.prob_data_tag_2_hard = {
             'name': 'medium_problem_2',
             'difficulty': Difficulty.HARD,
             'KS': 3,
-            'tag': 'tag_2'}
+            'tag': 'tag_2',
+            'ts_logged': dt.datetime(2021, 1, 1, 10)}
+
+        self.prob_data_never_done = {
+            'name': 'new_problem',
+            'difficulty': Difficulty.HARD,
+            'KS': np.nan,
+            'tag': 'tag_new',
+            'ts_logged': np.nan}
 
         self.empty_problem_df = pd.DataFrame(columns=[
             'difficulty', 'name', 'tag', 'url', 'problem_id', 'ts_logged',
@@ -116,7 +131,8 @@ class TestGetPrioritizedTags(unittest.TestCase):
             self.prob_data_medium,
             self.prob_data_tag_2_easy,
             self.prob_data_tag_2_medium,
-            self.prob_data_tag_2_hard])
+            self.prob_data_tag_2_hard,
+            self.prob_data_never_done])
 
         expected_res = pd.DataFrame(data=[
             {'tag': 'tag_1',
@@ -128,13 +144,18 @@ class TestGetPrioritizedTags(unittest.TestCase):
              'KS (weighted avg)': 4.0,
              'experience': 0.6,
              'num_problems': 3,
-             'priority': 2.4}
+             'priority': 2.4},
+            {'tag': 'tag_new',
+             'KS (weighted avg)': 0.0,
+             'experience': 0.0,
+             'num_problems': 1,
+             'priority': 0.0}
         ])
 
         res = TagGetter._prioritize_tags(tag_data=test_df)
 
-        assert_frame_equal(expected_res,
-                           res.reindex(columns=expected_res.columns))
+        assert_frame_equal(expected_res, res,
+                           check_like=True)
 
     def test_prioritize_tags_empty_data(self):
         res = TagGetter._prioritize_tags(tag_data=self.empty_problem_df)
