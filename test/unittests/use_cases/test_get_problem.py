@@ -41,6 +41,10 @@ class TestListProblems(unittest.TestCase):
              'KS': 2.0,
         }
 
+        expected_data = self.problem_data.copy()
+        expected_data.update(self.problem_knowledge_data)
+        self.prioritized_problem = pd.DataFrame(data=[expected_data])
+
     def test_get_problems(self):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = [self.problem]
@@ -76,10 +80,6 @@ class TestListProblems(unittest.TestCase):
             data=[self.problem_knowledge_data])
         mock_get_problem_knowledge_scores.return_value = knowledge_score_df
 
-        expected_data = self.problem_data.copy()
-        expected_data.update(self.problem_knowledge_data)
-        expected_df = pd.DataFrame(data=[expected_data])
-
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
 
         # call
@@ -93,7 +93,7 @@ class TestListProblems(unittest.TestCase):
         mock_get_problem_knowledge_scores.assert_called_once_with(
             problem_ids=[1])
 
-        assert_frame_equal(expected_df, res, check_like=True)
+        assert_frame_equal(self.prioritized_problem, res, check_like=True)
 
     @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
     @patch.object(ProblemGetter, 'get_problems')

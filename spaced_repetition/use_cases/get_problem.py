@@ -19,10 +19,21 @@ class ProblemGetter:
                       sorted_by: List[str] = None,
                       tags_any: List[str] = None,
                       tags_all: List[str] = None):
-        self.presenter.list_problems(
-            problems=self.get_prioritized_problems(name_substr=name_substr,
+        problem_df = self.get_prioritized_problems(name_substr=name_substr,
                                                    tags_any=tags_any,
-                                                   tags_all=tags_all))
+                                                   tags_all=tags_all)
+
+        problem_df.sort_values(by=sorted_by or 'KS',
+                               inplace=True,
+                               key=self.sort_key,
+                               na_position='first')
+        self.presenter.list_problems(problem_df)
+
+    @staticmethod
+    def sort_key(col):
+        if col.dtype == 'object':
+            return col.str.lower()
+        return col
 
     def get_prioritized_problems(self, name_substr: str = None,
                                  tags_any: List[str] = None,

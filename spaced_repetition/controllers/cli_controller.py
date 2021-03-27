@@ -51,7 +51,7 @@ class CliController:
             nargs='+',
             help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
-                                 choices=['id', 'name'],
+                                 choices=['KS', 'name', 'problem_id'],
                                  nargs=1,
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
