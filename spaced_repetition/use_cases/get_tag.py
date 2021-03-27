@@ -32,6 +32,8 @@ where:
 """
 
 import dataclasses
+from typing import List
+
 import numpy as np
 import pandas as pd
 
@@ -53,31 +55,45 @@ class TagGetter:
 
     def get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
         tag_df = self.get_tags(sub_str=sub_str)
+        filter_tags = tag_df.tag.to_list() if sub_str else None
 
+        problem_df = self._get_problems_per_tag(filter_tags=filter_tags)
+
+        tag_data = pd.merge(tag_df, problem_df, on='tag', how='outer')
+
+        return self._prioritize_tags(tag_data=tag_data)
+
+    def _get_problems_per_tag(self, filter_tags: List[str] = None):
         problem_getter = ProblemGetter(db_gateway=self.repo,
                                        presenter=self.presenter)
-        filter_tags = tag_df.name.to_list() if sub_str else None
         problem_df = problem_getter.get_prioritized_problems(
             tags_any=filter_tags)
 
-        return self._prioritize_tags(problem_data=problem_df)
+        # resolve problem: tag many-to one
+        problem_df.tags = problem_df.tags.str.split(', ')
+        problem_df = problem_df \
+            .rename(columns={'tags': 'tag'}) \
+            .explode('tag', ignore_index=True)
+
+        return problem_df
 
     def get_tags(self, sub_str: str = None) -> pd.DataFrame:
         tags = self.repo.get_tags(sub_str=sub_str)
 
         tag_df = pd.DataFrame(data=[dataclasses.asdict(tag) for tag in tags]) \
-            .reindex(columns=['name', 'tag_id'])  # ensure cols exist when empty
+            .rename(columns={'name': 'tag'}) \
+            .reindex(columns=['tag', 'tag_id'])  # ensure cols exist when empty
         return tag_df
 
     @classmethod
-    def _prioritize_tags(cls, problem_data: pd.DataFrame):
-        if problem_data.empty:
+    def _prioritize_tags(cls, tag_data: pd.DataFrame):
+        if tag_data.empty:
             return pd.DataFrame(
                 columns=['tags', 'experience', 'KW (weighted avg)',
                          'num_problems', 'priority'])
 
-        return problem_data \
-            .groupby('tags') \
+        return tag_data \
+            .groupby('tag') \
             .apply(cls._prioritize) \
             .reset_index() \
             .sort_values(['priority', 'KS (weighted avg)'])

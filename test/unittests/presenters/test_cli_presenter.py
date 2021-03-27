@@ -123,16 +123,16 @@ class TestCliPresenterTags(unittest.TestCase):
                  'KS (weighted avg)': 5.0,
                  'priority': 4.0,
                  'num_problems': 4}],
-            columns=['tags', 'priority', 'KS (weighted avg)', 'experience',
+            columns=['tag', 'priority', 'KS (weighted avg)', 'experience',
                      'num_problems']) \
-            .set_index('tags')
+            .set_index('tag')
 
         assert_frame_equal(formatted_df, expected_df)
 
     def test_format_tag_df_empty(self):
-        order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
+        order = ['tag', 'priority', 'KS (weighted avg)', 'experience',
                  'num_problems']
-        expected_res = pd.DataFrame(columns=order).set_index('tags')
+        expected_res = pd.DataFrame(columns=order).set_index('tag')
 
         assert_frame_equal(expected_res,
                            CliPresenter.format_tag_df(pd.DataFrame()),
@@ -142,14 +142,14 @@ class TestCliPresenterTags(unittest.TestCase):
     def test_list_tags(self, mock_stdout):
         test_df = pd.DataFrame(
             data=[
-                {'tags': 'test-tag',
+                {'tag': 'test-tag',
                  'experience': 0.8,
                  'KS (weighted avg)': 5.0,
                  'priority': 4.0,
                  'num_problems': 4}])
 
         expected_output = \
-            "| tags     |   priority |   KS (weighted avg) |   experience |   num_problems |\n" \
+            "| tag      |   priority |   KS (weighted avg) |   experience |   num_problems |\n" \
             "|----------|------------|---------------------|--------------|----------------|\n" \
             "| test-tag |          4 |                   5 |          0.8 |              4 |\n"
 

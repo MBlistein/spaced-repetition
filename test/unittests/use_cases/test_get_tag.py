@@ -19,7 +19,7 @@ class TestGetTags(unittest.TestCase):
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
         tag_getter.repo.get_tags.return_value = [tag_1, tag_2]
 
-        expected_df = pd.DataFrame(data={'name': ['tag_1', 'tag_2'],
+        expected_df = pd.DataFrame(data={'tag': ['tag_1', 'tag_2'],
                                          'tag_id': [None, None]})
 
         tag_df = tag_getter.get_tags()
@@ -33,7 +33,7 @@ class TestGetTags(unittest.TestCase):
         tag_df = tag_getter.get_tags()
 
         self.assertTrue(tag_df.empty)
-        self.assertEqual(['name', 'tag_id'], tag_df.columns.to_list())
+        self.assertEqual(['tag', 'tag_id'], tag_df.columns.to_list())
 
 
 class TestGetPrioritizedTags(unittest.TestCase):
@@ -42,39 +42,39 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'name': 'easy_problem_1',
             'difficulty': Difficulty.EASY,
             'KS': 3,
-            'tags': 'tag_1'}
+            'tag': 'tag_1'}
 
         self.prob_data_easy_2 = {
             'name': 'easy_problem_2',
             'difficulty': Difficulty.EASY,
             'KS': 5,
-            'tags': 'tag_1'}
+            'tag': 'tag_1'}
 
         self.prob_data_medium = {
             'name': 'medium_problem',
             'difficulty': Difficulty.MEDIUM,
             'KS': 2,
-            'tags': 'tag_1'}
+            'tag': 'tag_1'}
         self.prob_data_tag_2_easy = {
             'name': 'easy_problem_3',
             'difficulty': Difficulty.EASY,
             'KS': 5,
-            'tags': 'tag_2'}
+            'tag': 'tag_2'}
 
         self.prob_data_tag_2_medium = {
             'name': 'medium_problem_2',
             'difficulty': Difficulty.MEDIUM,
             'KS': 4,
-            'tags': 'tag_2'}
+            'tag': 'tag_2'}
 
         self.prob_data_tag_2_hard = {
             'name': 'medium_problem_2',
             'difficulty': Difficulty.HARD,
             'KS': 3,
-            'tags': 'tag_2'}
+            'tag': 'tag_2'}
 
         self.empty_problem_df = pd.DataFrame(columns=[
-            'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
+            'difficulty', 'name', 'tag', 'url', 'problem_id', 'ts_logged',
             'result', 'ease', 'interval', 'RF', 'KS'])
 
         self.empty_tag_df = pd.DataFrame(columns=[
@@ -119,57 +119,111 @@ class TestGetPrioritizedTags(unittest.TestCase):
             self.prob_data_tag_2_hard])
 
         expected_res = pd.DataFrame(data=[
-            {'tags': 'tag_1',
+            {'tag': 'tag_1',
              'KS (weighted avg)': 2.0,
              'experience': 0.6,
              'num_problems': 3,
              'priority': 1.2},
-            {'tags': 'tag_2',
+            {'tag': 'tag_2',
              'KS (weighted avg)': 4.0,
              'experience': 0.6,
              'num_problems': 3,
              'priority': 2.4}
         ])
 
-        res = TagGetter._prioritize_tags(problem_data=test_df)
+        res = TagGetter._prioritize_tags(tag_data=test_df)
 
         assert_frame_equal(expected_res,
                            res.reindex(columns=expected_res.columns))
 
     def test_prioritize_tags_empty_data(self):
-        res = TagGetter._prioritize_tags(problem_data=self.empty_problem_df)
+        res = TagGetter._prioritize_tags(tag_data=self.empty_problem_df)
 
         assert_frame_equal(self.empty_tag_df, res)
 
-    @patch.object(ProblemGetter, 'get_prioritized_problems')
+    @patch.object(TagGetter, 'get_tags')
+    @patch.object(TagGetter, '_get_problems_per_tag')
     @patch.object(TagGetter, '_prioritize_tags')
     def test_get_prioritized_tags(self, mock_prioritize_tags,
-                                  mock_get_prio_problems):
-        mock_prioritize_tags.return_value = 'correct'
-        fake_problem_data = pd.DataFrame(data=[{'row': 'non-empty content'}])
-        mock_get_prio_problems.return_value = fake_problem_data
-        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
-        tag_getter.repo.get_tags.return_value = [TagCreator.create('tag_1'),
-                                                 TagCreator.create('tag_2')]
+                                  mock_get_problems_per_tag, mock_get_tags):
+        # prepare
+        mock_prioritize_tags.return_value = 'fake_prio_df'
+        mock_get_problems_per_tag.return_value = pd.DataFrame(data={
+            'tag': ['tag_1', 'tag_2'], 'some_info': [1, 2]})
+        mock_get_tags.return_value = pd.DataFrame(data={
+            'tag': ['tag_1', 'tag_2'], 'tag_id': [1, 2]})
 
+        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
+
+        expected_merge_df = pd.DataFrame(data={
+            'tag': ['tag_1', 'tag_2'], 'tag_id': [1, 2], 'some_info': [1, 2]})
+
+        # call
         res = tag_getter.get_prioritized_tags(sub_str='test_str')
 
-        tag_getter.repo.get_tags.assert_called_once_with(sub_str='test_str')  # noqa
-        mock_get_prio_problems.assert_called_once_with(
-            tags_any=['tag_1', 'tag_2'])
-        mock_prioritize_tags.assert_called_once_with(
-            problem_data=fake_problem_data)
-        self.assertEqual('correct', res)
+        # assert
+        mock_get_tags.assert_called_once_with(sub_str='test_str')
+        mock_get_problems_per_tag.assert_called_once_with(
+            filter_tags=['tag_1', 'tag_2'])
 
-    @patch.object(ProblemGetter, 'get_prioritized_problems')
-    def test_get_prioritized_tags_no_data(self, mock_get_prioritized_problems):
-        mock_get_prioritized_problems.return_value = self.empty_problem_df
+        merge_res = mock_prioritize_tags.call_args.kwargs['tag_data']
+        assert_frame_equal(expected_merge_df, merge_res)
+        mock_prioritize_tags.assert_called_once()
+        self.assertEqual('fake_prio_df', res)
+
+    @patch.object(TagGetter, 'get_tags')
+    @patch.object(TagGetter, '_get_problems_per_tag')
+    def test_get_prioritized_tags_no_data(
+            self, mock_get_problems_per_tag, mock_get_tags):
+        # prepare
+        mock_get_problems_per_tag.return_value = self.empty_problem_df
+        mock_get_tags.return_value = pd.DataFrame(
+            columns=['tag', 'tag_id'])
 
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
-        tag_getter.repo.get_tags.return_value = []
 
+        # call
         res = tag_getter.get_prioritized_tags()
 
-        tag_getter.repo.get_tags.assert_called_once_with(sub_str=None)  # noqa
-        mock_get_prioritized_problems.assert_called_once_with(tags_any=None)
+        # assert
+        mock_get_tags.assert_called_once_with(sub_str=None)
+        mock_get_problems_per_tag.assert_called_once_with(filter_tags=None)
         assert_frame_equal(self.empty_tag_df, res)
+
+    @patch.object(ProblemGetter, 'get_prioritized_problems')
+    def test_get_problems_per_tag(self, mock_get_prioritized_problems):
+        mock_get_prioritized_problems.return_value = pd.DataFrame(data=[
+            {'tags': 'tag_1, tag_2',
+             'name': 'prob_1'},
+            {'tags': 'tag_2',
+             'name': 'prob_2'},
+        ])
+        expected_df = pd.DataFrame(data=[
+            {'tag': 'tag_1',
+             'name': 'prob_1'},
+            {'tag': 'tag_2',
+             'name': 'prob_1'},
+            {'tag': 'tag_2',
+             'name': 'prob_2'},
+        ])
+
+        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
+        res = tag_getter._get_problems_per_tag()
+
+        assert_frame_equal(expected_df, res)
+
+    @patch.object(ProblemGetter, 'get_prioritized_problems')
+    def test_get_problems_per_tag_no_data(self, mock_get_prioritized_problems):
+        mock_get_prioritized_problems.return_value = pd.DataFrame(columns=[
+            'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
+            'result', 'ease', 'interval', 'RF', 'KS'])
+
+        expected_df = pd.DataFrame(columns=[
+            'difficulty', 'name', 'tag', 'url', 'problem_id', 'ts_logged',
+            'result', 'ease', 'interval', 'RF', 'KS'])
+
+        tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
+        res = tag_getter._get_problems_per_tag()
+
+        assert_frame_equal(expected_df, res,
+                           check_index_type=False)

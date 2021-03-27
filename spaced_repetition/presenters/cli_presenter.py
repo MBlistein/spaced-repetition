@@ -76,9 +76,9 @@ class CliPresenter(PresenterInterface):
 
     @staticmethod
     def format_tag_df(df: pd.DataFrame):
-        order = ['tags', 'priority', 'KS (weighted avg)', 'experience',
+        order = ['tag', 'priority', 'KS (weighted avg)', 'experience',
                  'num_problems']
 
         return df \
             .reindex(columns=order) \
-            .set_index('tags')
+            .set_index('tag')
