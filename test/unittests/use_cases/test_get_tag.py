@@ -248,3 +248,15 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
         assert_frame_equal(expected_df, res,
                            check_index_type=False)
+
+    def test_mean_knowledge_score(self):
+        data_df = pd.DataFrame(data=[
+            {'difficulty': Difficulty.EASY, 'KS': 3},
+            {'difficulty': Difficulty.EASY, 'KS': 1},
+            {'difficulty': Difficulty.EASY, 'KS': np.nan}
+        ])
+
+        res = TagGetter._mean_knowledge_score(df=data_df,
+                                              difficulty=Difficulty.EASY)
+
+        self.assertAlmostEqual(2.0, res)

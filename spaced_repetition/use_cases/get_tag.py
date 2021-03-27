@@ -129,6 +129,7 @@ class TagGetter:
 
     @staticmethod
     def _mean_knowledge_score(df: pd.DataFrame, difficulty: Difficulty):
+        # problems that have never been done should be ignored
         ks = df \
             .loc[df.difficulty == difficulty, 'KS'] \
             .mean()
