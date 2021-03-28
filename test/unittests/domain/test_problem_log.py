@@ -4,7 +4,9 @@ from unittest.mock import patch
 
 from dateutil.tz import gettz
 
-from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL,
+from spaced_repetition.domain.problem_log import (DEFAULT_EASE,
+                                                  INTERVAL_NON_OPTIMAL_SOLUTION,
+                                                  MINIMUM_EASE,
                                                   ProblemLog, ProblemLogCreator,
                                                   Result)
 
@@ -43,17 +45,25 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_calc_ease(self):
         last_log = ProblemLogCreator.create(
-            ease=1,
+            ease=10,
+            interval=1,
+            last_log=None,
+            problem_id=1,
+            result=Result.KNEW_BY_HEART)
+
+        last_log_ease_too_low = ProblemLogCreator.create(
+            ease=0.5,
             interval=1,
             last_log=None,
             problem_id=1,
             result=Result.KNEW_BY_HEART)
 
         test_params = [
-            (last_log, Result.KNEW_BY_HEART, 1.5),
-            (last_log, Result.SOLVED_OPTIMALLY_IN_UNDER_25, 1),
-            (last_log, Result.SOLVED_OPTIMALLY_SLOWER, 0.5),
+            (last_log, Result.KNEW_BY_HEART, 10.12),
+            (last_log, Result.SOLVED_OPTIMALLY_IN_UNDER_25, 10),
+            (last_log, Result.SOLVED_OPTIMALLY_SLOWER, 9.88),
             (last_log, 'any_other_result', DEFAULT_EASE),
+            (last_log_ease_too_low, Result.KNEW_BY_HEART, MINIMUM_EASE),
             (None, Result.KNEW_BY_HEART, DEFAULT_EASE),
         ]
 
@@ -76,9 +86,9 @@ class TestProblemLogCreator(unittest.TestCase):
             ('any_ease', None, Result.SOLVED_OPTIMALLY_SLOWER, 7),
             (1.5, last_log, Result.SOLVED_OPTIMALLY_SLOWER, 75),
             (1.5, last_log, Result.SOLVED_OPTIMALLY_WITH_HINT,
-             DEFAULT_INTERVAL),
+             INTERVAL_NON_OPTIMAL_SOLUTION),
             ('any_ease', None, Result.SOLVED_OPTIMALLY_WITH_HINT,
-             DEFAULT_INTERVAL),
+             INTERVAL_NON_OPTIMAL_SOLUTION),
         ]
 
         for ease, last_log, result, expected_interval in test_params:

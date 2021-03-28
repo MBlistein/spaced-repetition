@@ -19,7 +19,9 @@ from dateutil.tz import gettz
 
 
 DEFAULT_EASE = 2.5
-DEFAULT_INTERVAL = 1
+EASE_DELTA = 0.12
+INTERVAL_NON_OPTIMAL_SOLUTION = 3
+MINIMUM_EASE = 1.3
 
 
 @unique
@@ -69,14 +71,18 @@ class ProblemLogCreator:
 
         ease = last_log.ease
         if result == Result.KNEW_BY_HEART:
-            return ease + 0.5
-        if result == Result.SOLVED_OPTIMALLY_IN_UNDER_25:
-            return ease
-        if result == Result.SOLVED_OPTIMALLY_SLOWER:
-            return ease - 0.5
+            ease += EASE_DELTA
+        elif result == Result.SOLVED_OPTIMALLY_IN_UNDER_25:
+            pass
+        elif result == Result.SOLVED_OPTIMALLY_SLOWER:
+            ease -= EASE_DELTA
+        else:
+            # did not know the optimal solution (without hint) -> start over
+            ease = DEFAULT_EASE
 
-        # did not know the optimal solution (without hint) -> start over
-        return DEFAULT_EASE
+        ease = max(ease, MINIMUM_EASE)
+
+        return ease
 
     @staticmethod
     def calc_interval(ease: float, last_log: Union[ProblemLog, None],
@@ -84,7 +90,7 @@ class ProblemLogCreator:
         if result.value >= Result.SOLVED_OPTIMALLY_SLOWER.value:
             # eventually reached the optimal result without help
             if not last_log:
-                # do the problem for the first time -> set new defaults
+                # did the problem for the first time -> set new defaults
                 if result == Result.KNEW_BY_HEART:
                     return 21
                 if result == Result.SOLVED_OPTIMALLY_IN_UNDER_25:
@@ -96,7 +102,7 @@ class ProblemLogCreator:
             return round(last_log.interval * ease)
 
         # did not know the optimal solution (without hint) -> start over
-        return DEFAULT_INTERVAL
+        return INTERVAL_NON_OPTIMAL_SOLUTION
 
     @staticmethod
     def validate_problem_id(problem_id: int) -> int:

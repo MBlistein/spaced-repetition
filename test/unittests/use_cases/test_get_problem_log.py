@@ -6,7 +6,7 @@ import pandas as pd
 from dateutil.tz import gettz
 from pandas.testing import assert_frame_equal
 
-from spaced_repetition.domain.problem_log import (DEFAULT_EASE, DEFAULT_INTERVAL,
+from spaced_repetition.domain.problem_log import (DEFAULT_EASE, INTERVAL_NON_OPTIMAL_SOLUTION,
                                                   ProblemLogCreator, Result)
 from spaced_repetition.domain.score import Score
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
@@ -37,12 +37,12 @@ class TestProblemLogGetter(unittest.TestCase):
     def test_get_problem_logs(self):
         expected_res = pd.DataFrame([
             {'ease': DEFAULT_EASE,
-             'interval': DEFAULT_INTERVAL,
+             'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 1,
              'result': Result.NO_IDEA,
              'ts_logged': self.time_1},
             {'ease': DEFAULT_EASE,
-             'interval': DEFAULT_INTERVAL,
+             'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
@@ -67,7 +67,7 @@ class TestProblemLogGetter(unittest.TestCase):
     def test_log_to_row_content(self):
         expected_res = {
             'ease': DEFAULT_EASE,
-            'interval': DEFAULT_INTERVAL,
+            'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
             'problem_id': 1,
             'result': Result.NO_IDEA,
             'ts_logged': self.time_1}
