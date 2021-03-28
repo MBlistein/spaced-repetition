@@ -43,10 +43,11 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_calc_ease(self):
         last_log = ProblemLogCreator.create(
+            ease=1,
+            interval=1,
             last_log=None,
             problem_id=1,
             result=Result.KNEW_BY_HEART)
-        last_log.ease = 1
 
         test_params = [
             (last_log, Result.KNEW_BY_HEART, 1.5),
@@ -64,15 +65,15 @@ class TestProblemLogCreator(unittest.TestCase):
 
     def test_calc_interval(self):
         last_log = ProblemLogCreator.create(
+            interval=50,
             last_log=None,
             problem_id=1,
             result=Result.KNEW_BY_HEART)
-        last_log.interval = 50
 
         test_params = [
             ('any_ease', None, Result.KNEW_BY_HEART, 21),
             ('any_ease', None, Result.SOLVED_OPTIMALLY_IN_UNDER_25, 14),
-            ('any_ease', None, Result.SOLVED_OPTIMALLY_SLOWER, 3),
+            ('any_ease', None, Result.SOLVED_OPTIMALLY_SLOWER, 7),
             (1.5, last_log, Result.SOLVED_OPTIMALLY_SLOWER, 75),
             (1.5, last_log, Result.SOLVED_OPTIMALLY_WITH_HINT,
              DEFAULT_INTERVAL),

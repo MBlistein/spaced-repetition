@@ -32,7 +32,7 @@ class Result(Enum):
     KNEW_BY_HEART = 5
 
 
-@dataclass
+@dataclass(frozen=True)
 class ProblemLog:
     ease: float  # factor for spacing interval
     interval: int  # in days
@@ -90,7 +90,7 @@ class ProblemLogCreator:
                 if result == Result.SOLVED_OPTIMALLY_IN_UNDER_25:
                     return 14
                 if result == Result.SOLVED_OPTIMALLY_SLOWER:
-                    return 3
+                    return 7
                 raise ValueError(f"Result '{result.name}' unknown!")
 
             return round(last_log.interval * ease)
