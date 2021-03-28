@@ -20,6 +20,9 @@ from dateutil.tz import gettz
 
 DEFAULT_EASE = 2.5
 EASE_DELTA = 0.12
+INTERVAL_KNEW_BY_HEART = 21
+INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25 = 14
+INTERVAL_SOLVED_OPTIMALLY_SLOWER = 7
 INTERVAL_NON_OPTIMAL_SOLUTION = 3
 MINIMUM_EASE = 1.3
 
@@ -92,11 +95,11 @@ class ProblemLogCreator:
             if not last_log:
                 # did the problem for the first time -> set new defaults
                 if result == Result.KNEW_BY_HEART:
-                    return 21
+                    return INTERVAL_KNEW_BY_HEART
                 if result == Result.SOLVED_OPTIMALLY_IN_UNDER_25:
-                    return 14
+                    return INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25
                 if result == Result.SOLVED_OPTIMALLY_SLOWER:
-                    return 7
+                    return INTERVAL_SOLVED_OPTIMALLY_SLOWER
                 raise ValueError(f"Result '{result.name}' unknown!")
 
             return round(last_log.interval * ease)
