@@ -60,7 +60,7 @@ class DjangoGateway(DBGatewayInterface):
             qs = qs \
                 .filter(tags__name__in=tags_any) \
                 .distinct()
-        if tags_all is not None:
+        if tags_all:
             qs = qs \
                 .annotate(num_matches=Count(
                     'tags',

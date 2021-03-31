@@ -77,10 +77,8 @@ class TestProblemQuerying(TestCase):
                                                    name='many_tags')
         prob_many_tags.tags.set([tag_1, tag_2, tag_3, tag_4])
 
-        OrmProblem.objects.create(difficulty=1, name='no_tags')  # no tags
-
     def test_query_all(self):
-        self.assertEqual(5, len(DjangoGateway._query_problems(name=None)))
+        self.assertEqual(4, len(DjangoGateway._query_problems(name=None)))
 
     def test_query_filter_by_name(self):
         self.assertEqual(1, len(DjangoGateway._query_problems(name='prob_1')))
@@ -110,7 +108,6 @@ class TestProblemQuerying(TestCase):
     def test_get_problems_filter_by_empty_params(self):
         params = [
             ({'name': ''}, []),
-            ({'tags_all': []}, [])
         ]
 
         for kwargs, expected_res in params:
