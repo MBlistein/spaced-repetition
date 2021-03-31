@@ -10,6 +10,7 @@ from spaced_repetition.domain.problem_log import (DEFAULT_EASE, INTERVAL_NON_OPT
                                                   ProblemLogCreator, Result)
 from spaced_repetition.domain.score import Score
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
+from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
 class TestProblemLogGetter(unittest.TestCase):
@@ -47,18 +48,18 @@ class TestProblemLogGetter(unittest.TestCase):
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
 
-        assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
+        assert_frame_equal(self.plg._get_problem_logs(problem_ids=[1, 2]),
                            expected_res)
 
     def test_get_problem_logs_no_problems(self):
         plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
         plg.repo.get_problem_logs.return_value = []
 
-        assert_frame_equal(plg.get_problem_logs(),
+        assert_frame_equal(plg._get_problem_logs(),
                            pd.DataFrame())
 
     def test_get_problem_logs_for_specific_problems(self):
-        self.plg.get_problem_logs(problem_ids=[1])
+        self.plg._get_problem_logs(problem_ids=[1])
 
         # noinspection PyUnresolvedReferences
         self.plg.repo.get_problem_logs.assert_called_once_with(
@@ -77,12 +78,12 @@ class TestProblemLogGetter(unittest.TestCase):
             expected_res)
 
     @patch.object(ProblemLogGetter, '_last_log_per_problem')
-    @patch.object(ProblemLogGetter, 'get_problem_logs')
+    @patch.object(ProblemLogGetter, '_get_problem_logs')
     def test_get_last_log_per_problem(self, mock_get_problem_logs,
                                       mock_last_log_per_problem):
         mock_get_problem_logs.return_value = 'dummy_return'
 
-        self.plg.get_last_log_per_problem(problem_ids=[1, 2, 3])
+        self.plg._get_last_log_per_problem(problem_ids=[1, 2, 3])
 
         mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
         mock_last_log_per_problem.assert_called_once_with('dummy_return')
@@ -117,19 +118,20 @@ class TestProblemLogGetter(unittest.TestCase):
              'interval': 10,
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
-             'ts_logged': dt.datetime(2021, 1, 1, 15)}]) \
-            .reindex(columns=['problem_id', 'ts_logged', 'result', 'ease', 'interval'])
+             'ts_logged': dt.datetime(2021, 1, 1, 15)}])
 
         res = ProblemLogGetter._last_log_per_problem(log_df=log_df)
 
         # drop numeric index, which depends on the order of log_df entries
         res.reset_index(drop=True, inplace=True)
 
-        assert_frame_equal(expected_df, res)
+        assert_frame_equal(expected_df, res,
+                           check_like=True)
 
     def test_last_log_per_problem_no_data(self):
         columns = ['problem_id', 'ts_logged', 'result', 'ease', 'interval']
-        expected_df = pd.DataFrame(columns=columns, dtype='float64')
+        expected_df = add_missing_columns(df=pd.DataFrame(),
+                                          required_columns=columns)
 
         assert_frame_equal(
             expected_df,
@@ -150,15 +152,15 @@ class TestProblemLogGetter(unittest.TestCase):
         assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
                            expected_df)
 
-    @patch.object(ProblemLogGetter, 'get_knowledge_scores', autospec=True)
-    @patch.object(ProblemLogGetter, 'get_last_log_per_problem')
-    def test_get_problem_knowledge_scores(self, mock_get_problem_logs,
+    @patch.object(ProblemLogGetter, '_get_knowledge_scores', autospec=True)
+    @patch.object(ProblemLogGetter, '_get_last_log_per_problem')
+    def test_get_problem_knowledge_scores(self, mock_get_last_log_per_problem,
                                           mock_get_knowledge_scores):
-        mock_get_problem_logs.return_value = 'dummy_return'
+        mock_get_last_log_per_problem.return_value = 'dummy_return'
 
-        self.plg.get_problem_knowledge_scores(problem_ids=[1, 2, 3])
+        self.plg.get_problem_knowledge_scores(problem_ids=[1, 2])
 
-        mock_get_problem_logs.assert_called_once_with(problem_ids=[1, 2, 3])
+        mock_get_last_log_per_problem.assert_called_once_with(problem_ids=[1, 2])
         mock_get_knowledge_scores.assert_called_once_with(log_data='dummy_return')
 
     def test_retention_score(self):
@@ -180,7 +182,7 @@ class TestProblemLogGetter(unittest.TestCase):
 
                 self.assertAlmostEqual(
                     expected_rf,
-                    ProblemLogGetter.retention_score(df_row=df_row, ts=ts))
+                    ProblemLogGetter._retention_score(df_row=df_row, ts=ts))
 
     def test_get_knowledge_scores(self):
         last_log_data = pd.DataFrame(data=[
@@ -198,8 +200,8 @@ class TestProblemLogGetter(unittest.TestCase):
 
         cols_in_order = sorted(expected_df.columns)
 
-        res = ProblemLogGetter.get_knowledge_scores(log_data=last_log_data,
-                                                    ts=ts)
+        res = ProblemLogGetter._get_knowledge_scores(log_data=last_log_data,
+                                                     ts=ts)
 
         assert_frame_equal(expected_df.reindex(columns=cols_in_order),
                            res.reindex(columns=cols_in_order))
@@ -207,11 +209,13 @@ class TestProblemLogGetter(unittest.TestCase):
     def test_get_knowledge_scores_empty_input(self):
         columns_log_data = ['problem_id', 'ts_logged', 'result', 'ease',
                             'interval']
-        last_log_data = pd.DataFrame(columns=columns_log_data)
+        last_log_data = add_missing_columns(df=pd.DataFrame(),
+                                            required_columns=columns_log_data)
 
         columns_knowledge_df = columns_log_data + ['RF', 'KS']
-        expected_df = pd.DataFrame(columns=columns_knowledge_df)
+        expected_df = add_missing_columns(df=pd.DataFrame(),
+                                          required_columns=columns_knowledge_df)
 
-        res = ProblemLogGetter.get_knowledge_scores(log_data=last_log_data)
+        res = ProblemLogGetter._get_knowledge_scores(log_data=last_log_data)
 
-        assert_frame_equal(expected_df, res)
+        assert_frame_equal(expected_df, res, check_like=True)

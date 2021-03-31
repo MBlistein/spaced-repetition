@@ -37,10 +37,11 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from .get_problem import ProblemGetter
-from .db_gateway_interface import DBGatewayInterface
-from .presenter_interface import PresenterInterface
 from spaced_repetition.domain.problem import Difficulty
+from .db_gateway_interface import DBGatewayInterface
+from .get_problem import ProblemGetter
+from .helpers_pandas import add_missing_columns
+from .presenter_interface import PresenterInterface
 
 
 class TagGetter:
@@ -51,10 +52,10 @@ class TagGetter:
 
     def list_tags(self, sub_str: str = None):
         self.presenter.list_tags(
-            tags=self.get_prioritized_tags(sub_str=sub_str))
+            tags=self._get_prioritized_tags(sub_str=sub_str))
 
-    def get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
-        tag_df = self.get_tags(sub_str=sub_str)
+    def _get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
+        tag_df = self._get_tags(sub_str=sub_str)
         filter_tags = tag_df.tag.to_list() if sub_str else None
 
         problem_df = self._get_problems_per_tag(filter_tags=filter_tags)
@@ -69,29 +70,30 @@ class TagGetter:
         problem_df = problem_getter.get_prioritized_problems(
             tags_any=filter_tags)
 
-        # resolve problem: tag many-to one
-        problem_df.tags = problem_df.tags.str.split(', ')
+        # de-normalize many-to-one relation between problems and tags
+        if not problem_df.tags.empty:
+            problem_df.tags = problem_df.tags.str.split(', ')
         problem_df = problem_df \
             .rename(columns={'tags': 'tag'}) \
             .explode('tag', ignore_index=True)
 
         return problem_df
 
-    def get_tags(self, sub_str: str = None) -> pd.DataFrame:
+    def _get_tags(self, sub_str: str = None) -> pd.DataFrame:
         tags = self.repo.get_tags(sub_str=sub_str)
 
         tag_df = pd.DataFrame(data=[dataclasses.asdict(tag) for tag in tags]) \
-            .rename(columns={'name': 'tag'}) \
-            .reindex(columns=['tag', 'tag_id'])  # ensure cols exist when empty
-        return tag_df
+            .rename(columns={'name': 'tag'})
+        return add_missing_columns(tag_df,
+                                   ['tag', 'tag_id'])
 
     @classmethod
     def _prioritize_tags(cls, tag_data: pd.DataFrame):
         if tag_data.empty:
-            return pd.DataFrame(
-                columns=['tags', 'experience', 'KW (weighted avg)',
-                         'num_problems', 'priority'])
-
+            return add_missing_columns(
+                df=pd.DataFrame(),
+                required_columns=['experience', 'KW (weighted avg)',
+                                  'num_problems', 'priority', 'tags'])
         return tag_data \
             .groupby('tag') \
             .apply(cls._prioritize) \
@@ -102,10 +104,7 @@ class TagGetter:
     def _prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
         """ see docstring for description """
         if group_df.empty:
-            return pd.Series(index=['experience', 'KW (weighted avg)',
-                                    'num_problems', 'priority'],
-                             dtype='object')
-
+            raise ValueError("Handle group_df empty!")
         easy_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.EASY)
         med_avg_ks = cls._mean_knowledge_score(df=group_df,

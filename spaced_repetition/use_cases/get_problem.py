@@ -6,6 +6,7 @@ import pandas as pd
 from spaced_repetition.domain.problem import Problem
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem_log import ProblemLogGetter
+from .helpers_pandas import add_missing_columns
 from .presenter_interface import PresenterInterface
 
 
@@ -54,15 +55,13 @@ class ProblemGetter:
     def get_problems(self, name_substr: str = None,
                      tags_any: List[str] = None,
                      tags_all: List[str] = None) -> pd.DataFrame:
+        output_columns = ['difficulty', 'name', 'problem_id', 'tags', 'url']
         problems = self.repo.get_problems(name_substr=name_substr,
                                           tags_any=tags_any,
                                           tags_all=tags_all)
-        if not problems:
-            # Ensure expected columns exist
-            return pd.DataFrame(columns=[
-                'difficulty', 'name', 'problem_id', 'tags', 'url'])
 
-        return pd.DataFrame(data=map(self.problem_to_row_content, problems))
+        df = pd.DataFrame(data=map(self.problem_to_row_content, problems))
+        return add_missing_columns(df, required_columns=output_columns)
 
     @staticmethod
     def problem_to_row_content(problem: Problem) -> dict:

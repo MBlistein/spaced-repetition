@@ -11,6 +11,7 @@ from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import Result
 from spaced_repetition.use_cases.get_problem import ProblemGetter
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
+from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
 class TestListProblems(unittest.TestCase):
@@ -64,7 +65,8 @@ class TestListProblems(unittest.TestCase):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = []
 
-        expected_df = pd.DataFrame(columns=self.problem_columns)
+        expected_df = add_missing_columns(df=pd.DataFrame(),
+                                          required_columns=self.problem_columns)
 
         res = p_g.get_problems()
 
@@ -139,15 +141,17 @@ class TestListProblems(unittest.TestCase):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = []
 
-        expected_res = pd.DataFrame(columns=[
-            'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
-            'result', 'ease', 'interval', 'RF', 'KS'])
+        expected_res = add_missing_columns(
+            df=pd.DataFrame(), required_columns=[
+                'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
+                'result', 'ease', 'interval', 'RF', 'KS'])
 
         with patch.object(ProblemLogGetter, 'get_problem_knowledge_scores') as \
                 mock_ks_scores:
-            mock_ks_scores.return_value = pd.DataFrame(columns=[
-                'problem_id', 'ts_logged', 'result', 'ease', 'interval',
-                'RF', 'KS'])
+            mock_ks_scores.return_value = add_missing_columns(
+                df=pd.DataFrame(),
+                required_columns=['problem_id', 'ts_logged', 'result', 'ease',
+                                  'interval', 'RF', 'KS'])
 
             res = p_g.get_prioritized_problems()
 
