@@ -152,7 +152,7 @@ class TestProblemLogGetter(unittest.TestCase):
         assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
                            expected_df)
 
-    @patch.object(ProblemLogGetter, '_get_knowledge_scores', autospec=True)
+    @patch.object(ProblemLogGetter, '_get_knowledge_scores')
     @patch.object(ProblemLogGetter, '_get_last_log_per_problem')
     def test_get_problem_knowledge_scores(self, mock_get_last_log_per_problem,
                                           mock_get_knowledge_scores):
