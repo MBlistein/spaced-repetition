@@ -3,7 +3,7 @@ from typing import Union
 
 from .domain_helpers import validate_param
 
-MAX_TAG_LENGTH = 10
+MAX_TAG_LENGTH = 20
 
 
 @dataclass

@@ -1,9 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from spaced_repetition.domain.tag import TagCreator
-
-MAX_TAG_LENGTH = 10
+from spaced_repetition.domain.tag import (MAX_TAG_LENGTH, TagCreator)
 
 
 class TestTagCreator(unittest.TestCase):
