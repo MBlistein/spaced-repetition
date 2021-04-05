@@ -79,7 +79,9 @@ class ProblemLogGetter:
     def _retention_score(df_row: pd.Series, ts: dt.datetime) -> float:
         """Calculates the 'retention score' 0 <= RF <= 1,
         the percentage of knowledge retained at time ts"""
-        days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()).days
+        days_since_last_study = (ts - df_row.ts_logged.to_pydatetime()) \
+            .total_seconds() \
+            / 3600 / 24
 
         # negative days_over would make RF > 1
         days_over = max(0, days_since_last_study - df_row.interval)

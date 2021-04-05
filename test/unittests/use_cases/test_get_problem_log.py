@@ -172,13 +172,14 @@ class TestProblemLogGetter(unittest.TestCase):
         params = [
             (dt.timedelta(days=-interval), 1.0),
             (dt.timedelta(days=interval), 1.0),
+            (dt.timedelta(days=interval, hours=1), 0.994240423818),
             (dt.timedelta(days=2 * interval), 0.5),
             (dt.timedelta(days=3 * interval), 0.25),
         ]
 
-        for days_late, expected_rf in params:
-            with self.subTest(days_late=days_late, expected_rf=expected_rf):
-                ts = ts_logged + days_late
+        for delta_t, expected_rf in params:
+            with self.subTest(time_passed=delta_t, expected_rf=expected_rf):
+                ts = ts_logged + delta_t
 
                 self.assertAlmostEqual(
                     expected_rf,
