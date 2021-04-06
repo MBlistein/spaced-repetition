@@ -1,35 +1,7 @@
 """ Retrieves relevant information from the database, calculates a per-tag
 priority and passes the data on to the presenter.
 
-Per-tag priority:
-  - determines how urgently a certain topic (tag) should be reviewed
-  - implemented as prio-score between 1 (high need to catch up) to 10 (no
-    study necessary).
-
-Priority algorithm:
-The total tag priority is calculated as:
-
-    prio = avg_weighted_problem_prio * experience
-
-where:
-  1) Avg. weighted problem prio
-     Problems are rated in three categories: easy, medium, hard.
-     The avg_weighted_prio is calculated as the weighted sum of the average
-      priority of each of these categories.
-     It is reasoned that:
-       - easy problems signify the introduction of a topic
-       - medium problems are more representative of actual
-         topic knowledge as well as interview questions
-       - hard problems are rather edge-cases or advanced interview
-         questions --> not as essential as medium ones
-     Therefore, the total average score for a tag is determined as:
-     avg_score = 0.25 * avg_easy + 0.5 * avg_med + 0.25 * avg_hard
-  2) Experience
-    It does make sense to choose topics as fine-grained as possible.
-    Per topic, a minimum of 5 questions is necessary to reach full
-    'experience'. Hence:
-        experience = max(1, num_problems/ 5)
-"""
+Details on per-tag priority are described in the README"""
 
 import dataclasses
 from typing import List
