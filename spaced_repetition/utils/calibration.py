@@ -77,12 +77,12 @@ def spacing_data(repetition_results) -> pd.DataFrame:
 def plot_spacing(df):
     fig = plt.figure(figsize=(14, 8))
     fig.suptitle('Spacing development')
-    gs = GridSpec(nrows=2, ncols=2, figure=fig,
+    g_s = GridSpec(nrows=2, ncols=2, figure=fig,
                   hspace=0.3, wspace=0.25)
 
-    ax0 = fig.add_subplot(gs[0, 0])
-    ax1 = plt.subplot(gs.new_subplotspec((0, 1), colspan=1))
-    ax2 = plt.subplot(gs.new_subplotspec((1, 0), colspan=2))
+    ax0 = fig.add_subplot(g_s[0, 0])
+    ax1 = plt.subplot(g_s.new_subplotspec((0, 1), colspan=1))
+    ax2 = plt.subplot(g_s.new_subplotspec((1, 0), colspan=2))
 
     sns.scatterplot(ax=ax0, data=df, x='repetition', y='ease',
                     hue='result', marker='o', zorder=2)

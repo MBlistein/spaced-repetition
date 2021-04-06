@@ -112,7 +112,7 @@ class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def _format_problem_logs(problem_log_qs: QuerySet) -> List[ProblemLog]:
         res = []
-        for idx, p_l in enumerate(problem_log_qs):
+        for p_l in problem_log_qs:
             res.append(ProblemLogCreator.create(
                 ease=p_l.ease,
                 interval=p_l.interval,

@@ -28,7 +28,7 @@ class Problem:
 
 class ProblemCreator:
     @classmethod
-    def create(cls, name: str,
+    def create(cls, name: str,          # pylint: disable=too-many-arguments
                difficulty: Difficulty,
                tags: List[str],
                problem_id: int = None,
@@ -42,7 +42,7 @@ class ProblemCreator:
 
     @staticmethod
     def validate_difficulty(difficulty: Difficulty) -> Difficulty:
-        if type(difficulty) is not Difficulty:
+        if not isinstance(difficulty, Difficulty):
             raise TypeError('difficulty should be of type Difficulty')
         return difficulty
 

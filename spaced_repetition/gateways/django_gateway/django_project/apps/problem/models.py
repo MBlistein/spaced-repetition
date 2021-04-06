@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 from spaced_repetition.domain.problem import (Difficulty,
                                               MAX_NAME_LENGTH,

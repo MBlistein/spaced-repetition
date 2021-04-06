@@ -13,6 +13,9 @@ from spaced_repetition.use_cases.get_tag import TagGetter
 from spaced_repetition.use_cases.log_problem import ProblemLogger
 
 
+# pylint: disable=too-few-public-methods
+
+
 class CliController:
     DESCRIPTION = """This is the spaced-repetition CLI"""
 
@@ -23,8 +26,6 @@ class CliController:
 
     @classmethod
     def _parse_args(cls):
-        # TODO: install this program to be called from the command line via
-        #  'spaced-repetition'
         parser = argparse.ArgumentParser(prog='spaced-repetition',
                                          description=CliController.DESCRIPTION)
         sub_parsers = parser.add_subparsers(title='Options')
@@ -142,8 +143,8 @@ class CliController:
     @classmethod
     def _get_user_input_result(cls) -> Result:
         print('\nThe following Result options exist:')
-        for r in Result:
-            print(f'{r.value}: {r.name}')
+        for res in Result:
+            print(f'{res.value}: {res.name}')
 
         user_choice = cls._clean_input(input('Choose one (int): '))
         return Result(int(user_choice))
@@ -154,9 +155,9 @@ class CliController:
 
     @classmethod
     def _record_problem_data(cls) -> dict:
-        sorted_difficulties = list(sorted([diff for diff in Difficulty],
-                                          key=lambda d: d.value))
-        min_diff, max_diff = sorted_difficulties[0], sorted_difficulties[-1]
+        sorted_difficulties = sorted(Difficulty, key=lambda d: d.value)
+        min_diff = sorted_difficulties[0]
+        max_diff = sorted_difficulties[-1]
         return {
             'name': cls._get_problem_name(),
             'difficulty': cls._format_difficulty(

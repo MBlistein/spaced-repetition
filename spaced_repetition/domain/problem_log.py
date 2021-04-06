@@ -48,7 +48,7 @@ class ProblemLog:
 
 class ProblemLogCreator:
     @classmethod
-    def create(cls,
+    def create(cls,                      # pylint: disable=too-many-arguments
                problem_id: int,
                result: Result,
                ease: float = None,
