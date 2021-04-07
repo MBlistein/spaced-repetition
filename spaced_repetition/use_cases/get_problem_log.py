@@ -26,7 +26,7 @@ class ProblemLogGetter:
         return self._get_knowledge_scores(
             log_data=self._get_last_log_per_problem(problem_ids=problem_ids))
 
-    def _get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
+    def get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs(problem_ids=problem_ids)
         return pd.DataFrame(data=map(self._log_to_row_content, problem_logs))
 
@@ -37,7 +37,7 @@ class ProblemLogGetter:
         return row_content
 
     def _get_last_log_per_problem(self, problem_ids: List[int] = None):
-        log_df = self._get_problem_logs(problem_ids=problem_ids)
+        log_df = self.get_problem_logs(problem_ids=problem_ids)
         return self._last_log_per_problem(log_df)
 
     @staticmethod

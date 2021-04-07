@@ -5,18 +5,41 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
-class TestCliPresenter(unittest.TestCase):
-    def setUp(self):
-        self.num_cols = 5
-        self.column_widths = [5, 20, 20, 10, 25]
+class TestCommonFormatters(unittest.TestCase):
+    def test_format_difficulty(self):
+        difficulty = pd.Series({1: Difficulty.MEDIUM})
+        expected_res = pd.Series({1: Difficulty.MEDIUM.name})
 
+        res = CliPresenter._format_difficulty(difficulty=difficulty)
+
+        assert_series_equal(expected_res, res)
+
+    def test_format_result(self):
+        result = pd.Series({1: Result.KNEW_BY_HEART})
+        expected_res = pd.Series({1: Result.KNEW_BY_HEART.name})
+
+        res = CliPresenter._format_result(result=result)
+
+        assert_series_equal(expected_res, res)
+
+    def test_format_timestamp(self):
+        timestamp = pd.Series({1: dt.datetime(2021, 1, 15, 10, 23, 45, 124)})
+        expected_res = pd.Series({1: '2021-01-15 10:23'})
+
+        res = CliPresenter._format_timestamp(ts=timestamp)
+
+        assert_series_equal(expected_res, res)
+
+
+class TestListProblems(unittest.TestCase):
+    def setUp(self):
         self.problem_df = pd.DataFrame(data=[{
             'difficulty': Difficulty.MEDIUM,
             'ease': 2.5,
@@ -99,11 +122,37 @@ class TestCliPresenter(unittest.TestCase):
                          mock_stdout.getvalue())
 
 
-class TestCliPresenterTags(unittest.TestCase):
+class TestProblemHistory(unittest.TestCase):
     def setUp(self):
-        self.num_cols = 2
-        self.column_widths = [5, 10]
+        self.problem = ProblemCreator.create(name='test_problem',
+                                             difficulty=Difficulty.MEDIUM,
+                                             tags=['test_tag'],
+                                             problem_id=1)
+        self.problem_log_info = pd.DataFrame(data=[{
+            'comment': 'problem_log_1 comment',
+            'ease': 2.5,
+            'interval': 10,
+            'problem_id': 1,
+            'result': Result.NO_IDEA,
+            'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 25, 1561),
+        }])
 
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_show_problem_history(self, mock_stdout):
+        expected_output = "History for problem 'test_problem':\n"
+        expected_output += \
+            "|    | ts_logged        | result   | comment               |   ease |   interval |\n" \
+            "|----|------------------|----------|-----------------------|--------|------------|\n" \
+            "|  0 | 2021-01-10 08:10 | NO_IDEA  | problem_log_1 comment |    2.5 |         10 |\n"
+
+        CliPresenter.show_problem_history(problem=self.problem,
+                                          problem_log_info=self.problem_log_info)
+
+        self.assertEqual(expected_output,
+                         mock_stdout.getvalue())
+
+
+class TestPresentTags(unittest.TestCase):
     def test_format_tag_df(self):
         test_df = pd.DataFrame(data=[
             {'tags': 'test-tag',
@@ -159,7 +208,7 @@ class TestCliPresenterTags(unittest.TestCase):
                          mock_stdout.getvalue())
 
 
-class TestCliPresenterConfirmation(unittest.TestCase):
+class TestCliPresentConfirmations(unittest.TestCase):
     def setUp(self) -> None:
         self.problem = ProblemCreator.create(
             name='testname',

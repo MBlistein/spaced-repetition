@@ -51,18 +51,18 @@ class TestProblemLogGetter(unittest.TestCase):
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
 
-        assert_frame_equal(self.plg._get_problem_logs(problem_ids=[1, 2]),
+        assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
                            expected_res, check_like=True)
 
     def test_get_problem_logs_no_problems(self):
         plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
         plg.repo.get_problem_logs.return_value = []
 
-        assert_frame_equal(plg._get_problem_logs(),
+        assert_frame_equal(plg.get_problem_logs(),
                            pd.DataFrame())
 
     def test_get_problem_logs_for_specific_problems(self):
-        self.plg._get_problem_logs(problem_ids=[1])
+        self.plg.get_problem_logs(problem_ids=[1])
 
         # noinspection PyUnresolvedReferences
         self.plg.repo.get_problem_logs.assert_called_once_with(
@@ -82,7 +82,7 @@ class TestProblemLogGetter(unittest.TestCase):
             expected_res)
 
     @patch.object(ProblemLogGetter, '_last_log_per_problem')
-    @patch.object(ProblemLogGetter, '_get_problem_logs')
+    @patch.object(ProblemLogGetter, 'get_problem_logs')
     def test_get_last_log_per_problem(self, mock_get_problem_logs,
                                       mock_last_log_per_problem):
         mock_get_problem_logs.return_value = 'dummy_return'

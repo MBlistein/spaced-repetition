@@ -15,6 +15,8 @@ class ProblemGetter:
                  presenter: PresenterInterface):
         self.presenter = presenter
         self.repo = db_gateway
+        self.plg = ProblemLogGetter(db_gateway=self.repo,
+                                    presenter=self.presenter)
 
     def list_problems(self, name_substr: str = None,
                       sorted_by: List[str] = None,
@@ -30,6 +32,16 @@ class ProblemGetter:
                                na_position='first')
         self.presenter.list_problems(problem_df)
 
+    def show_problem_history(self, name: str):
+        problems = self.repo.get_problems(name=name)
+        if not problems:
+            raise ValueError(f'Could not find problem with name "{name}"!')
+
+        problem_log_df = self.plg.get_problem_logs(
+            problem_ids=[problems[0].problem_id])
+        self.presenter.show_problem_history(problem=problems[0],
+                                            problem_log_info=problem_log_df)
+
     @staticmethod
     def _sort_key(col):
         """ case-insensitive sorting of text columns """
@@ -44,8 +56,7 @@ class ProblemGetter:
                                         tags_any=tags_any,
                                         tags_all=tags_all)
 
-        plg = ProblemLogGetter(db_gateway=self.repo, presenter=self.presenter)
-        problem_priorities = plg.get_problem_knowledge_scores(
+        problem_priorities = self.plg.get_problem_knowledge_scores(
             problem_ids=problem_df.problem_id.to_list())
 
         return problem_df.merge(problem_priorities,

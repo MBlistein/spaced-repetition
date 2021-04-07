@@ -58,6 +58,12 @@ class CliController:
                                       'sort listed problems by')
         list_parser.set_defaults(func=cls._list_problems)
 
+        # show problem history
+        add_parser = sub_parsers.add_parser('show-history',
+                                            aliases=['sh'],
+                                            help='Show previous solution attempts')
+        add_parser.set_defaults(func=cls._show_problem_history)
+
         # add new tag
         add_parser = sub_parsers.add_parser('add-tag',
                                             aliases=['at'],
@@ -128,7 +134,6 @@ class CliController:
             print(err)
 
     # -------------------- add tag --------------------
-
     @classmethod
     def _add_tag(cls, _):
         """Create new Tag"""
@@ -145,7 +150,7 @@ class CliController:
     @classmethod
     def _get_comment(cls):
         return cls._clean_input(input(
-            f"Add comment (optional, max {MAX_COMMENT_LENGTH} chars)"))
+            f"Add comment (optional, max {MAX_COMMENT_LENGTH} chars): "))
 
     @classmethod
     def _get_user_input_result(cls) -> Result:
@@ -201,6 +206,16 @@ class CliController:
         tag_getter = TagGetter(db_gateway=DjangoGateway(),
                                presenter=CliPresenter())
         tag_getter.list_tags(**kwargs)
+
+    @classmethod
+    def _show_problem_history(cls, _):
+        problem_name = cls._get_problem_name()
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        try:
+            prob_getter.show_problem_history(name=problem_name)
+        except ValueError as err:
+            print(err)
 
 
 def main():
