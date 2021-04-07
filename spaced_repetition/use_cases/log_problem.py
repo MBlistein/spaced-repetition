@@ -12,7 +12,7 @@ class ProblemLogger:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def log_problem(self, problem_name: str, result: Result):
+    def log_problem(self, comment: str, problem_name: str, result: Result):
         try:
             problem = self.repo.get_problems(name=problem_name)[0]
         except IndexError:
@@ -23,6 +23,7 @@ class ProblemLogger:
         last_log = self.get_last_log_for_problem(problem_id=problem.problem_id)
 
         problem_log = ProblemLogCreator.create(
+            comment=comment,
             last_log=last_log,
             problem_id=problem.problem_id,
             result=result)

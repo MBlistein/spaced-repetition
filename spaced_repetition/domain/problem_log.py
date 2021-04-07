@@ -17,6 +17,8 @@ from typing import Union
 
 from dateutil.tz import gettz
 
+from .domain_helpers import validate_param
+
 
 DEFAULT_EASE = 2.5
 EASE_DELTA = 0.12
@@ -24,6 +26,7 @@ INTERVAL_KNEW_BY_HEART = 21
 INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25 = 14
 INTERVAL_SOLVED_OPTIMALLY_SLOWER = 7
 INTERVAL_NON_OPTIMAL_SOLUTION = 3
+MAX_COMMENT_LENGTH = 255
 MINIMUM_EASE = 1.3
 
 
@@ -44,6 +47,7 @@ class ProblemLog:
     problem_id: int
     result: Result
     timestamp: dt.datetime
+    comment: str = ''
 
 
 class ProblemLogCreator:
@@ -51,6 +55,7 @@ class ProblemLogCreator:
     def create(cls,                      # pylint: disable=too-many-arguments
                problem_id: int,
                result: Result,
+               comment: str = '',
                ease: float = None,
                interval: int = None,
                last_log: ProblemLog = None,
@@ -61,6 +66,7 @@ class ProblemLogCreator:
                                                  last_log=last_log,
                                                  result=result)
         return ProblemLog(
+            comment=cls.validate_comment(comment),
             ease=ease,
             interval=interval,
             problem_id=cls.validate_problem_id(problem_id),
@@ -106,6 +112,11 @@ class ProblemLogCreator:
 
         # did not know the optimal solution (without hint) -> start over
         return INTERVAL_NON_OPTIMAL_SOLUTION
+
+    @staticmethod
+    def validate_comment(comment: str):
+        return validate_param(param=comment, max_length=MAX_COMMENT_LENGTH,
+                              label='Comment', empty_allowed=True)
 
     @staticmethod
     def validate_problem_id(problem_id: int) -> int:

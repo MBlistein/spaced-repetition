@@ -19,6 +19,7 @@ class TestProblemLogGetter(unittest.TestCase):
         self.time_2 = dt.datetime(2021, 1, 10, 5)
 
         self.problem_log_1 = ProblemLogCreator.create(
+            comment='problem_log_1 comment',
             last_log=None,
             problem_id=1,
             result=Result.NO_IDEA,
@@ -37,19 +38,21 @@ class TestProblemLogGetter(unittest.TestCase):
 
     def test_get_problem_logs(self):
         expected_res = pd.DataFrame([
-            {'ease': DEFAULT_EASE,
+            {'comment': 'problem_log_1 comment',
+             'ease': DEFAULT_EASE,
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 1,
              'result': Result.NO_IDEA,
              'ts_logged': self.time_1},
-            {'ease': DEFAULT_EASE,
+            {'comment': '',
+             'ease': DEFAULT_EASE,
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
 
         assert_frame_equal(self.plg._get_problem_logs(problem_ids=[1, 2]),
-                           expected_res)
+                           expected_res, check_like=True)
 
     def test_get_problem_logs_no_problems(self):
         plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
@@ -67,6 +70,7 @@ class TestProblemLogGetter(unittest.TestCase):
 
     def test_log_to_row_content(self):
         expected_res = {
+            'comment': 'problem_log_1 comment',
             'ease': DEFAULT_EASE,
             'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
             'problem_id': 1,

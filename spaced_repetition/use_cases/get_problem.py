@@ -26,12 +26,13 @@ class ProblemGetter:
 
         problem_df.sort_values(by=sorted_by or 'KS',
                                inplace=True,
-                               key=self.sort_key,
+                               key=self._sort_key,
                                na_position='first')
         self.presenter.list_problems(problem_df)
 
     @staticmethod
-    def sort_key(col):
+    def _sort_key(col):
+        """ case-insensitive sorting of text columns """
         if col.dtype == 'object':
             return col.str.lower()
         return col
@@ -39,9 +40,9 @@ class ProblemGetter:
     def get_prioritized_problems(self, name_substr: str = None,
                                  tags_any: List[str] = None,
                                  tags_all: List[str] = None) -> pd.DataFrame:
-        problem_df = self.get_problems(name_substr=name_substr,
-                                       tags_any=tags_any,
-                                       tags_all=tags_all)
+        problem_df = self._get_problems(name_substr=name_substr,
+                                        tags_any=tags_any,
+                                        tags_all=tags_all)
 
         plg = ProblemLogGetter(db_gateway=self.repo, presenter=self.presenter)
         problem_priorities = plg.get_problem_knowledge_scores(
@@ -52,9 +53,9 @@ class ProblemGetter:
                                 how='outer',
                                 validate='one_to_one')
 
-    def get_problems(self, name_substr: str = None,
-                     tags_any: List[str] = None,
-                     tags_all: List[str] = None) -> pd.DataFrame:
+    def _get_problems(self, name_substr: str = None,
+                      tags_any: List[str] = None,
+                      tags_all: List[str] = None) -> pd.DataFrame:
         output_columns = ['difficulty', 'name', 'problem_id', 'tags', 'url']
         problems = self.repo.get_problems(name_substr=name_substr,
                                           tags_any=tags_any,

@@ -30,18 +30,21 @@ class TestProblemLogCreator(unittest.TestCase):
                 for assert_expr in assert_expressions:
                     assert_expr()
 
+    @patch.object(ProblemLogCreator, attribute='validate_comment')
     @patch.object(ProblemLogCreator, attribute='validate_problem_id')
     @patch.object(ProblemLogCreator, attribute='validate_result')
     @patch.object(ProblemLogCreator, attribute='validate_or_create_timestamp')
     def test_create_all_validators_called(self, mock_val_ts, mock_val_result,
-                                          mock_val_problem_id):
-        pl = ProblemLogCreator.create(last_log=None,
+                                          mock_val_problem_id, mock_val_comment):
+        pl = ProblemLogCreator.create(comment='test-comment',
+                                      last_log=None,
                                       problem_id=1,
                                       result=Result.NO_IDEA)
         self.assertIsInstance(pl, ProblemLog)
         mock_val_ts.assert_called_once()
         mock_val_result.assert_called_once()
         mock_val_problem_id.assert_called_once()
+        mock_val_comment.assert_called_once()
 
     def test_calc_ease(self):
         last_log = ProblemLogCreator.create(
@@ -141,3 +144,11 @@ class TestProblemLogCreator(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             f"timestamp should be of type dt.datetime, but is <class 'str'>!")
+
+    def test_validate_comment_raises_too_long(self):
+        with self.assertRaises(ValueError) as context:
+            ProblemLogCreator.validate_comment(comment='a' * 256)
+
+        self.assertEqual(
+            str(context.exception),
+            f"Comment too long, max length = 255 chars.")
