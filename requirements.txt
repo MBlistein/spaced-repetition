@@ -1,0 +1,10 @@
+coverage
+django
+matplotlib
+numpy
+pandas
+pylint
+pylint-django
+python-dateutil
+seaborn
+tabulate
