@@ -3,7 +3,7 @@
 import argparse
 
 from spaced_repetition.domain.problem import Difficulty
-from spaced_repetition.domain.problem_log import Result
+from spaced_repetition.domain.problem_log import (MAX_COMMENT_LENGTH, Result)
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 from spaced_repetition.use_cases.add_problem import ProblemAdder
@@ -57,6 +57,12 @@ class CliController:
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
         list_parser.set_defaults(func=cls._list_problems)
+
+        # show problem history
+        add_parser = sub_parsers.add_parser('show-history',
+                                            aliases=['sh'],
+                                            help='Show previous solution attempts')
+        add_parser.set_defaults(func=cls._show_problem_history)
 
         # add new tag
         add_parser = sub_parsers.add_parser('add-tag',
@@ -116,17 +122,18 @@ class CliController:
         except ValueError as err:
             print(f"\nSupplied invalid Result!\n{err}")
             return
+        comment = cls._get_comment()
 
         prob_logger = ProblemLogger(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
         try:
-            prob_logger.log_problem(problem_name=problem_name,
+            prob_logger.log_problem(comment=comment,
+                                    problem_name=problem_name,
                                     result=result)
         except ValueError as err:
             print(err)
 
     # -------------------- add tag --------------------
-
     @classmethod
     def _add_tag(cls, _):
         """Create new Tag"""
@@ -139,6 +146,11 @@ class CliController:
     @classmethod
     def _get_problem_name(cls):
         return cls._clean_input(input("Problem name: "))
+
+    @classmethod
+    def _get_comment(cls):
+        return cls._clean_input(input(
+            f"Add comment (optional, max {MAX_COMMENT_LENGTH} chars): "))
 
     @classmethod
     def _get_user_input_result(cls) -> Result:
@@ -194,6 +206,16 @@ class CliController:
         tag_getter = TagGetter(db_gateway=DjangoGateway(),
                                presenter=CliPresenter())
         tag_getter.list_tags(**kwargs)
+
+    @classmethod
+    def _show_problem_history(cls, _):
+        problem_name = cls._get_problem_name()
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        try:
+            prob_getter.show_problem_history(name=problem_name)
+        except ValueError as err:
+            print(err)
 
 
 def main():

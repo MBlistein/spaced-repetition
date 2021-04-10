@@ -19,6 +19,7 @@ class TestProblemLogGetter(unittest.TestCase):
         self.time_2 = dt.datetime(2021, 1, 10, 5)
 
         self.problem_log_1 = ProblemLogCreator.create(
+            comment='problem_log_1 comment',
             last_log=None,
             problem_id=1,
             result=Result.NO_IDEA,
@@ -37,29 +38,31 @@ class TestProblemLogGetter(unittest.TestCase):
 
     def test_get_problem_logs(self):
         expected_res = pd.DataFrame([
-            {'ease': DEFAULT_EASE,
+            {'comment': 'problem_log_1 comment',
+             'ease': DEFAULT_EASE,
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 1,
              'result': Result.NO_IDEA,
              'ts_logged': self.time_1},
-            {'ease': DEFAULT_EASE,
+            {'comment': '',
+             'ease': DEFAULT_EASE,
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
              'ts_logged': self.time_2}])
 
-        assert_frame_equal(self.plg._get_problem_logs(problem_ids=[1, 2]),
-                           expected_res)
+        assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
+                           expected_res, check_like=True)
 
     def test_get_problem_logs_no_problems(self):
         plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
         plg.repo.get_problem_logs.return_value = []
 
-        assert_frame_equal(plg._get_problem_logs(),
+        assert_frame_equal(plg.get_problem_logs(),
                            pd.DataFrame())
 
     def test_get_problem_logs_for_specific_problems(self):
-        self.plg._get_problem_logs(problem_ids=[1])
+        self.plg.get_problem_logs(problem_ids=[1])
 
         # noinspection PyUnresolvedReferences
         self.plg.repo.get_problem_logs.assert_called_once_with(
@@ -67,6 +70,7 @@ class TestProblemLogGetter(unittest.TestCase):
 
     def test_log_to_row_content(self):
         expected_res = {
+            'comment': 'problem_log_1 comment',
             'ease': DEFAULT_EASE,
             'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
             'problem_id': 1,
@@ -78,7 +82,7 @@ class TestProblemLogGetter(unittest.TestCase):
             expected_res)
 
     @patch.object(ProblemLogGetter, '_last_log_per_problem')
-    @patch.object(ProblemLogGetter, '_get_problem_logs')
+    @patch.object(ProblemLogGetter, 'get_problem_logs')
     def test_get_last_log_per_problem(self, mock_get_problem_logs,
                                       mock_last_log_per_problem):
         mock_get_problem_logs.return_value = 'dummy_return'

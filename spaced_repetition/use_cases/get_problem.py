@@ -15,6 +15,8 @@ class ProblemGetter:
                  presenter: PresenterInterface):
         self.presenter = presenter
         self.repo = db_gateway
+        self.plg = ProblemLogGetter(db_gateway=self.repo,
+                                    presenter=self.presenter)
 
     def list_problems(self, name_substr: str = None,
                       sorted_by: List[str] = None,
@@ -26,12 +28,23 @@ class ProblemGetter:
 
         problem_df.sort_values(by=sorted_by or 'KS',
                                inplace=True,
-                               key=self.sort_key,
+                               key=self._sort_key,
                                na_position='first')
         self.presenter.list_problems(problem_df)
 
+    def show_problem_history(self, name: str):
+        problems = self.repo.get_problems(name=name)
+        if not problems:
+            raise ValueError(f'Could not find problem with name "{name}"!')
+
+        problem_log_df = self.plg.get_problem_logs(
+            problem_ids=[problems[0].problem_id])
+        self.presenter.show_problem_history(problem=problems[0],
+                                            problem_log_info=problem_log_df)
+
     @staticmethod
-    def sort_key(col):
+    def _sort_key(col):
+        """ case-insensitive sorting of text columns """
         if col.dtype == 'object':
             return col.str.lower()
         return col
@@ -39,12 +52,11 @@ class ProblemGetter:
     def get_prioritized_problems(self, name_substr: str = None,
                                  tags_any: List[str] = None,
                                  tags_all: List[str] = None) -> pd.DataFrame:
-        problem_df = self.get_problems(name_substr=name_substr,
-                                       tags_any=tags_any,
-                                       tags_all=tags_all)
+        problem_df = self._get_problems(name_substr=name_substr,
+                                        tags_any=tags_any,
+                                        tags_all=tags_all)
 
-        plg = ProblemLogGetter(db_gateway=self.repo, presenter=self.presenter)
-        problem_priorities = plg.get_problem_knowledge_scores(
+        problem_priorities = self.plg.get_problem_knowledge_scores(
             problem_ids=problem_df.problem_id.to_list())
 
         return problem_df.merge(problem_priorities,
@@ -52,9 +64,9 @@ class ProblemGetter:
                                 how='outer',
                                 validate='one_to_one')
 
-    def get_problems(self, name_substr: str = None,
-                     tags_any: List[str] = None,
-                     tags_all: List[str] = None) -> pd.DataFrame:
+    def _get_problems(self, name_substr: str = None,
+                      tags_any: List[str] = None,
+                      tags_all: List[str] = None) -> pd.DataFrame:
         output_columns = ['difficulty', 'name', 'problem_id', 'tags', 'url']
         problems = self.repo.get_problems(name_substr=name_substr,
                                           tags_any=tags_any,

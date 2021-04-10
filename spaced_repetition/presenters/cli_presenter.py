@@ -41,14 +41,26 @@ class CliPresenter(PresenterInterface):
         tabulated_df = cls.tabulate_df(df=formatted_df)
         print(tabulated_df)
 
+    @classmethod
+    def show_problem_history(cls, problem: Problem,
+                             problem_log_info: pd.DataFrame) -> None:
+        print(f"History for problem '{problem.name}':")
+        history_df = problem_log_info \
+            .sort_values('ts_logged', ascending=False) \
+            .reindex(columns=['ts_logged', 'result', 'comment', 'ease', 'interval'])
+
+        history_df.result = cls._format_result(history_df.result)
+        history_df.ts_logged = cls._format_timestamp(history_df.ts_logged)
+        print(cls.tabulate_df(history_df))
+
     @staticmethod
     def tabulate_df(df: pd.DataFrame):
         return tabulate(df,
                         headers='keys',
                         tablefmt='github')
 
-    @staticmethod
-    def format_problem_df(df: pd.DataFrame):
+    @classmethod
+    def format_problem_df(cls, df: pd.DataFrame):
         """Needs at least a column named 'problem_id'"""
         name_mapper = {'problem_id': 'id',
                        'result': 'last_result',
@@ -60,13 +72,23 @@ class CliPresenter(PresenterInterface):
                  'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
         df = df.reindex(columns=order).set_index('id')
 
-        df.difficulty = df.difficulty.map(lambda x: x.name, na_action='ignore')
-        df.last_result = df.last_result.map(lambda x: x.name, na_action='ignore')
-
-        # if df.last_access is full of np.NaN, needs to be cast to datetime
-        df.last_access = pd.to_datetime(df.last_access) \
-            .dt.strftime('%Y-%m-%d %H:%M')
+        df.difficulty = cls._format_difficulty(df.difficulty)
+        df.last_result = cls._format_result(df.last_result)
+        df.last_access = cls._format_timestamp(df.last_access)
         return df
+
+    @staticmethod
+    def _format_difficulty(difficulty: pd.Series):
+        return difficulty.map(lambda x: x.name, na_action='ignore')
+
+    @staticmethod
+    def _format_result(result: pd.Series):
+        return result.map(lambda x: x.name, na_action='ignore')
+
+    @staticmethod
+    def _format_timestamp(ts: pd.Series):
+        # if ts consists of only np.NaN, it needs to be cast to datetime
+        return pd.to_datetime(ts).dt.strftime('%Y-%m-%d %H:%M')
 
     @classmethod
     def list_tags(cls, tags: pd.DataFrame) -> None:

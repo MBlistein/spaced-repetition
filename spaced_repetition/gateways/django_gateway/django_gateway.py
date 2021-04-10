@@ -89,6 +89,7 @@ class DjangoGateway(DBGatewayInterface):
     @staticmethod
     def create_problem_log(problem_log: ProblemLog) -> None:
         OrmProblemLog.objects.create(
+            comment=problem_log.comment,
             ease=problem_log.ease,
             interval=problem_log.interval,
             problem=OrmProblem.objects.get(pk=problem_log.problem_id),
@@ -114,6 +115,7 @@ class DjangoGateway(DBGatewayInterface):
         res = []
         for p_l in problem_log_qs:
             res.append(ProblemLogCreator.create(
+                comment=p_l.comment,
                 ease=p_l.ease,
                 interval=p_l.interval,
                 problem_id=p_l.problem.pk,

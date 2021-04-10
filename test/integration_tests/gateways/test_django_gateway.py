@@ -198,6 +198,7 @@ class TestProblemLogCreation(TestCase):
         dgw = DjangoGateway()
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
         log = ProblemLogCreator.create(
+            comment='test comment',
             last_log=None,
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
@@ -212,6 +213,7 @@ class TestProblemLogCreation(TestCase):
         self.assertEqual(orm_log.result,
                          Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
         self.assertEqual(orm_log.timestamp, ts)
+        self.assertEqual(orm_log.comment, 'test comment')
 
 
 class TestProblemLogQuerying(TestCase):
@@ -226,6 +228,7 @@ class TestProblemLogQuerying(TestCase):
 
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
+            comment='test comment 123!',
             ease=1,
             interval=1,
             problem_id=self.prob.pk,
@@ -257,6 +260,7 @@ class TestProblemLogQuerying(TestCase):
     def test_format_problem_logs(self):
         expected_res = [
             ProblemLogCreator.create(
+                comment='test comment 123!',
                 ease=1,
                 interval=1,
                 problem_id=self.prob.pk,

@@ -50,9 +50,9 @@ class TestListProblems(unittest.TestCase):
         p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
         p_g.repo.get_problems.return_value = [self.problem]
 
-        problem_df = p_g.get_problems(name_substr='aa',
-                                      tags_any=['bb'],
-                                      tags_all=['cc'])
+        problem_df = p_g._get_problems(name_substr='aa',
+                                       tags_any=['bb'],
+                                       tags_all=['cc'])
 
         # noinspection PyUnresolvedReferences
         p_g.repo.get_problems.assert_called_once_with(
@@ -68,12 +68,12 @@ class TestListProblems(unittest.TestCase):
         expected_df = add_missing_columns(df=pd.DataFrame(),
                                           required_columns=self.problem_columns)
 
-        res = p_g.get_problems()
+        res = p_g._get_problems()
 
         assert_frame_equal(expected_df, res)
 
     @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
-    @patch.object(ProblemGetter, 'get_problems')
+    @patch.object(ProblemGetter, '_get_problems')
     def test_get_prioritized_problems(self, mock_get_problems,
                                       mock_get_problem_knowledge_scores):
         # prepare
@@ -98,7 +98,7 @@ class TestListProblems(unittest.TestCase):
         assert_frame_equal(self.prioritized_problem, res, check_like=True)
 
     @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
-    @patch.object(ProblemGetter, 'get_problems')
+    @patch.object(ProblemGetter, '_get_problems')
     def test_get_prioritized_problems_new_problems(
             self, mock_get_problems, mock_get_problem_knowledge_scores):
         """ Assert that new problems have 'na' values for KS, etc. """

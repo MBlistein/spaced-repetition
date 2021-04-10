@@ -19,6 +19,15 @@ class TestProblemCreator(unittest.TestCase):
                                          label='URL',
                                          empty_allowed=True)
 
+    def test_validate_url_empty(self):
+        with patch('spaced_repetition.domain.problem.validate_param') as mock:
+            ProblemCreator.validate_url(url=None)
+
+            mock.assert_called_once_with(param='',
+                                         max_length=MAX_URL_LENGTH,
+                                         label='URL',
+                                         empty_allowed=True)
+
     def test_validate_name(self):
         with patch('spaced_repetition.domain.problem.validate_param') as mock:
             ProblemCreator.validate_name(name='valid name')

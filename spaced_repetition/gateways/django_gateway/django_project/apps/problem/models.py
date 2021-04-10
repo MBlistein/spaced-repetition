@@ -35,6 +35,7 @@ class Problem(models.Model):
 
 
 class ProblemLog(models.Model):
+    comment = models.CharField(max_length=255, blank=True, null=False)
     ease = models.FloatField(null=False)
     interval = models.IntegerField(null=False)
     problem = models.ForeignKey(Problem,
