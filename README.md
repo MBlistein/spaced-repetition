@@ -1,18 +1,29 @@
 ## Purpose
 This project has been implemented for two reasons:
-* to create a tool for effective study of algorithmic problems via
+1. to create a tool for effective study of classic CS algorithms via
   'spaced repetition' and 'active recall' techniques
-* to implement a project following Martin Robert's guidelines in his
-  book 'Clean Architecture.
+1. to implement a project following Martin Robert's guidelines in his
+  book 'Clean Architecture'.
+  
+Why a spaced repetition tool to study algorithms? There is lot's of literature
+describing the theory behind algorithms and lots of sources that allow
+solving algorithmic problems. However, it is easy to get carried away, solving
+problems at random and forgetting learned information over time.
+This program should:
+* allow to define relevant algorithmic topics with arbitrary granularity, open to modification
+* allow to define problems whose optimal solution represents an application of one
+  of the relevant algorithmic topics
+* quantify the knowledge status per algorithmic topic
+* help to reach the desired knowledge status per topic with maximum efficiency
+  (through spaced repetition and active recall techniques)
 
 This is an experimental project and implements a minimalist
-solution for personal need -> please use with care, feedback is welcome
-:-).
+solution -> you are welcome to use it with care :-).
 
 ## Setup
 * clone the repository and cd into it
 * create a virtual environment, e.g.: `python3 -m venv <your_env_name>`
-* activate the environment: `source <path_to_venv>/bin/activate
+* activate the environment: `source <path_to_venv>/bin/activate`
 * install required packages: `pip install -r requirements.txt`
 
 Run the CLI with the '-h' flag to see possible actions:
@@ -30,130 +41,168 @@ that implement spaced repetition algorithms (such as
 Therefore, the intended purpose of this program is **to track and help
 us refresh the knowledge of key algorithms**. This means: the program
 tracks how well we know an algorithmic topic by tracking how well we
-solve problems related to that topic. It then calculates when we should
-re-solve the same problem to get to and maintain the desired knowledge
-level.
+solve problems related to that topic, where each problem should represent a
+relevant application case of the related algorithm. The program then calculates
+when we should re-solve the same problem to get to and maintain the desired
+algorithmic knowledge level.
 
-To use this program, the user should just start solving algorithmic
-problems. When encountering a problem that is
-somewhat representative of a standard algorithm or a typical application
-case, this problem should be added to the 'spaced-repetition' database
+To use this program, the user can either start by adding relevant algorithmic
+topics to the database (see below), or by starting solving problems related to
+the algorithms of interest. When encountering a problem that is
+somewhat representative of an application for a relevant algorithm,
+this problem should be added to the 'spaced-repetition' database
 via `python3 scripts/run_cli.py add-problem`.
 
 The corresponding dialogue will ask to link the problem to at least one
-tag (representative of an algorithmic topic, e.g. 'dfs'). Tags should be
-as fine-grained as necessary. They need to exist before a problem can
+'tag', representative of an algorithmic topic, e.g. 'depth-first-search'.
+A problem should
+be linked to exactly those algorithms that solve this problem optimally in
+some way. There can be several optimal algorithms, that may each have some
+trade-offs (e.g. optimal time or space complexity). Non-optimal algorithms
+should not be linked, otherwise the program will schedule repetitions of the
+non-optimal solution.<br>
+Tags need to exist in the database before a problem can
 be linked to them. Create a tag via:
 `python3 scripts/run_cli.py add-tag`.
 
-Every attempt at solving a tracked problem should be tracked via the
-'spaced-repetition' tool. This is possible via:
+Every attempt at solving a tracked problem should be logged by creating a
+ProblemLog:
 `python3 scripts/run_cli.py add-log`.  
-The corresponding dialogue asks the user to grade how well she/ he was
-able to solve the problem on a provided scale. From this and previous
-results, the underlying algorithm calculates a 'knowledge score' as well
-as the next repetition date for both this problem and the tags linked
-to the problem. For more details, see the section 'Algorithm' below.
+The corresponding dialogue asks to grade how well the problem
+was solved on a provided scale, and via which algorithm(s) /
+tag(s) the problem has been solved. Only algorithms linked to the problem
+(i.e. optimal ones) may be selected. However, each ProblemLog also has an optional
+'comment' field, in which the user could describe non-optimal solutions.
+From these execution logs, the underlying algorithm calculates:
 
-## Algorithm
-The spaced-repetition toolbox should:
-* give an overview of the knowlege level across all topics
-* schedule problem repetitions to reach desired knowledge levels with
-the least effort possible
-* rank the topics and problems inside a topic by urgency (which topic
-needs work the most?)
+* a 'knowledge score' per problem-tag combination (representing an application
+  case of the linked algorithm). List all knowledge scores via:<br>
+  `python3 scripts/run_cli.py list-full`
+* an overview of the aggregated knowledge level per problem:<br>
+  `python3 scripts/run_cli.py list-problems`
+* an overview of the aggregated knowledge level per tag (i.e. algorithm):<br>
+  `python3 scripts/run_cli.py list-tags`
+  
+Any of these overviews can be used to find the topic, problem or problem-topic
+combination with the
+highest priority to study (= lowest knowledge).
 
-To achieve this, the following ranking algorithm has been devised.
 
-### Problems
-Problems are ranked via a **knowledge score K** between 0 and 5, where:
-* 0  --> no knowledge, highest priority topic
-* 5 --> perfect knowledge, no further study necessary
+## How it works
+This section sketches spaced-repetition's underlying priorization algorithm.
 
-**K** is computed as the product of the **Correctness Score C** achieved
-when last solving the problem, and the **Retention Factor RF**:  
-```K = C * RF```
+### Tags (= algorithmic topics)
+Tags represent algorithmic topics, the knowledge per tag is rated on a scale
+from 0 (high need to catch up) to 5 (topic mastered). The knowledge status
+is calculated from the last solution attempts (= ProblemLogs) of every linked
+problem.
+
+```tag_knowledge = weighted_avg_score * experience```
+
+#### Weighted avg. score
+Problems are rated in three categories: easy, medium, hard.
+It is reasoned that:
+- easy problems signify the introduction of a topic
+- medium problems are more representative of actual
+  topic knowledge as well as interview questions
+- hard problems are rather edge-cases or advanced interview
+  questions --> having strong results here shows that one fully masters
+  a topic.
+
+Therefore, the score per algorithm is determined from the
+knowledge scores achieved when last solving it's linked problems via this
+algorithm (= logged problem-tag-combinations), averaged per difficulty:
+```weighted_knowledge_score = max(0.5 * avg_easy_score,  0.75 * avg_med_score, avg_hard_score)```
+
+#### Experience
+Algorithms can be applied in a variety of ways and, in some cases, for
+very different problem types. To track the knowledge of different
+algorithmic topics correctly, it does make sense to choose topics in
+a rather fine-grained manner.
+Per such fine-grained topic, a minimum of 5 problems is deemed necessary
+to cover it, i.e. to reach full 'experience'. Hence:  
+```experience = max(1, num_problems_linked_to_tag/ 5)```
+
+
+### Knowledge Scores
+Problems may be solved optimally via different algorithms.
+E.g.: assume a problem can be solved optimally by either of two algorithms A and
+B; we want to study both.
+We last solved the problem by applying algorithm A 3 weeks ago with a score of 4,
+and solved it via algorithm B 2 weeks ago with a score of 2. Which one should
+we rehearse more urgently? We got a better result with algorithm A, but we may
+have forgotten more of it since it has been longer.
+
+To determine which algorithm application case rehearsal more urgently, we rank
+problem-tag-combinations via a **knowledge score KS** between 0 and 5, where:
+* 0  --> no knowledge
+* 5 --> perfect knowledge
+
+**KS** is computed as the product of the **Correctness Score C** achieved
+when last solving the problem with the linked algorithm, and the
+**Retention Factor RF**:  
+```KS = C * RF```
 
 #### Correctness Score C
 There are 6 possible values for the correctness score: `C in [0..5]`
-These are mapped to the possible problem solving attempt results as
-follows:
+These are mapped to the following possible outcomes of solving a problem
+with specific algorithm(s):
 
-| Attempt result | Score |
+| Attempt result | Correctness Score |
 |---|---|
-| KNEW_BY_HEART                  | 5 |
-| SOLVED_OPTIMALLY_IN_UNDER_25   | 4 |
-| SOLVED_OPTIMALLY_SLOWER        | 3 |
-| SOLVED_OPTIMALLY_WITH_HINT     | 2 |
-| SOLVED_SUBOPTIMALLY            | 1 |
-| NO_IDEA                        | 0 |
+| KNEW_BY_HEART                       | 5 |
+| SOLVED_OPTIMALLY_IN_UNDER_25 (mins) | 4 |
+| SOLVED_OPTIMALLY_SLOWER             | 3 |
+| SOLVED_OPTIMALLY_WITH_HINT          | 2 |
+| SOLVED_SUBOPTIMALLY                 | 1 |
+| NO_IDEA                             | 0 |
 
 #### Retention Factor RF
 According to literature, humans forget learned content in some
 exponential form. Study and repetition algorithms have been developed to
 counter forgetting.
 For memorizing smaller bits of information (e.g. Flash card style studying),
-[SuperMemo_2](https://en.wikipedia.org/wiki/SuperMemo) or SM2 is one of
+[SuperMemo_2](https://en.wikipedia.org/wiki/SuperMemo) (SM2) is one of
 the most popular ones. This algorithm is used to schedule repetitions
-of active recall sessions such that knowledge is committed to memory
-with the least amount of effort.
+of active recall sessions such that knowledge is committed to long-term memory
+with the least amount of actual study time.
 
 Here however, I am not only interested in scheduling repetition times.
-Instead, I want to estimate my knowledge of all studied topics, to study
-the most urgent one when I have time.  
+I also want to estimate my knowledge of all relevant topics, to study
+the most urgent one when I have time.
+
+To get the best of both worlds, spaced-repetition calculates the optimal
+rehearsal dates. Once past that date, the algorithm estimates how much of
+the once acquired knowledge has been forgotten.
+
 Therefore, upon revision of a problem at time t_0, the next intended
-repetition time t_1 is calculated via a modified version of SM2.  
-Concretly: t_1 = t_0 + T, where T is the spacing interval calculated via SM2.
-It is assumed that, when reaching a time t_2 > t_1, the user starts to
-forget in an exponential manner.  
+repetition time t_1 is calculated via a modified version of SM2 (see differences
+to SM2 below).<br>
+Concretely: t_1 = t_0 + T, where T is the spacing interval calculated via SM2.<br>
+When reaching a time t_2 > t_1 (i.e. past the scheduled repetition time), it is
+assumed that the user starts to forget in an exponential manner.<br>
 Specifically, it is assumed that once another
 spacing interval T has passed after the scheduled repetition time t_1,
 the user remembers only the fraction '**a**' of the original knowledge
-she/ he had at time t_0.
+present at time t_0.
 Hence the **Retention Factor RF** is introduced, which calculates
 exactly that:
 
 ![Alt text](./docs/RF.svg),
 
-Where:
-* **a** is the fraction of remembered knowledge **T** days after the
+where:
+* **a** is the fraction of remembered knowledge, **T** days after the
 scheduled repetition
 * **delta_t** is the time that has gone by since the scheduled
 repetition (= max(0, t - t_1))
 
-'a' is currently set to 0.5 -> T after the next scheduled repetition,
+'a' is currently set to 0.5 -> T after the next scheduled repetition time t_1,
 the user is assumed to have forgotten half of their knowledge.
 
-### Tags (= Topics)
-For every tag, a 'per-tag priority' between 0 (high need to catch up)
-and 5 (topic mastered) is calculated. The priority for every tag is
-calculated as:
-
-    prio = avg_weighted_problem_prio * experience
-
-#### Avg. weighted problem prio
-Problems are rated in three categories: easy, medium, hard.
-The avg_weighted_prio is calculated as the weighted sum of the average
-priority of each of these degrees of difficulty.
-It is reasoned that:
- - easy problems signify the introduction of a topic
- - medium problems are more representative of actual
-   topic knowledge as well as interview questions
- - hard problems are rather edge-cases or advanced interview
-   questions --> Having strong results here shows that one fully masters
-   a topic.
-
-Therefore, the total average score for a tag is determined as:  
-weighted_avg_score = 0.25 * avg_easy + 0.5 * avg_med + 0.25 * avg_hard
-
-#### Experience
-Algorithms can be applied in a variety of ways and, in some cases, for
-very different problem types. To track the knowledge of different
-algorithmic topics correctly, it does make sense to choose topics as
-fine-grained as possible.
-Per such fine-grained topic, a minimum of 5 problems is deemed necessary
-to cover it, i.e. to reach full 'experience'. Hence:  
-experience = max(1, num_problems/ 5)
+In summary: The retention factor RF diminishes the KnowledgeScore KS when the
+user does not repeat a problem as scheduled. This, in some way, represents
+how much the user remembers of each topic and allows to rank problems by
+'urgency of repetition'.
 
 
 ### Differences to SM2
@@ -167,19 +216,22 @@ This does not seem applicable to studying algorithmic topics, as the tools
 to solve the individual problems overlap largely between problems. Hence
 the 'learning phase' is skipped.
 
-##### Initial spacing interval T
+##### Spacing interval T
 In SM2, each question starts out with a spacing interval of 1 day,
 which is then grown via the 'ease', which in turn is influenced by
-the scores achieved when recalling knowledge. Here however, the initial
-spacing interval T depends on the score achieved on the initial review
-of the problem:
+the scores achieved when recalling knowledge. Knowledge acquired when deriving
+solutions to problems however seems to fade slower than knowledge acquired
+through pure memorization. This is especially true when we can reuse knowledge
+acquired in other problems. Hence, the minimum spacing interval T depends on the
+score achieved during the last review of the problem:
 
 | Attempt result | Score |
 |---|---|
-| KNEW_BY_HEART                  | 21 |
+| KNEW_BY_HEART                  | 30 |
 | SOLVED_OPTIMALLY_IN_UNDER_25   | 14 |
 | SOLVED_OPTIMALLY_SLOWER        | 7 |
 | any worse result               | 3 |
+
 
 ## Architecture
 The architecture has been designed according to the guidelins of
@@ -204,8 +256,8 @@ details, such as:
   interface)
   * how their outputs are visualized
   * 'detail' implementations, such as the database or ORM
-* The database is organized via Django ORM (because I know it best and
-wanted to spend as little time as possible here). Core logic accesses
+* The database is organized via Django ORM because I know it best and
+wanted to spend as little time as possible here. Core logic accesses
 the db via a 'db_gateway_interface' and is completely independent from
 the actual implementation. It could be swapped for any other
 db or ORM (e.g. SqlAlchemy).
