@@ -6,10 +6,14 @@ import pandas as pd
 from dateutil.tz import gettz
 from pandas.testing import assert_frame_equal
 
-from spaced_repetition.domain.problem_log import (DEFAULT_EASE, INTERVAL_NON_OPTIMAL_SOLUTION,
-                                                  ProblemLogCreator, Result)
+from spaced_repetition.domain.problem_log import (
+    DEFAULT_EASE,
+    INTERVAL_NON_OPTIMAL_SOLUTION,
+    ProblemLogCreator,
+    Result)
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
+from spaced_repetition.domain.tag import TagCreator
 
 
 class TestProblemLogGetter(unittest.TestCase):
@@ -17,11 +21,15 @@ class TestProblemLogGetter(unittest.TestCase):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
         self.time_2 = dt.datetime(2021, 1, 10, 5)
 
+        self.tag_1 = TagCreator.create('tag_1')
+        self.tag_2 = TagCreator.create('tag_2')
+
         self.problem_log_1 = ProblemLogCreator.create(
             comment='problem_log_1 comment',
             last_log=None,
             problem_id=1,
             result=Result.NO_IDEA,
+            tags=[self.tag_1, self.tag_2],
             timestamp=self.time_1)
 
         problem_logs = [
@@ -30,6 +38,7 @@ class TestProblemLogGetter(unittest.TestCase):
                 last_log=None,
                 problem_id=2,
                 result=Result.SOLVED_OPTIMALLY_WITH_HINT,
+                tags=[self.tag_2],
                 timestamp=self.time_2)]
 
         self.plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
@@ -42,12 +51,14 @@ class TestProblemLogGetter(unittest.TestCase):
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 1,
              'result': Result.NO_IDEA,
+             'tags': 'tag_1, tag_2',
              'ts_logged': self.time_1},
             {'comment': '',
              'ease': DEFAULT_EASE,
              'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
              'problem_id': 2,
              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
+             'tags': 'tag_2',
              'ts_logged': self.time_2}])
 
         assert_frame_equal(self.plg.get_problem_logs(problem_ids=[1, 2]),
@@ -74,6 +85,7 @@ class TestProblemLogGetter(unittest.TestCase):
             'interval': INTERVAL_NON_OPTIMAL_SOLUTION,
             'problem_id': 1,
             'result': Result.NO_IDEA,
+            'tags': 'tag_1, tag_2',
             'ts_logged': self.time_1}
 
         self.assertEqual(

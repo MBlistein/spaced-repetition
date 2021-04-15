@@ -42,7 +42,7 @@ class DBGatewayInterface(ABC):
 
     @classmethod
     @abstractmethod
-    def get_tags(cls, sub_str: str = None):
+    def get_tags(cls, names: List[str] = None, sub_str: str = None):
         pass
 
     @staticmethod

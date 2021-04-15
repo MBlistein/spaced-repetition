@@ -18,6 +18,7 @@ from spaced_repetition.domain.problem_log import (
     INTERVAL_NON_OPTIMAL_SOLUTION,
     ProblemLogCreator,
     Result)
+from spaced_repetition.domain.tag import TagCreator
 
 DEFAULT_INTERVAL = {
     Result.KNEW_BY_HEART: INTERVAL_KNEW_BY_HEART,
@@ -58,9 +59,11 @@ def spacing_data(repetition_results) -> pd.DataFrame:
 
     for result in repetition_results:
         print(f'\n----------------{result}-----------------')
-        last_log = ProblemLogCreator.create(problem_id=1,
-                                            last_log=last_log,
-                                            result=result)
+        last_log = ProblemLogCreator.create(
+            problem_id=1,
+            last_log=last_log,
+            result=result,
+            tags=[TagCreator.create('dummy_tag')])
         data.append({'day': current_day,
                      'repetition': repetition_cnt,
                      'result': last_log.result,

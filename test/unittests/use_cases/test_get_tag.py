@@ -15,12 +15,14 @@ from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
 class TestGetTags(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tag_1 = TagCreator.create(name='tag_1')
+        self.tag_2 = TagCreator.create(name='tag_2')
+
     def test_get_tags(self):
-        tag_1 = TagCreator.create(name='tag_1')
-        tag_2 = TagCreator.create(name='tag_2')
 
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
-        tag_getter.repo.get_tags.return_value = [tag_1, tag_2]
+        tag_getter.repo.get_tags.return_value = [self.tag_1, self.tag_2]
 
         expected_df = pd.DataFrame(data={'tag': ['tag_1', 'tag_2'],
                                          'tag_id': [None, None]})
@@ -37,6 +39,27 @@ class TestGetTags(unittest.TestCase):
 
         self.assertTrue(tag_df.empty)
         self.assertEqual(['tag', 'tag_id'], tag_df.columns.to_list())
+
+    def test_get_existing_tags(self):
+        repo = Mock()
+        repo.get_tags.return_value = [self.tag_1]
+        tag_getter = TagGetter(db_gateway=repo, presenter=Mock())
+
+        tags = tag_getter.get_existing_tags(names=[self.tag_1.name])
+
+        self.assertEqual(tags, [self.tag_1])
+
+    def test_get_existing_tags_raises_missing(self):
+        repo = Mock()
+        repo.get_tags.return_value = [self.tag_1]
+        tag_getter = TagGetter(db_gateway=repo, presenter=Mock())
+
+        with self.assertRaises(ValueError) as context:
+            tag_getter.get_existing_tags(names=[self.tag_1.name,
+                                                self.tag_2.name])
+
+        self.assertEqual(str(context.exception),
+                         "The following tag names don't exist: {'tag_2'}")
 
 
 class TestGetPrioritizedTags(unittest.TestCase):
@@ -240,12 +263,12 @@ class TestGetPrioritizedTags(unittest.TestCase):
         mock_get_prioritized_problems.return_value = pd.DataFrame(
             columns=['difficulty', 'name', 'tags', 'url', 'problem_id',
                      'ts_logged', 'result', 'ease', 'interval', 'RF', 'KS'],
-            dtype=np.float)
+            dtype=float)
 
         expected_df = pd.DataFrame(
             columns=['difficulty', 'name', 'tag', 'url', 'problem_id',
                      'ts_logged', 'result', 'ease', 'interval', 'RF', 'KS'],
-            dtype=np.float)
+            dtype=float)
 
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())
         res = tag_getter._get_problems_per_tag()

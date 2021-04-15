@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from spaced_repetition.domain.problem import Difficulty, Problem
 from spaced_repetition.domain.problem_log import (ProblemLogCreator, Result)
-from spaced_repetition.domain.tag import Tag
+from spaced_repetition.domain.tag import Tag, TagCreator
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
 from spaced_repetition.gateways.django_gateway.django_project.apps.problem.models import (
     Problem as OrmProblem,
@@ -40,17 +40,6 @@ class TestProblemCreation(TestCase):
         self.assertNotEqual(orm_problem.pk, 99)  # pk is independent of problem_id
         self.assertEqual(orm_problem.url, 'https://testurl.com')
         self.assertEqual([t.name for t in orm_problem.tags.all()], ['tag1'])
-
-    def test_create_problem_raises_missing_tag(self):
-        dgw = DjangoGateway()
-        self.problem.tags.append('tag2')
-
-        with self.assertRaises(ValueError) as context:
-            dgw.create_problem(problem=self.problem)
-
-        self.assertEqual(str(context.exception),
-                         "Error, tried to link problem to non-existent "
-                         "tags {'tag2'}")
 
 
 class TestProblemQuerying(TestCase):
@@ -194,6 +183,8 @@ class TestProblemLogCreation(TestCase):
             name='testname',
             url='https://testurl.com')
 
+        self.tag = OrmTag.objects.create(name='test-tag')
+
     def test_create_problem_log(self):
         dgw = DjangoGateway()
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
@@ -202,6 +193,7 @@ class TestProblemLogCreation(TestCase):
             last_log=None,
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
+            tags=[TagCreator.create(name=self.tag.name)],
             timestamp=ts)
 
         dgw.create_problem_log(problem_log=log)
@@ -212,6 +204,8 @@ class TestProblemLogCreation(TestCase):
         self.assertEqual(orm_log.problem.name, 'testname')
         self.assertEqual(orm_log.result,
                          Result.SOLVED_OPTIMALLY_IN_UNDER_25.value)
+        self.assertEqual(orm_log.tags.count(), 1)
+        self.assertEqual(orm_log.tags.first().name, 'test-tag')
         self.assertEqual(orm_log.timestamp, ts)
         self.assertEqual(orm_log.comment, 'test comment')
 
@@ -225,6 +219,7 @@ class TestProblemLogQuerying(TestCase):
         prob_2 = OrmProblem.objects.create(difficulty=2,
                                            name='test_problem_2',
                                            url='www.test_url_2.com')
+        self.tag = OrmTag.objects.create(name='tag_1')
 
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
@@ -234,20 +229,23 @@ class TestProblemLogQuerying(TestCase):
             problem_id=self.prob.pk,
             result=Result.SOLVED_SUBOPTIMALLY.value,
             timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))
+        self.problem_log.tags.add(self.tag)
 
-        OrmProblemLog.objects.create(
+        log_2 = OrmProblemLog.objects.create(
             ease=1,
             interval=1,
             problem_id=self.prob.pk,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
             timestamp=dt.datetime(2021, 1, 20, 10, tzinfo=gettz('UTC')))
+        log_2.tags.add(self.tag)
 
-        OrmProblemLog.objects.create(
+        log_3 = OrmProblemLog.objects.create(
             ease=1,
             interval=1,
             problem_id=prob_2.pk,
             result=Result.SOLVED_OPTIMALLY_WITH_HINT.value,
             timestamp=dt.datetime(2021, 1, 15, 10, tzinfo=gettz('UTC')))
+        log_3.tags.add(self.tag)
 
     def test_query_all(self):
         self.assertEqual(3, len(DjangoGateway._query_problem_logs()))
@@ -265,6 +263,7 @@ class TestProblemLogQuerying(TestCase):
                 interval=1,
                 problem_id=self.prob.pk,
                 result=Result.SOLVED_SUBOPTIMALLY,
+                tags=[TagCreator.create(name='tag_1', tag_id=self.tag.pk)],
                 timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))]
 
         problem_log_qs = OrmProblemLog.objects.filter(pk=self.problem_log.pk)
@@ -304,15 +303,20 @@ class TestTagGetting(TestCase):
         OrmTag.objects.create(name='t3')
 
     def test_query_tags(self):
-        tags = DjangoGateway._query_tags(sub_str=None)
+        tags = DjangoGateway._query_tags(names=None, sub_str=None)
 
         self.assertIsInstance(tags[0], OrmTag)
         self.assertEqual([t.name for t in tags], ['tag2', 'Tag1', 't3'])
 
-    def test_query_tag_filter(self):
-        tags = DjangoGateway._query_tags(sub_str='ag')
+    def test_query_tag_filter_sub_str(self):
+        tags = DjangoGateway._query_tags(names=None, sub_str='ag')
 
         self.assertEqual([t.name for t in tags], ['tag2', 'Tag1'])
+
+    def test_query_tag_filter_names(self):
+        tags = DjangoGateway._query_tags(names=['Tag1', 't3'], sub_str=None)
+
+        self.assertEqual([t.name for t in tags], ['Tag1', 't3'])
 
     def test_format_tag(self):
         tags = DjangoGateway._format_tags(tags=OrmTag.objects.all())

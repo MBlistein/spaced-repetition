@@ -9,9 +9,13 @@ from spaced_repetition.domain.problem_log import (DEFAULT_EASE,
                                                   MINIMUM_EASE,
                                                   ProblemLog, ProblemLogCreator,
                                                   Result)
+from spaced_repetition.domain.tag import TagCreator
 
 
 class TestProblemLogCreator(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tag = TagCreator.create(name='test-tag')
+
     @patch.object(ProblemLogCreator, 'calc_ease')
     @patch.object(ProblemLogCreator, 'calc_interval')
     def test_create_spacing_calc_calls(self, mock_calc_int, mock_calc_ease):
@@ -22,9 +26,11 @@ class TestProblemLogCreator(unittest.TestCase):
                           mock_calc_ease.assert_called_once]),
         ]
 
-        with self.subTest():
-            for ease, interval, assert_expressions in params:
+        for ease, interval, assert_expressions in params:
+            with self.subTest(ease=ease, interval=interval,
+                              assert_expressions=assert_expressions):
                 ProblemLogCreator.create(problem_id=1, result=Result.NO_IDEA,
+                                         tags=[self.tag],
                                          ease=ease, interval=interval)
 
                 for assert_expr in assert_expressions:
@@ -34,13 +40,17 @@ class TestProblemLogCreator(unittest.TestCase):
     @patch.object(ProblemLogCreator, attribute='validate_problem_id')
     @patch.object(ProblemLogCreator, attribute='validate_result')
     @patch.object(ProblemLogCreator, attribute='validate_or_create_timestamp')
-    def test_create_all_validators_called(self, mock_val_ts, mock_val_result,
+    @patch('spaced_repetition.domain.problem_log.validate_tag_list')
+    def test_create_all_validators_called(self, mock_val_tags, mock_val_ts,
+                                          mock_val_result,
                                           mock_val_problem_id, mock_val_comment):
         pl = ProblemLogCreator.create(comment='test-comment',
                                       last_log=None,
                                       problem_id=1,
-                                      result=Result.NO_IDEA)
+                                      result=Result.NO_IDEA,
+                                      tags=[self.tag])
         self.assertIsInstance(pl, ProblemLog)
+        mock_val_tags.assert_called_once_with([self.tag])
         mock_val_ts.assert_called_once()
         mock_val_result.assert_called_once()
         mock_val_problem_id.assert_called_once()
@@ -52,14 +62,16 @@ class TestProblemLogCreator(unittest.TestCase):
             interval=1,
             last_log=None,
             problem_id=1,
-            result=Result.KNEW_BY_HEART)
+            result=Result.KNEW_BY_HEART,
+            tags=[self.tag])
 
         last_log_ease_too_low = ProblemLogCreator.create(
             ease=0.5,
             interval=1,
             last_log=None,
             problem_id=1,
-            result=Result.KNEW_BY_HEART)
+            result=Result.KNEW_BY_HEART,
+            tags=[self.tag])
 
         test_params = [
             (last_log, Result.KNEW_BY_HEART, 10.12),
@@ -71,7 +83,8 @@ class TestProblemLogCreator(unittest.TestCase):
         ]
 
         for last_log, result, expected_ease in test_params:
-            with self.subTest():
+            with self.subTest(last_log=last_log, result=result,
+                              expected_ease=expected_ease):
                 new_ease = ProblemLogCreator.calc_ease(last_log=last_log,
                                                        result=result)
                 self.assertAlmostEqual(expected_ease, new_ease)
@@ -81,7 +94,8 @@ class TestProblemLogCreator(unittest.TestCase):
             interval=50,
             last_log=None,
             problem_id=1,
-            result=Result.KNEW_BY_HEART)
+            result=Result.KNEW_BY_HEART,
+            tags=[self.tag])
 
         test_params = [
             ('any_ease', None, Result.KNEW_BY_HEART, 21),

@@ -1,6 +1,7 @@
 """Command line controller / user interface"""
 
 import argparse
+from typing import List
 
 from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.problem_log import (MAX_COMMENT_LENGTH, Result)
@@ -99,7 +100,7 @@ class CliController:
                 difficulty=user_input['difficulty'],
                 url=user_input['url'],
                 name=user_input['name'],
-                tags=user_input['tags'])
+                tags=cls._get_tags_from_user())
         except ValueError as err:
             print(err)
             return
@@ -129,7 +130,8 @@ class CliController:
         try:
             prob_logger.log_problem(comment=comment,
                                     problem_name=problem_name,
-                                    result=result)
+                                    result=result,
+                                    tags=cls._get_tags_from_user())
         except ValueError as err:
             print(err)
 
@@ -151,6 +153,11 @@ class CliController:
     def _get_comment(cls):
         return cls._clean_input(input(
             f"Add comment (optional, max {MAX_COMMENT_LENGTH} chars): "))
+
+    @classmethod
+    def _get_tags_from_user(cls) -> List[str]:
+        return cls._format_tags(
+            input("Supply whitespace-separated tags (at least one): "))
 
     @classmethod
     def _get_user_input_result(cls) -> Result:
@@ -177,9 +184,7 @@ class CliController:
                     input(f"Choose a difficulty between "
                           f"{min_diff.value} ({min_diff.name}) and "
                           f"{max_diff.value} ({max_diff.name}): "))),
-            'url': cls._clean_input(input("Url (optional): ")),
-            'tags': cls._format_tags(
-                input("Supply whitespace-separated tags (at least one): "))}
+            'url': cls._clean_input(input("Url (optional): "))}
 
     # -------------------- display elements --------------------
     @staticmethod

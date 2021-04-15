@@ -13,11 +13,12 @@ Calculation of a problem's ease and interval is adapted from the original:
 import datetime as dt
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Union
+from typing import List, Union
 
 from dateutil.tz import gettz
 
 from .domain_helpers import validate_param
+from .tag import Tag, validate_tag_list
 
 
 DEFAULT_EASE = 2.5
@@ -46,6 +47,7 @@ class ProblemLog:
     interval: int  # in days
     problem_id: int
     result: Result
+    tags: List[Tag]
     timestamp: dt.datetime
     comment: str = ''
 
@@ -55,6 +57,7 @@ class ProblemLogCreator:
     def create(cls,                      # pylint: disable=too-many-arguments
                problem_id: int,
                result: Result,
+               tags: List[Tag],
                comment: str = '',
                ease: float = None,
                interval: int = None,
@@ -71,6 +74,7 @@ class ProblemLogCreator:
             interval=interval,
             problem_id=cls.validate_problem_id(problem_id),
             result=cls.validate_result(result),
+            tags=validate_tag_list(tags),
             timestamp=cls.validate_or_create_timestamp(timestamp))
 
     @staticmethod

@@ -22,7 +22,7 @@ class Problem:
     difficulty: Difficulty
     name: str
     problem_id: Union[int, None]
-    tags: List[str]
+    tags: List[str]  # TODO: make List[Tag]
     url: Union[str, None]
 
 

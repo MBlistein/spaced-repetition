@@ -42,6 +42,8 @@ class ProblemLog(models.Model):
                                 on_delete=models.CASCADE,
                                 related_name='logs')
     result = models.IntegerField(choices=((r.value, r.name) for r in Result))
+    tags = models.ManyToManyField(Tag,
+                                  related_name='problem_logs')
     timestamp = models.DateTimeField(null=False)
 
     def __str__(self):

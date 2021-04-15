@@ -40,20 +40,6 @@ class TestProblemCreator(unittest.TestCase):
         self.assertEqual(ProblemCreator.validate_tags(tags=['tag1', 'tag2']),
                          ['tag1', 'tag2'])
 
-    def test_validate_tags_raises_input_is_not_list(self):
-        with self.assertRaises(TypeError) as context:
-            ProblemCreator.validate_tags(tags="tag1 tag2")
-
-        self.assertEqual(str(context.exception),
-                         "Tags must be a list of strings.")
-
-    def test_validate_tags_empty(self):
-        with self.assertRaises(ValueError) as context:
-            ProblemCreator.validate_tags(tags=[])
-
-        self.assertEqual(str(context.exception),
-                         "Provide at least one tag.")
-
     def test_validate_tag_input_validated(self):
         with patch('spaced_repetition.domain.problem.validate_param') as mock:
             ProblemCreator.validate_tags(tags=['test_tag'])

@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from spaced_repetition.domain.problem import Difficulty
+from spaced_repetition.domain.tag import Tag
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem import ProblemGetter
 from .helpers_pandas import add_missing_columns
@@ -25,6 +26,18 @@ class TagGetter:
     def list_tags(self, sub_str: str = None):
         self.presenter.list_tags(
             tags=self._get_prioritized_tags(sub_str=sub_str))
+
+    def get_existing_tags(self, names: List[str]) -> List[Tag]:
+        """ Returns tags with the given names, and raises ValueError
+        if at least one of them does not exist. """
+        tags = self.repo.get_tags(names=names)
+
+        if len(tags) < len(names):
+            existing_tags = {tag.name for tag in tags}
+            non_existing_tags = set(names).difference(existing_tags)
+            raise ValueError("The following tag names don't exist: "
+                             f"{non_existing_tags}")
+        return tags
 
     def _get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
         tag_df = self._get_tags(sub_str=sub_str)

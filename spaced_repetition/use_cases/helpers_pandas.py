@@ -25,5 +25,5 @@ def add_missing_columns(df, required_columns: List[str]):
     df = df.copy()
     for col in required_columns:
         if col not in df.columns:
-            df[col] = pd.Series(dtype=TYPE_MAPPER.get(col, np.float))
+            df[col] = pd.Series(dtype=TYPE_MAPPER.get(col, float))
     return df

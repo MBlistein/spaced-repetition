@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
+from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
@@ -218,7 +219,9 @@ class TestCliPresentConfirmations(unittest.TestCase):
             url='test-url')
 
         self.problem_log = ProblemLogCreator.create(
-            problem_id=1, result=Result.SOLVED_OPTIMALLY_IN_UNDER_25)
+            problem_id=1,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
+            tags=[TagCreator.create('test-tag')])
 
     def test_problem_confirmation_txt(self):
         expected_txt = "Created Problem 'testname' with id '1' " \

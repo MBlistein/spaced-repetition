@@ -16,21 +16,12 @@ from .django_project.apps.problem.models import (Problem as OrmProblem,
 class DjangoGateway(DBGatewayInterface):
     @classmethod
     def create_problem(cls, problem: Problem) -> Problem:
-        existing_tags = OrmTag.objects \
-            .filter(name__in=problem.tags)
-
-        if existing_tags.count() < len(problem.tags):
-            existing_tags = {e_t.name for e_t in existing_tags}
-            non_existing_tags = set(problem.tags).difference(existing_tags)
-            raise ValueError("Error, tried to link problem to non-existent "
-                             f"tags {non_existing_tags}")
-
         orm_problem = OrmProblem.objects.create(
             difficulty=problem.difficulty.value,
             url=problem.url,
             name=problem.name)
 
-        orm_problem.tags.set(existing_tags)
+        orm_problem.tags.set(OrmTag.objects.filter(name__in=problem.tags))
         orm_problem.save()
 
         return cls._format_problems(problems=[orm_problem])[0]
@@ -86,15 +77,18 @@ class DjangoGateway(DBGatewayInterface):
             return OrmProblem.objects.filter(pk=problem_id).exists()
         return OrmProblem.objects.filter(name=name).exists()
 
-    @staticmethod
-    def create_problem_log(problem_log: ProblemLog) -> None:
-        OrmProblemLog.objects.create(
+    @classmethod
+    def create_problem_log(cls, problem_log: ProblemLog) -> None:
+        log = OrmProblemLog.objects.create(
             comment=problem_log.comment,
             ease=problem_log.ease,
             interval=problem_log.interval,
             problem=OrmProblem.objects.get(pk=problem_log.problem_id),
             result=problem_log.result.value,
             timestamp=problem_log.timestamp)
+
+        log.tags.set(cls._query_tags(
+            names=[tag.name for tag in problem_log.tags], sub_str=None))
 
     @classmethod
     def get_problem_logs(cls, problem_ids: List[int] = None) -> List[ProblemLog]:
@@ -119,8 +113,10 @@ class DjangoGateway(DBGatewayInterface):
                 ease=p_l.ease,
                 interval=p_l.interval,
                 problem_id=p_l.problem.pk,
-                timestamp=p_l.timestamp,
-                result=Result(p_l.result)))
+                result=Result(p_l.result),
+                tags=[TagCreator.create(name=tag.name, tag_id=tag.pk)
+                      for tag in p_l.tags.all()],
+                timestamp=p_l.timestamp))
 
         return res
 
@@ -130,12 +126,15 @@ class DjangoGateway(DBGatewayInterface):
         return cls._format_tags(tags=[orm_tag])[0]
 
     @classmethod
-    def get_tags(cls, sub_str: str = None):
-        return cls._format_tags(tags=cls._query_tags(sub_str=sub_str))
+    def get_tags(cls, names: List[str] = None, sub_str: str = None):
+        return cls._format_tags(tags=cls._query_tags(names=names,
+                                                     sub_str=sub_str))
 
     @staticmethod
-    def _query_tags(sub_str: Union[str, None]):
+    def _query_tags(names: Union[List[str], None], sub_str: Union[str, None]):
         qs = OrmTag.objects.all()
+        if names is not None:
+            qs = qs.filter(name__in=names)
         if sub_str:
             qs = qs.filter(name__icontains=sub_str)
         return qs

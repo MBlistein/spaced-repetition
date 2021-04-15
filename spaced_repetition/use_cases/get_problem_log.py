@@ -33,6 +33,7 @@ class ProblemLogGetter:
     def _log_to_row_content(p_log: ProblemLog) -> dict:
         row_content = dataclasses.asdict(p_log)
         row_content['ts_logged'] = row_content.pop('timestamp')
+        row_content['tags'] = ', '.join(sorted([tag.name for tag in p_log.tags]))
         return row_content
 
     def _get_last_log_per_problem(self, problem_ids: List[int] = None):
