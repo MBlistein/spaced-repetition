@@ -7,7 +7,6 @@ import pandas as pd
 from dateutil.tz import gettz
 
 from spaced_repetition.domain.problem_log import ProblemLog
-from spaced_repetition.domain.score import SCORE_MAPPER
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
 from .helpers_pandas import add_missing_columns
@@ -50,14 +49,6 @@ class ProblemLogGetter:
             .sort_values('ts_logged') \
             .groupby('problem_id') \
             .tail(1)
-
-    @staticmethod
-    def _add_scores(log_df: pd.DataFrame) -> pd.DataFrame:
-        score_df = log_df.copy()
-        score_df['score'] = score_df['result'].map(
-            lambda x: SCORE_MAPPER[x].value)
-
-        return score_df
 
     @classmethod
     def _get_knowledge_scores(

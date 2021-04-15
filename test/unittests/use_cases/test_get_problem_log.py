@@ -8,7 +8,6 @@ from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem_log import (DEFAULT_EASE, INTERVAL_NON_OPTIMAL_SOLUTION,
                                                   ProblemLogCreator, Result)
-from spaced_repetition.domain.score import Score
 from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
@@ -140,21 +139,6 @@ class TestProblemLogGetter(unittest.TestCase):
         assert_frame_equal(
             expected_df,
             ProblemLogGetter._last_log_per_problem(log_df=pd.DataFrame()))
-
-    def test_add_scores(self):
-        log_df = pd.DataFrame(data=[
-            {'problem_id': 1,
-             'result': Result.SOLVED_OPTIMALLY_SLOWER.value}
-        ])
-
-        expected_df = pd.DataFrame(data=[
-            {'problem_id': 1,
-             'result': Result.SOLVED_OPTIMALLY_SLOWER.value,
-             'score': Score.MEDIUM.value}
-        ])
-
-        assert_frame_equal(ProblemLogGetter._add_scores(log_df=log_df),
-                           expected_df)
 
     @patch.object(ProblemLogGetter, '_get_knowledge_scores')
     @patch.object(ProblemLogGetter, '_get_last_log_per_problem')
