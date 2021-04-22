@@ -21,9 +21,48 @@ class ProblemLogGetter:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def get_problem_knowledge_scores(self, problem_ids: List[int] = None):
-        return self._get_knowledge_scores(
-            log_data=self._get_last_log_per_problem(problem_ids=problem_ids))
+    def get_knowledge_status(self):
+        """ Get the last recorded status per problem-log-combo """
+        problem_log_data = self._last_entry_per_problem_tag_combo(
+            plog_df=self.get_problem_log_data())
+
+        return self._add_knowledge_scores(log_data=problem_log_data)
+
+    @staticmethod
+    def _last_entry_per_problem_tag_combo(plog_df: pd.DataFrame):
+        columns = ['problem_id', 'tag', 'ts_logged', 'result', 'ease',
+                   'interval']
+        df = add_missing_columns(
+            df=plog_df.loc[:, [col for col in columns if col in plog_df.columns]],
+            required_columns=columns)
+
+        return df \
+            .sort_values('ts_logged') \
+            .groupby(['problem_id', 'tag']) \
+            .tail(1)
+
+    def get_problem_log_data(self) -> pd.DataFrame:
+        problem_logs = self.repo.get_problem_logs()
+        return pd.DataFrame(data=self._denormalize_logs(p_logs=problem_logs))
+
+    @staticmethod
+    def _denormalize_logs(p_logs: List[ProblemLog]) -> List[dict]:
+        res = []
+        for p_log in p_logs:
+            for tag in p_log.tags:
+                res.append({
+                    'comment': p_log.comment,
+                    'ease': p_log.ease,
+                    'interval': p_log.interval,
+                    'problem_id': p_log.problem_id,
+                    'result': p_log.result.name,
+                    'tag': tag.name,
+                    'ts_logged': p_log.timestamp})
+        return res
+
+    # def get_problem_knowledge_scores(self, problem_ids: List[int] = None):
+    #     return self._get_knowledge_scores(
+    #         log_data=self._get_last_log_per_problem(problem_ids=problem_ids))
 
     def get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs(problem_ids=problem_ids)
@@ -52,10 +91,10 @@ class ProblemLogGetter:
             .tail(1)
 
     @classmethod
-    def _get_knowledge_scores(
+    def _add_knowledge_scores(
             cls, log_data: pd.DataFrame,
             ts: dt.datetime = dt.datetime.now(tz=gettz('UTC'))) -> pd.DataFrame:
-        """Calculates the knowledge score 'KS' per problem"""
+        """Calculates the knowledge score 'KS' per log-entry (= log_data row)"""
         df = log_data.copy()
 
         if df.empty:

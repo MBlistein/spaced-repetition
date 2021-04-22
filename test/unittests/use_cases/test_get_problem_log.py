@@ -220,3 +220,109 @@ class TestProblemLogGetter(unittest.TestCase):
         res = ProblemLogGetter._get_knowledge_scores(log_data=last_log_data)
 
         assert_frame_equal(expected_df, res, check_like=True)
+
+
+class TestGetKnowledgeStatus(unittest.TestCase):
+    def setUp(self):
+        self.time_1 = dt.datetime(2021, 1, 10, 1)
+        self.time_2 = dt.datetime(2021, 1, 10, 5)
+
+        self.tag_1 = TagCreator.create('tag_1')
+        self.tag_2 = TagCreator.create('tag_2')
+
+        self.problem_log_1 = ProblemLogCreator.create(
+            comment='problem_log_1 comment',
+            ease=1,
+            interval=2,
+            last_log=None,
+            problem_id=1,
+            result=Result.NO_IDEA,
+            tags=[self.tag_1, self.tag_2],
+            timestamp=self.time_1)
+
+        self.problem_log_2 = ProblemLogCreator.create(
+            ease=3,
+            interval=4,
+            last_log=None,
+            problem_id=1,
+            result=Result.SOLVED_OPTIMALLY_WITH_HINT,
+            tags=[self.tag_2],
+            timestamp=self.time_2)
+
+        self.plg = ProblemLogGetter(db_gateway=Mock(), presenter=Mock())
+        self.plg.repo.get_problem_logs.return_value = [self.problem_log_1,
+                                                       self.problem_log_2]
+
+        self.prob1_tag1_ts1_data = {
+            'comment': 'problem_log_1 comment',
+            'ease': 1,
+            'interval': 2,
+            'problem_id': 1,
+            'result': 'NO_IDEA',
+            'tag': 'tag_1',
+            'ts_logged': self.time_1}
+        self.prob1_tag2_ts1_data = {
+             'comment': 'problem_log_1 comment',
+             'ease': 1,
+             'interval': 2,
+             'problem_id': 1,
+             'result': 'NO_IDEA',
+             'tag': 'tag_2',
+             'ts_logged': self.time_1}
+        self.prob1_tag2_ts2_data = {
+              'comment': '',
+              'ease': 3,
+              'interval': 4,
+              'problem_id': 1,
+              'result': 'SOLVED_OPTIMALLY_WITH_HINT',
+              'tag': 'tag_2',
+              'ts_logged': self.time_2}
+
+    def test_denormalize_logs(self):
+        expected_result = [self.prob1_tag1_ts1_data,
+                           self.prob1_tag2_ts1_data,
+                           self.prob1_tag2_ts2_data]
+
+        res = self.plg._denormalize_logs(p_logs=[self.problem_log_1,
+                                                 self.problem_log_2])
+
+        self.assertEqual(expected_result, res)
+
+    def test_get_problem_log_data(self):
+        expected_result = pd.DataFrame(data=[self.prob1_tag1_ts1_data,
+                                             self.prob1_tag2_ts1_data,
+                                             self.prob1_tag2_ts2_data])
+
+        res = self.plg.get_problem_log_data()
+
+        assert_frame_equal(expected_result, res)
+
+    def test_last_entry_per_problem_tag_combo(self):
+        input_df = pd.DataFrame(data=[self.prob1_tag1_ts1_data,
+                                      self.prob1_tag2_ts1_data,
+                                      self.prob1_tag2_ts2_data])
+        expected_result = pd \
+            .DataFrame(data=[self.prob1_tag1_ts1_data,
+                             self.prob1_tag2_ts2_data]) \
+            .loc[:, ['problem_id', 'tag', 'ts_logged', 'result', 'ease',
+                     'interval']]
+
+        res = self.plg._last_entry_per_problem_tag_combo(input_df) \
+            .reset_index(drop=True)  # filtered rows make index non-continuous
+
+        assert_frame_equal(expected_result, res)
+
+    @patch.object(ProblemLogGetter, '_add_knowledge_scores')
+    @patch.object(ProblemLogGetter, '_last_entry_per_problem_tag_combo')
+    @patch.object(ProblemLogGetter, 'get_problem_log_data')
+    def test_get_knowledge_status(self, mock_get_problem_log_data,
+                                  mock_get_last_entry,
+                                  mock_add_knowledge_scores):
+        mock_get_problem_log_data.return_value = 'log_data'
+        mock_get_last_entry.return_value = 'last_entries'
+
+        self.plg.get_knowledge_status()
+
+        mock_get_problem_log_data.assert_called_once()
+        mock_get_last_entry.assert_called_once_with(plog_df='log_data')
+        mock_add_knowledge_scores.assert_called_once_with(log_data='last_entries')
