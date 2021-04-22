@@ -24,7 +24,7 @@ class ProblemLogGetter:
     def get_knowledge_status(self):
         """ Get the last recorded status per problem-log-combo """
         problem_log_data = self._last_entry_per_problem_tag_combo(
-            plog_df=self.get_problem_log_data())
+            plog_df=self._get_problem_log_data())
 
         return self._add_knowledge_scores(log_data=problem_log_data)
 
@@ -41,7 +41,7 @@ class ProblemLogGetter:
             .groupby(['problem_id', 'tag']) \
             .tail(1)
 
-    def get_problem_log_data(self) -> pd.DataFrame:
+    def _get_problem_log_data(self) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs()
         return pd.DataFrame(data=self._denormalize_logs(p_logs=problem_logs))
 
@@ -60,35 +60,16 @@ class ProblemLogGetter:
                     'ts_logged': p_log.timestamp})
         return res
 
-    # def get_problem_knowledge_scores(self, problem_ids: List[int] = None):
-    #     return self._get_knowledge_scores(
-    #         log_data=self._get_last_log_per_problem(problem_ids=problem_ids))
-
     def get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs(problem_ids=problem_ids)
-        return pd.DataFrame(data=map(self._log_to_row_content, problem_logs))
+        return pd.DataFrame(data=map(self._log_to_row, problem_logs))
 
     @staticmethod
-    def _log_to_row_content(p_log: ProblemLog) -> dict:
+    def _log_to_row(p_log: ProblemLog) -> dict:
         row_content = dataclasses.asdict(p_log)
         row_content['ts_logged'] = row_content.pop('timestamp')
         row_content['tags'] = ', '.join(sorted([tag.name for tag in p_log.tags]))
         return row_content
-
-    def _get_last_log_per_problem(self, problem_ids: List[int] = None):
-        log_df = self.get_problem_logs(problem_ids=problem_ids)
-        return self._last_log_per_problem(log_df)
-
-    @staticmethod
-    def _last_log_per_problem(log_df: pd.DataFrame):
-        columns = ['problem_id', 'ts_logged', 'result', 'ease', 'interval']
-
-        return add_missing_columns(
-            df=log_df.loc[:, [col for col in columns if col in log_df.columns]],
-            required_columns=columns) \
-            .sort_values('ts_logged') \
-            .groupby('problem_id') \
-            .tail(1)
 
     @classmethod
     def _add_knowledge_scores(
