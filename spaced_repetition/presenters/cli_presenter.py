@@ -1,5 +1,6 @@
 import pandas as pd
 from tabulate import tabulate
+from typing import List
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.problem_log import ProblemLog
@@ -37,7 +38,21 @@ class CliPresenter(PresenterInterface):
     # -------------------- pretty-print db contents ------------------------
     @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
-        formatted_df = cls.format_problem_df(df=problems)
+        ordered_cols = ['id', 'problem', 'tags', 'difficulty', 'last_access',
+                        'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
+        formatted_df = cls.format_df(df=problems,
+                                     ordered_cols=ordered_cols,
+                                     index_col='id')
+        tabulated_df = cls.tabulate_df(df=formatted_df)
+        print(tabulated_df)
+
+    @classmethod
+    def list_problem_tag_combos(cls, problem_tag_combos: pd.DataFrame) -> None:
+        ordered_cols = ['tag', 'problem', 'problem_id', 'difficulty', 'last_access',
+                        'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
+        formatted_df = cls.format_df(df=problem_tag_combos,
+                                     ordered_cols=ordered_cols,
+                                     index_col='tag')
         tabulated_df = cls.tabulate_df(df=formatted_df)
         print(tabulated_df)
 
@@ -60,17 +75,15 @@ class CliPresenter(PresenterInterface):
                         tablefmt='github')
 
     @classmethod
-    def format_problem_df(cls, df: pd.DataFrame):
+    def format_df(cls, df: pd.DataFrame, ordered_cols: List[str],
+                  index_col: str):
         """Needs at least a column named 'problem_id'"""
-        name_mapper = {'problem_id': 'id',
-                       'result': 'last_result',
+        name_mapper = {'result': 'last_result',
                        'ts_logged': 'last_access'}
         df = df \
-            .rename(columns=name_mapper)
-
-        order = ['id', 'name', 'tags', 'difficulty', 'last_access',
-                 'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
-        df = df.reindex(columns=order).set_index('id')
+            .rename(columns=name_mapper) \
+            .reindex(columns=ordered_cols) \
+            .set_index(index_col)  # avoid printing some integer index
 
         df.difficulty = cls._format_difficulty(df.difficulty)
         df.last_result = cls._format_result(df.last_result)

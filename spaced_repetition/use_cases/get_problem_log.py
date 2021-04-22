@@ -55,7 +55,7 @@ class ProblemLogGetter:
                     'ease': p_log.ease,
                     'interval': p_log.interval,
                     'problem_id': p_log.problem_id,
-                    'result': p_log.result.name,
+                    'result': p_log.result,
                     'tag': tag.name,
                     'ts_logged': p_log.timestamp})
         return res

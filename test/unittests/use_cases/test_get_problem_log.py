@@ -173,7 +173,7 @@ class TestGetKnowledgeStatus(unittest.TestCase):
             'ease': 1,
             'interval': 2,
             'problem_id': 1,
-            'result': 'NO_IDEA',
+            'result': Result.NO_IDEA,
             'tag': 'tag_1',
             'ts_logged': self.time_1}
         self.prob1_tag2_ts1_data = {
@@ -181,7 +181,7 @@ class TestGetKnowledgeStatus(unittest.TestCase):
              'ease': 1,
              'interval': 2,
              'problem_id': 1,
-             'result': 'NO_IDEA',
+             'result': Result.NO_IDEA,
              'tag': 'tag_2',
              'ts_logged': self.time_1}
         self.prob1_tag2_ts2_data = {
@@ -189,7 +189,7 @@ class TestGetKnowledgeStatus(unittest.TestCase):
               'ease': 3,
               'interval': 4,
               'problem_id': 1,
-              'result': 'SOLVED_OPTIMALLY_WITH_HINT',
+              'result': Result.SOLVED_OPTIMALLY_WITH_HINT,
               'tag': 'tag_2',
               'ts_logged': self.time_2}
 

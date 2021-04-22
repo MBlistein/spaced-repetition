@@ -53,11 +53,26 @@ class CliController:
             nargs='+',
             help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
-                                 choices=['KS', 'name', 'problem_id'],
-                                 nargs=1,
+                                 choices=['KS', 'problem', 'problem_id'],
+                                 nargs='+',
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
         list_parser.set_defaults(func=cls._list_problems)
+
+        # list problem-tag-combos
+        combo_parser = sub_parsers.add_parser(
+            'list-problem-tag-combos',
+            aliases=['list-full', 'lf'],
+            help='List knowledge status of all problem-tag-combos')
+        combo_parser.add_argument('-ft', '--filter-tags',
+                                  help='Show results only for tags containing '
+                                       'the provided substring')
+        combo_parser.add_argument('-s', '--sort-by',
+                                  choices=['KS', 'ts_logged', 'problem', 'tag'],
+                                  nargs='+',
+                                  help='Provide space-separated attribute(s) to '
+                                       'sort listed problems by')
+        combo_parser.set_defaults(func=cls._list_problem_tag_combos)
 
         # show problem history
         add_parser = sub_parsers.add_parser('show-history',
@@ -201,6 +216,17 @@ class CliController:
         if args.sort_by:
             kwargs['sorted_by'] = args.sort_by
         prob_getter.list_problems(**kwargs)
+
+    @staticmethod
+    def _list_problem_tag_combos(args):
+        kwargs = {}
+        if args.sort_by:
+            kwargs['sorted_by'] = args.sort_by
+        if args.filter_tags:
+            kwargs['tag_substr'] = args.filter_tags
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        prob_getter.list_problem_tag_combos(**kwargs)
 
     @staticmethod
     def _list_tags(args):

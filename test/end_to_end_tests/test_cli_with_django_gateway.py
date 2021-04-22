@@ -19,6 +19,7 @@ class TestCliControllerFullExecution(DjangoTestCase):
         prob_1.tags.add(tag_1)
 
     def test_list_problems(self):
+        """ smoke test """
         with patch.object(sys, 'argv', new=['_', 'l']):
             CliController.run()
 
