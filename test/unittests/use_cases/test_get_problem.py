@@ -14,6 +14,9 @@ from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
+""" some day these tests should be regrouped by purpose to de-duplicate data"""
+
+
 class TestListProblemTagCombos(unittest.TestCase):
     def setUp(self):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
@@ -36,20 +39,30 @@ class TestListProblemTagCombos(unittest.TestCase):
             'url': 'some_url.com'}
         self.problem_df = pd.DataFrame(data=[self.problem_data],
                                        columns=self.problem_columns)
+        self.unlogged_problem_data = {
+            'difficulty': Difficulty.EASY,
+            'problem': 'unattempted_problem',
+            'problem_id': 2,
+            'tags': 'unattempted_tag'}
+        self.unlogged_problem_with_logged_tag_data = {
+            'difficulty': Difficulty.EASY,
+            'problem': 'unattempted_problem_with_logged_tag',
+            'problem_id': 3,
+            'tags': self.tag_1.name}
 
         self.t1_p1_knowledge_data = {'ease': 1,
                                      'interval': 2,
-                                     'KS': 3,
+                                     'KS': 5,
                                      'problem_id': 1,
-                                     'result': 'NO_IDEA',
+                                     'result': 'KNEW_BY_HEARt',
                                      'RF': 1,
                                      'tag': 'tag_1',
                                      'ts_logged': self.time_1}
         self.t2_p1_knowledge_data = {'ease': 3,
                                      'interval': 4,
-                                     'KS': 3,
+                                     'KS': 0,
                                      'problem_id': 1,
-                                     'result': 'SOLVED_OPTIMALLY_WITH_HINT',
+                                     'result': 'NO_IDEA',
                                      'RF': 1,
                                      'tag': 'tag_2',
                                      'ts_logged': self.time_2}
@@ -90,26 +103,70 @@ class TestListProblemTagCombos(unittest.TestCase):
 
         assert_frame_equal(expected_df, res)
 
-    @patch.object(ProblemGetter, '_get_problems')
-    @patch.object(ProblemLogGetter, 'get_knowledge_status')
-    def test_list_problem_tag_combos(self, mock_get_knowledge_status,
-                                     mock_get_problems):
-        mock_get_problems.return_value = self.problem_df
-        mock_get_knowledge_status.return_value = pd.DataFrame(
-            self.knowledge_status_data)
-
-        expected_result = self.problem_tag_combo_df
+    @patch.object(ProblemGetter, 'get_knowledge_status')
+    @patch.object(ProblemGetter, '_filter_tags')
+    def test_list_problem_tag_combos(self, mock_filter_args,
+                                     mock_get_knowledge_status):
+        mock_get_knowledge_status.return_value = self.problem_tag_combo_df
+        mock_filter_args.return_value = 'fake_res'
 
         mock_presenter = Mock()
         p_g = ProblemGetter(db_gateway=Mock(), presenter=mock_presenter)
 
         # call
-        p_g.list_problem_tag_combos()
+        p_g.list_problem_tag_combos(tag_substr='test_substr')
 
-        mock_presenter.list_problem_tag_combos.assert_called_once()
-        res = mock_presenter.list_problem_tag_combos.call_args[0][0]
+        mock_get_knowledge_status.assert_called_once()
+        call_df = mock_filter_args.call_args[1]['df']
+        filter_str = mock_filter_args.call_args[1]['tag_substr']
+        assert_frame_equal(call_df, self.problem_tag_combo_df.sort_values('KS'))
+        self.assertEqual(filter_str, 'test_substr')
+        mock_presenter.list_problem_tag_combos.assert_called_once_with(
+            'fake_res')
 
-        assert_frame_equal(expected_result, res, check_like=True)
+    @patch.object(ProblemGetter, '_get_problems')
+    @patch.object(ProblemLogGetter, 'get_last_log_per_problem_tag_combo')
+    def test_get_knowledge_status(self, mock_log_data_getter, mock_get_problems):
+        """ test that all data is retrieved, including unlogged problems """
+        problem_df = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 3,
+            'problem': ['problem_1', 'unlogged_problem', 'unlogged_problem_with_logged_tag'],
+            'problem_id': [1, 2, 3],
+            'tags': ['tag_1, tag_2', 'unlogged_tag', 'tag_1'],
+            'url': ['some_url.com'] * 3})
+
+        # problem 1 has been logged with 2 tags
+        log_df = pd.DataFrame(data={
+            'ease': [1] * 2,
+            'interval': [2] * 2,
+            'KS': [5] * 2,
+            'problem_id': [1] * 2,
+            'result': ['KNEW_BY_HEART'] * 2,
+            'RF': [1] * 2,
+            'tag': ['tag_1', 'tag_2'],
+            'ts_logged': [self.time_1] * 2})
+
+        expected_res = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 4,
+            'problem': ['problem_1', 'problem_1', 'unlogged_problem', 'unlogged_problem_with_logged_tag'],
+            'problem_id': [1, 1, 2, 3],
+            'url': ['some_url.com'] * 4,
+            'ease': [1, 1, np.nan, np.nan],
+            'interval': [2, 2, np.nan, np.nan],
+            'KS': [5, 5, np.nan, np.nan],
+            'result': ['KNEW_BY_HEART', 'KNEW_BY_HEART', np.nan, np.nan],
+            'RF': [1, 1, np.nan, np.nan],
+            'tag': ['tag_1', 'tag_2', 'unlogged_tag', 'tag_1'],
+            'ts_logged': [self.time_1, self.time_1, np.nan, np.nan]})
+
+        mock_get_problems.return_value = problem_df
+        mock_log_data_getter.return_value = log_df
+        p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+
+        # call
+        res = p_g.get_knowledge_status()
+
+        assert_frame_equal(expected_res, res, check_like=True)
 
     def test_denormalize_problems(self):
         expected_res = pd.DataFrame(data={
@@ -159,7 +216,7 @@ class TestListProblemTagCombos(unittest.TestCase):
 
         assert_frame_equal(expected_res, res)
 
-    def test_merge_problem_with_unlogged_combos(self):
+    def test_merge_problem_with_unlogged_problems(self):
         prob_df = pd.DataFrame({'problem': ['problem'] * 2,
                                 'tag': ['tag_1', 'tag_2'],
                                 'problem_id': [1] * 2})
@@ -190,88 +247,76 @@ class TestListProblemTagCombos(unittest.TestCase):
 
 
 class TestListProblems(unittest.TestCase):
-    pass
-    # @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
-    # @patch.object(ProblemGetter, '_get_problems')
-    # def test_get_prioritized_problems(self, mock_get_problems,
-    #                                   mock_get_problem_knowledge_scores):
-    #     # prepare
-    #     mock_get_problems.return_value = self.problem_df
-    #     knowledge_score_df = pd.DataFrame(
-    #         data=[self.problem_knowledge_data])
-    #     mock_get_problem_knowledge_scores.return_value = knowledge_score_df
-    #
-    #     p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-    #
-    #     # call
-    #     res = p_g.get_prioritized_problems(name_substr='aa',
-    #                                        tags_all=['cc'])
-    #
-    #     # assert
-    #     mock_get_problems.assert_called_once_with(name_substr='aa',
-    #                                               tags_any=None,
-    #                                               tags_all=['cc'])
-    #     mock_get_problem_knowledge_scores.assert_called_once_with(
-    #         problem_ids=[1])
-    #
-    #     assert_frame_equal(self.prioritized_problem, res, check_like=True)
-    #
-    # @patch.object(ProblemLogGetter, 'get_problem_knowledge_scores')
-    # @patch.object(ProblemGetter, '_get_problems')
-    # def test_get_prioritized_problems_new_problems(
-    #         self, mock_get_problems, mock_get_problem_knowledge_scores):
-    #     """ Assert that new problems have 'na' values for KS, etc. """
-    #     # prepare
-    #     new_problem_data = {
-    #         'name': 'new_problem',
-    #         'problem_id': 2,
-    #         'difficulty': Difficulty.MEDIUM,
-    #         'url': 'new_url.com',
-    #         'tags': 'tag_1'}
-    #     problem_df = pd.DataFrame(data=[self.problem_data, new_problem_data],
-    #                               columns=self.problem_columns)
-    #     mock_get_problems.return_value = problem_df
-    #
-    #     knowledge_score_df = pd.DataFrame(
-    #         data=[self.problem_knowledge_data])
-    #     mock_get_problem_knowledge_scores.return_value = knowledge_score_df
-    #
-    #     know_problem_data = self.problem_data.copy()
-    #     know_problem_data.update(self.problem_knowledge_data)
-    #     new_problem_data.update({
-    #         'ts_logged': np.nan,
-    #         'result': np.nan,
-    #         'interval': np.nan,
-    #         'ease': np.nan,
-    #         'RF': np.nan,
-    #         'KS': np.nan
-    #     })
-    #     expected_df = pd.DataFrame(data=[know_problem_data, new_problem_data])
-    #
-    #     p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-    #
-    #     # call
-    #     res = p_g.get_prioritized_problems()
-    #
-    #     # assert
-    #     assert_frame_equal(expected_df, res, check_like=True)
-    #
-    # def test_get_prioritized_problems_none_found(self):
-    #     p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
-    #     p_g.repo.get_problems.return_value = []
-    #
-    #     expected_res = add_missing_columns(
-    #         df=pd.DataFrame(), required_columns=[
-    #             'difficulty', 'name', 'tags', 'url', 'problem_id', 'ts_logged',
-    #             'result', 'ease', 'interval', 'RF', 'KS'])
-    #
-    #     with patch.object(ProblemLogGetter, 'get_problem_knowledge_scores') as \
-    #             mock_ks_scores:
-    #         mock_ks_scores.return_value = add_missing_columns(
-    #             df=pd.DataFrame(),
-    #             required_columns=['problem_id', 'ts_logged', 'result', 'ease',
-    #                               'interval', 'RF', 'KS'])
-    #
-    #         res = p_g.get_prioritized_problems()
-    #
-    #         assert_frame_equal(expected_res, res)
+    def setUp(self):
+        self.time_1 = dt.datetime(2021, 1, 10, 1)
+
+    def test_aggregate_problems(self):
+        knowledge_status = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 4,
+            'problem': ['problem_1', 'problem_1', 'unlogged_problem', 'unlogged_problem_with_logged_tag'],
+            'problem_id': [1, 1, 2, 3],
+            'url': ['some_url.com'] * 4,
+            'ease': [1, 1, np.nan, np.nan],
+            'interval': [2, 2, np.nan, np.nan],
+            'KS': [5, 5, np.nan, np.nan],
+            'result': ['KNEW_BY_HEART', 'KNEW_BY_HEART', np.nan, np.nan],
+            'RF': [1, 1, np.nan, np.nan],
+            'tag': ['tag_1', 'tag_2', 'unlogged_tag', 'tag_1'],
+            'ts_logged': [self.time_1, self.time_1, np.nan, np.nan]})
+
+        expected_result = pd.DataFrame(data={
+            'problem_id': [1, 2, 3],
+            'KS': [5., 0., 0.],
+            'RF': [1, np.nan, np.nan]})
+
+        p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+
+        # call
+        res = p_g.aggregate_problems(knowledge_status)
+
+        assert_frame_equal(expected_result, res, check_like=True)
+
+    @patch.object(ProblemGetter, '_get_problems')
+    @patch.object(ProblemGetter, 'get_knowledge_status')
+    def test_get_knowledge_status(self, mock_get_knowledge_status, mock_get_problems):
+        """ test that all data is retrieved, including unlogged problems """
+        problem_df = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 2,
+            'problem': ['problem_1', 'unlogged_problem'],
+            'problem_id': [1, 2],
+            'tags': ['tag_1, tag_2', 'unlogged_tag'],
+            'url': ['some_url.com'] * 2})
+
+        knowledge_status = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 3,
+            'problem': ['problem_1', 'problem_1', 'unlogged_problem'],
+            'problem_id': [1, 1, 2],
+            'url': ['some_url.com'] * 3,
+            'ease': [1, 1, np.nan],
+            'interval': [2, 2, np.nan],
+            'KS': [5, 5, np.nan],
+            'result': ['KNEW_BY_HEART', 'KNEW_BY_HEART', np.nan],
+            'RF': [1, 1, np.nan],
+            'tag': ['tag_1', 'tag_2', 'unlogged_tag'],
+            'ts_logged': [self.time_1, self.time_1, np.nan]})
+
+        expected_res = pd.DataFrame(data={
+            'difficulty': [Difficulty.EASY] * 2,
+            'problem': ['problem_1', 'unlogged_problem'],
+            'problem_id': [1, 2],
+            'url': ['some_url.com'] * 2,
+            'KS': [5., 0.],
+            'RF': [1, np.nan],
+            'tags': ['tag_1, tag_2', 'unlogged_tag']})
+
+        mock_get_problems.return_value = problem_df
+        mock_get_knowledge_status.return_value = knowledge_status
+        p_g = ProblemGetter(db_gateway=Mock(), presenter=Mock())
+
+        # call
+        p_g.list_problems()
+
+        res = p_g.presenter.list_problems.call_args[0][0]
+
+        assert_frame_equal(expected_res, res, check_like=True)
+

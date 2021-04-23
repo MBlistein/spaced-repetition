@@ -1,6 +1,7 @@
 import dataclasses
 from typing import List
 
+import numpy as np
 import pandas as pd
 
 from spaced_repetition.domain.problem import Problem
@@ -22,15 +23,37 @@ class ProblemGetter:
                       sorted_by: List[str] = None,
                       tags_any: List[str] = None,
                       tags_all: List[str] = None):
-        problem_df = self.get_prioritized_problems(name_substr=name_substr,
-                                                   tags_any=tags_any,
-                                                   tags_all=tags_all)
+        knowledge_status = self.get_knowledge_status()
+        problem_knowledge = self.aggregate_problems(knowledge_status)
+
+        problems = self._get_problems(name_substr=name_substr,
+                                      tags_all=tags_all,
+                                      tags_any=tags_any)
+        problem_df = pd.merge(
+            problems,
+            problem_knowledge,
+            on='problem_id',
+            how='left')  # allow filtering for specific problems
 
         problem_df.sort_values(by=sorted_by or 'KS',
                                inplace=True,
                                key=self._sort_key,
                                na_position='first')
         self.presenter.list_problems(problem_df)
+
+    @staticmethod
+    def aggregate_problems(knowledge_status: pd.DataFrame) -> pd.DataFrame:
+        relevant_data = knowledge_status \
+            .loc[:, ['KS', 'problem_id', 'RF']] \
+
+        # unlogged problems get KS = 0 because they should be studied
+        relevant_data.KS.fillna(value=0, inplace=True)
+
+        return relevant_data \
+            .groupby('problem_id') \
+            .agg({'KS': np.mean,
+                  'RF': np.mean}) \
+            .reset_index()
 
     def show_problem_history(self, name: str):
         problems = self.repo.get_problems(name=name)
@@ -56,7 +79,8 @@ class ProblemGetter:
                                      inplace=True,
                                      key=self._sort_key,
                                      na_position='first')
-        filtered_df = self._filter_tags(knowledge_status, tag_substr=tag_substr)
+        filtered_df = self._filter_tags(df=knowledge_status,
+                                        tag_substr=tag_substr)
 
         self.presenter.list_problem_tag_combos(filtered_df)
 
@@ -88,24 +112,6 @@ class ProblemGetter:
         if tag_substr:
             df = df[df.tag.str.contains(tag_substr)]
         return df
-
-    def get_prioritized_problems(self, name_substr: str = None,
-                                 tags_any: List[str] = None,
-                                 tags_all: List[str] = None) -> pd.DataFrame:
-        """ TODO: problem prio should be calculated from avg of
-        corresponding problem-tag-combos """
-        # problem_df = self._get_problems(name_substr=name_substr,
-        #                                 tags_any=tags_any,
-        #                                 tags_all=tags_all)
-        #
-        # problem_priorities = self.plg.get_problem_knowledge_scores(
-        #     problem_ids=problem_df.problem_id.to_list())
-        #
-        # return problem_df.merge(problem_priorities,
-        #                         on='problem_id',
-        #                         how='outer',
-        #                         validate='one_to_one')
-        pass
 
     def _get_problems(self, name_substr: str = None,
                       tags_any: List[str] = None,

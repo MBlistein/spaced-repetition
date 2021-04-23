@@ -38,11 +38,11 @@ class CliPresenter(PresenterInterface):
     # -------------------- pretty-print db contents ------------------------
     @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
-        ordered_cols = ['id', 'problem', 'tags', 'difficulty', 'last_access',
-                        'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
+        ordered_cols = ['problem_id', 'problem', 'tags', 'difficulty',
+                        'KS', 'RF', 'url']
         formatted_df = cls.format_df(df=problems,
                                      ordered_cols=ordered_cols,
-                                     index_col='id')
+                                     index_col='problem_id')
         tabulated_df = cls.tabulate_df(df=formatted_df)
         print(tabulated_df)
 
@@ -86,8 +86,10 @@ class CliPresenter(PresenterInterface):
             .set_index(index_col)  # avoid printing some integer index
 
         df.difficulty = cls._format_difficulty(df.difficulty)
-        df.last_result = cls._format_result(df.last_result)
-        df.last_access = cls._format_timestamp(df.last_access)
+        if 'last_result' in ordered_cols:
+            df.last_result = cls._format_result(df.last_result)
+        if 'last_access' in ordered_cols:
+            df.last_access = cls._format_timestamp(df.last_access)
         return df
 
     @staticmethod

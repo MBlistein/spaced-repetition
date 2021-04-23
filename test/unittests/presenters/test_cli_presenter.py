@@ -142,7 +142,7 @@ class TestListProblems(unittest.TestCase):
             'ease': 2.5,
             'interval': 10,
             'KS': 2.0,
-            'name': 'name',
+            'problem': 'test-prob',
             'problem_id': 5,
             'result': Result.NO_IDEA,
             'RF': 0.7,
@@ -164,9 +164,9 @@ class TestListProblems(unittest.TestCase):
     def test_list_problems(self, mock_stdout):
         # pep8: disable=line-too-long
         expected_output = \
-            "|   id | name   | tags     | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
-            "|------|--------|----------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
-            "|    5 | name   | test-tag | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
+            "|   problem_id | problem   | tags     | difficulty   |   KS |   RF | url          |\n" \
+            "|--------------|-----------|----------|--------------|------|------|--------------|\n" \
+            "|            5 | test-prob | test-tag | MEDIUM       |    2 |  0.7 | www.test.com |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
