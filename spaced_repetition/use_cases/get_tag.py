@@ -46,10 +46,18 @@ class TagGetter:
                                        presenter=self.presenter)
         knowledge_status = problem_getter.get_knowledge_status()
 
-        # merge on left to get only filtered tags
-        tag_data = pd.merge(tag_df, knowledge_status, on='tag', how='left')
+        tag_data = self._merge_tag_and_knowledge_data(
+            tag_data=tag_df, knowledge_data=knowledge_status)
 
         return self._prioritize_tags(tag_data=tag_data)
+
+    @staticmethod
+    def _merge_tag_and_knowledge_data(tag_data: pd.DataFrame,
+                                      knowledge_data: pd.DataFrame) -> pd.DataFrame:
+        return pd.merge(tag_data,
+                        knowledge_data,
+                        on='tag',
+                        how='left')  # to allow filtering for specific tags
 
     def _get_tags(self, sub_str: str = None) -> pd.DataFrame:
         tags = self.repo.get_tags(sub_str=sub_str)
@@ -74,9 +82,6 @@ class TagGetter:
 
     @classmethod
     def _prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
-        """ see docstring for description """
-        if group_df.empty:
-            raise ValueError("Handle group_df empty!")
         easy_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.EASY)
         med_avg_ks = cls._mean_knowledge_score(df=group_df,
@@ -84,8 +89,9 @@ class TagGetter:
         hard_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.HARD)
 
-        weighted_ks = 0.25 * easy_avg_ks + 0.5 * med_avg_ks + 0.25 * hard_avg_ks
-        # experience = min(1.0, len(group_df) / 5)
+        weighted_ks = max(0.5 * easy_avg_ks,
+                          0.75 * med_avg_ks,
+                          hard_avg_ks)
         experience = min(1.0, group_df.ts_logged.count() / 5)
         priority = weighted_ks * experience
 
