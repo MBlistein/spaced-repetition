@@ -41,28 +41,15 @@ class TagGetter:
 
     def _get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
         tag_df = self._get_tags(sub_str=sub_str)
-        filter_tags = tag_df.tag.to_list() if sub_str else None
 
-        problem_df = self._get_problems_per_tag(filter_tags=filter_tags)
-
-        tag_data = pd.merge(tag_df, problem_df, on='tag', how='outer')
-
-        return self._prioritize_tags(tag_data=tag_data)
-
-    def _get_problems_per_tag(self, filter_tags: List[str] = None):
         problem_getter = ProblemGetter(db_gateway=self.repo,
                                        presenter=self.presenter)
-        problem_df = problem_getter.get_prioritized_problems(
-            tags_any=filter_tags)
+        knowledge_status = problem_getter.get_knowledge_status()
 
-        # de-normalize many-to-one relation between problems and tags
-        if not problem_df.tags.empty:
-            problem_df.tags = problem_df.tags.str.split(', ')
-        problem_df = problem_df \
-            .rename(columns={'tags': 'tag'}) \
-            .explode('tag', ignore_index=True)
+        # merge on left to get only filtered tags
+        tag_data = pd.merge(tag_df, knowledge_status, on='tag', how='left')
 
-        return problem_df
+        return self._prioritize_tags(tag_data=tag_data)
 
     def _get_tags(self, sub_str: str = None) -> pd.DataFrame:
         tags = self.repo.get_tags(sub_str=sub_str)

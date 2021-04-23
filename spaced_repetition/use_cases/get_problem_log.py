@@ -21,7 +21,7 @@ class ProblemLogGetter:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def get_knowledge_status(self):
+    def get_last_log_per_problem_tag_combo(self):
         """ Get the last recorded status per problem-log-combo """
         problem_log_data = self._last_entry_per_problem_tag_combo(
             plog_df=self._get_problem_log_data())

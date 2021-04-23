@@ -51,29 +51,30 @@ class ProblemGetter:
 
     def list_problem_tag_combos(self, sorted_by: List[str] = None,
                                 tag_substr: str = None):
+        knowledge_status = self.get_knowledge_status()
+        knowledge_status.sort_values(by=sorted_by or 'KS',
+                                     inplace=True,
+                                     key=self._sort_key,
+                                     na_position='first')
+        filtered_df = self._filter_tags(knowledge_status, tag_substr=tag_substr)
+
+        self.presenter.list_problem_tag_combos(filtered_df)
+
+    def get_knowledge_status(self) -> pd.DataFrame:
         problems = self._get_problems()
         problems_denormalized = self._denormalize_problems(problems)
-        knowledge_status = self.plg.get_knowledge_status()
+        knowledge_status = self.plg.get_last_log_per_problem_tag_combo()
 
-        full_df = self._merge_problem_and_log_data(
+        return self._merge_problem_and_log_data(
             problem_data=problems_denormalized, log_data=knowledge_status)
-
-        full_df.sort_values(by=sorted_by or 'KS',
-                            inplace=True,
-                            key=self._sort_key,
-                            na_position='first')
-        full_df = self._filter_tags(full_df, tag_substr=tag_substr)
-
-        self.presenter.list_problem_tag_combos(full_df)
 
     @staticmethod
     def _denormalize_problems(problems: pd.DataFrame) -> pd.DataFrame:
         """ create a separate row per problem-tag combination """
         problems['tags'] = problems['tags'].str.split(', ')
         return problems \
-            .explode('tags') \
-            .rename(columns={'tags': 'tag'}) \
-            .reset_index(drop=True)  # avoid identical idx in several rows
+            .explode('tags', ignore_index=True) \
+            .rename(columns={'tags': 'tag'})
 
     @staticmethod
     def _merge_problem_and_log_data(problem_data: pd.DataFrame,

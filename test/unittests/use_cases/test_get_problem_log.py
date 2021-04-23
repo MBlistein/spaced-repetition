@@ -242,13 +242,13 @@ class TestGetKnowledgeStatus(unittest.TestCase):
     @patch.object(ProblemLogGetter, '_add_knowledge_scores')
     @patch.object(ProblemLogGetter, '_last_entry_per_problem_tag_combo')
     @patch.object(ProblemLogGetter, '_get_problem_log_data')
-    def test_get_knowledge_status(self, mock_get_problem_log_data,
-                                  mock_get_last_entry,
-                                  mock_add_knowledge_scores):
+    def test_get_last_log_per_problem_tag_combo(self, mock_get_problem_log_data,
+                                                mock_get_last_entry,
+                                                mock_add_knowledge_scores):
         mock_get_problem_log_data.return_value = 'log_data'
         mock_get_last_entry.return_value = 'last_entries'
 
-        self.plg.get_knowledge_status()
+        self.plg.get_last_log_per_problem_tag_combo()
 
         mock_get_problem_log_data.assert_called_once()
         mock_get_last_entry.assert_called_once_with(plog_df='log_data')
