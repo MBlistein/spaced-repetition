@@ -168,18 +168,6 @@ class TestListProblemTagCombos(unittest.TestCase):
 
         assert_frame_equal(expected_res, res, check_like=True)
 
-    def test_denormalize_problems(self):
-        expected_res = pd.DataFrame(data={
-            'difficulty': [Difficulty.EASY] * 2,
-            'problem': ['test_problem'] * 2,
-            'problem_id': [1] * 2,
-            'tag': ['tag_1', 'tag_2'],
-            'url': ['some_url.com'] * 2})
-
-        res = ProblemGetter._denormalize_problems(self.problem_df)
-
-        assert_frame_equal(expected_res, res)
-
     def test_merge_problem_and_log_data_one_to_one(self):
         prob_df = pd.DataFrame({'problem': ['problem'] * 2,
                                 'tag': ['tag_1', 'tag_2'],

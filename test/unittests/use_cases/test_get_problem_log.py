@@ -193,16 +193,6 @@ class TestGetKnowledgeStatus(unittest.TestCase):
               'tag': 'tag_2',
               'ts_logged': self.time_2}
 
-    def test_denormalize_logs(self):
-        expected_result = [self.prob1_tag1_ts1_data,
-                           self.prob1_tag2_ts1_data,
-                           self.prob1_tag2_ts2_data]
-
-        res = self.plg._denormalize_logs(p_logs=[self.problem_log_1,
-                                                 self.problem_log_2])
-
-        self.assertEqual(expected_result, res)
-
     def test_get_problem_log_data(self):
         expected_result = pd.DataFrame(data=[self.prob1_tag1_ts1_data,
                                              self.prob1_tag2_ts1_data,
@@ -210,7 +200,7 @@ class TestGetKnowledgeStatus(unittest.TestCase):
 
         res = self.plg._get_problem_log_data()
 
-        assert_frame_equal(expected_result, res)
+        assert_frame_equal(expected_result, res, check_like=True)
 
     def test_last_entry_per_problem_tag_combo(self):
         input_df = pd.DataFrame(data=[self.prob1_tag1_ts1_data,

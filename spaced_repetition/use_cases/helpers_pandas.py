@@ -26,3 +26,16 @@ def add_missing_columns(df, required_columns: List[str]):
         if col not in df.columns:
             df[col] = pd.Series(dtype=TYPE_MAPPER.get(col, float))
     return df
+
+
+def denormalize_tags(df: pd.DataFrame) -> pd.DataFrame:
+    """ For a DataFrame with a column 'tags' that contains comma-space-separated
+    tags, denormalize the 'tags' column. """
+    if df.empty:
+        return df
+
+    df = df.copy()
+    df['tags'] = df['tags'].str.split(', ')
+    return df \
+        .explode('tags', ignore_index=True) \
+        .rename(columns={'tags': 'tag'})

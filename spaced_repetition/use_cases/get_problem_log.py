@@ -9,7 +9,7 @@ from dateutil.tz import gettz
 from spaced_repetition.domain.problem_log import ProblemLog
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
-from .helpers_pandas import add_missing_columns
+from .helpers_pandas import add_missing_columns, denormalize_tags
 
 
 RETENTION_FRACTION_PER_T = 0.5  # Fraction of remembered content after time T
@@ -41,28 +41,13 @@ class ProblemLogGetter:
             .groupby(['problem_id', 'tag']) \
             .tail(1)
 
-    def _get_problem_log_data(self) -> pd.DataFrame:
-        problem_logs = self.repo.get_problem_logs()
-        return pd.DataFrame(data=self._denormalize_logs(p_logs=problem_logs))
-
-    @staticmethod
-    def _denormalize_logs(p_logs: List[ProblemLog]) -> List[dict]:
-        res = []
-        for p_log in p_logs:
-            for tag in p_log.tags:
-                res.append({
-                    'comment': p_log.comment,
-                    'ease': p_log.ease,
-                    'interval': p_log.interval,
-                    'problem_id': p_log.problem_id,
-                    'result': p_log.result,
-                    'tag': tag.name,
-                    'ts_logged': p_log.timestamp})
-        return res
-
     def get_problem_logs(self, problem_ids: List[int] = None) -> pd.DataFrame:
         problem_logs = self.repo.get_problem_logs(problem_ids=problem_ids)
         return pd.DataFrame(data=map(self._log_to_row, problem_logs))
+
+    def _get_problem_log_data(self) -> pd.DataFrame:
+        log_df = self.get_problem_logs()
+        return denormalize_tags(df=log_df)
 
     @staticmethod
     def _log_to_row(p_log: ProblemLog) -> dict:

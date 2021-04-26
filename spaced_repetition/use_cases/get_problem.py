@@ -7,7 +7,7 @@ import pandas as pd
 from spaced_repetition.domain.problem import Problem
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem_log import ProblemLogGetter
-from .helpers_pandas import add_missing_columns
+from .helpers_pandas import add_missing_columns, denormalize_tags
 from .presenter_interface import PresenterInterface
 
 
@@ -86,19 +86,11 @@ class ProblemGetter:
 
     def get_knowledge_status(self) -> pd.DataFrame:
         problems = self._get_problems()
-        problems_denormalized = self._denormalize_problems(problems)
+        problems_denormalized = denormalize_tags(df=problems)
         knowledge_status = self.plg.get_last_log_per_problem_tag_combo()
 
         return self._merge_problem_and_log_data(
             problem_data=problems_denormalized, log_data=knowledge_status)
-
-    @staticmethod
-    def _denormalize_problems(problems: pd.DataFrame) -> pd.DataFrame:
-        """ create a separate row per problem-tag combination """
-        problems['tags'] = problems['tags'].str.split(', ')
-        return problems \
-            .explode('tags', ignore_index=True) \
-            .rename(columns={'tags': 'tag'})
 
     @staticmethod
     def _merge_problem_and_log_data(problem_data: pd.DataFrame,
