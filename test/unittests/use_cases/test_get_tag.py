@@ -65,52 +65,59 @@ class TestGetTags(unittest.TestCase):
 class TestGetPrioritizedTags(unittest.TestCase):
     def setUp(self) -> None:
         self.data_tag1_prob1_easy = {
-            'name': 'easy_problem_1',
+            'problem': 'easy_problem_1',
             'difficulty': Difficulty.EASY,
             'KS': 3,
             'tag': 'tag_1',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag1_prob2_easy = {
-            'name': 'easy_problem_2',
+            'problem': 'easy_problem_2',
             'difficulty': Difficulty.EASY,
             'KS': 5,
             'tag': 'tag_1',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag1_prob3_medium = {
-            'name': 'medium_problem',
+            'problem': 'medium_problem',
             'difficulty': Difficulty.MEDIUM,
             'KS': 2,
             'tag': 'tag_1',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob4_easy = {
-            'name': 'easy_problem_3',
+            'problem': 'easy_problem_3',
             'difficulty': Difficulty.EASY,
             'KS': 5,
             'tag': 'tag_2',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob5_medium = {
-            'name': 'medium_problem_2',
+            'problem': 'medium_problem_2',
             'difficulty': Difficulty.MEDIUM,
             'KS': 4,
             'tag': 'tag_2',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob6_hard = {
-            'name': 'medium_problem_2',
+            'problem': 'medium_problem_2',
             'difficulty': Difficulty.HARD,
             'KS': 3,
             'tag': 'tag_2',
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
-        self.data_tag_new_problem_new_never_tried = {
-            'name': 'new_problem',
+        self.data_tag_untried_problem = {
+            'problem': 'untried_problem',
             'difficulty': Difficulty.HARD,
             'KS': np.nan,
-            'tag': 'tag_new',
+            'tag': 'tag_with_untried_problem',
+            'ts_logged': np.nan}
+
+        self.data_tag_no_problems = {
+            'problem': np.nan,
+            'difficulty': np.nan,
+            'KS': np.nan,
+            'tag': 'tag_wo_problems',
             'ts_logged': np.nan}
 
         self.empty_problem_df = add_missing_columns(
@@ -143,6 +150,23 @@ class TestGetPrioritizedTags(unittest.TestCase):
         assert_series_equal(expected_res,
                             res.reindex(index=expected_res.index))
 
+    def test_prioritize_tag_without_problem(self):
+        test_df = pd.DataFrame(data=[
+            self.data_tag_no_problems])
+
+        expected_res = pd.Series(
+            data={
+                'KS (weighted avg)': 0.0,
+                'experience': 0.0,
+                'num_problems': 0,
+                'priority': 0.0},
+            dtype='object')
+
+        res = TagGetter._prioritize(group_df=test_df)
+
+        assert_series_equal(expected_res,
+                            res.reindex(index=expected_res.index))
+
     def test_prioritize_tags(self):
         test_df = pd.DataFrame(data=[
             self.data_tag1_prob1_easy,
@@ -151,7 +175,8 @@ class TestGetPrioritizedTags(unittest.TestCase):
             self.data_tag2_prob4_easy,
             self.data_tag2_prob5_medium,
             self.data_tag2_prob6_hard,
-            self.data_tag_new_problem_new_never_tried])
+            self.data_tag_untried_problem,
+            self.data_tag_no_problems])
 
         expected_res = pd.DataFrame(data=[
             {'tag': 'tag_1',
@@ -164,10 +189,15 @@ class TestGetPrioritizedTags(unittest.TestCase):
              'experience': 0.6,
              'num_problems': 3,
              'priority': 1.8},
-            {'tag': 'tag_new',
+            {'tag': 'tag_with_untried_problem',
              'KS (weighted avg)': 0.0,
              'experience': 0.0,
              'num_problems': 1,
+             'priority': 0.0},
+            {'tag': 'tag_wo_problems',
+             'KS (weighted avg)': 0.0,
+             'experience': 0.0,
+             'num_problems': 0,
              'priority': 0.0}
         ])
 

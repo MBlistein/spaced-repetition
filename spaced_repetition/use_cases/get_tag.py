@@ -99,7 +99,7 @@ class TagGetter:
             data={
                 'experience': experience,
                 'KS (weighted avg)': weighted_ks,
-                'num_problems': len(group_df),
+                'num_problems': group_df.problem.count(),
                 'priority': priority
             },
             dtype='object')
