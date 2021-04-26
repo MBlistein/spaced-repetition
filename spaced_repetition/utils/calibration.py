@@ -1,4 +1,7 @@
-""" This script serves a simulator for different learning paths.
+"""
+DEPRECATED after v0.1 --> to be revived in the future
+
+This script serves a simulator for different learning paths.
 Given a series of problem solving results, it plots the ease and spacing
 interval development.
 The produced plots can be used to understand and calibrate the spaced

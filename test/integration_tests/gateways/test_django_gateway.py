@@ -190,7 +190,6 @@ class TestProblemLogCreation(TestCase):
         ts = dt.datetime(2021, 3, 6, 10, 0, tzinfo=tzlocal())
         log = ProblemLogCreator.create(
             comment='test comment',
-            last_log=None,
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
             tags=[TagCreator.create(name=self.tag.name)],
@@ -259,8 +258,6 @@ class TestProblemLogQuerying(TestCase):
         expected_res = [
             ProblemLogCreator.create(
                 comment='test comment 123!',
-                ease=1,
-                interval=1,
                 problem_id=self.prob.pk,
                 result=Result.SOLVED_SUBOPTIMALLY,
                 tags=[TagCreator.create(name='tag_1', tag_id=self.tag.pk)],

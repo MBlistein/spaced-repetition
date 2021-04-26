@@ -22,12 +22,10 @@ class ProblemLogger:
                 f"Problem with name '{problem_name}' does not exist, "
                 "try searching for similar problems.")
 
-        last_log = self.get_last_log_for_problem(problem_id=problem.problem_id)
         tag_getter = TagGetter(db_gateway=self.repo, presenter=self.presenter)
 
         problem_log = ProblemLogCreator.create(
             comment=comment,
-            last_log=last_log,
             problem_id=problem.problem_id,
             result=result,
             tags=tag_getter.get_existing_tags(names=tags))
@@ -36,8 +34,3 @@ class ProblemLogger:
 
         self.presenter.confirm_problem_logged(problem=problem,
                                               problem_log=problem_log)
-
-    def get_last_log_for_problem(self, problem_id: int) -> Union[ProblemLog, None]:
-        previous_logs = self.repo.get_problem_logs(problem_ids=[problem_id])
-        if previous_logs:
-            return max(previous_logs, key=lambda p: p.timestamp)

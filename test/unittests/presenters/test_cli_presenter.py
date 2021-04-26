@@ -182,10 +182,9 @@ class TestProblemHistory(unittest.TestCase):
                                              problem_id=1)
         self.problem_log_info = pd.DataFrame(data=[{
             'comment': 'problem_log_1 comment',
-            'ease': 2.5,
-            'interval': 10,
             'problem_id': 1,
             'result': Result.NO_IDEA,
+            'tags': 'tag_1',
             'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 25, 1561),
         }])
 
@@ -193,9 +192,9 @@ class TestProblemHistory(unittest.TestCase):
     def test_show_problem_history(self, mock_stdout):
         expected_output = "History for problem 'test_problem':\n"
         expected_output += \
-            "|    | ts_logged        | result   | comment               |   ease |   interval |\n" \
-            "|----|------------------|----------|-----------------------|--------|------------|\n" \
-            "|  0 | 2021-01-10 08:10 | NO_IDEA  | problem_log_1 comment |    2.5 |         10 |\n"
+            "|    | ts_logged        | result   | comment               | tags   |\n" \
+            "|----|------------------|----------|-----------------------|--------|\n" \
+            "|  0 | 2021-01-10 08:10 | NO_IDEA  | problem_log_1 comment | tag_1  |\n"
 
         CliPresenter.show_problem_history(problem=self.problem,
                                           problem_log_info=self.problem_log_info)

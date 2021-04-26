@@ -32,7 +32,7 @@ def denormalize_tags(df: pd.DataFrame) -> pd.DataFrame:
     """ For a DataFrame with a column 'tags' that contains comma-space-separated
     tags, denormalize the 'tags' column. """
     if df.empty:
-        return df
+        return add_missing_columns(df, required_columns=['tag'])
 
     df = df.copy()
     df['tags'] = df['tags'].str.split(', ')

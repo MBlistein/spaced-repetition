@@ -47,7 +47,7 @@ class TestAddMissingColumns(unittest.TestCase):
         assert_frame_equal(expected_res, res)
 
     def test_denormalize_tags_empty_input(self):
-        expected_res = pd.DataFrame()
+        expected_res = pd.DataFrame(columns=['tag'])
 
         res = denormalize_tags(pd.DataFrame())
 

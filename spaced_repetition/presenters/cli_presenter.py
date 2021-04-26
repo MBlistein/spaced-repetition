@@ -62,7 +62,7 @@ class CliPresenter(PresenterInterface):
         print(f"History for problem '{problem.name}':")
         history_df = problem_log_info \
             .sort_values('ts_logged', ascending=False) \
-            .reindex(columns=['ts_logged', 'result', 'comment', 'ease', 'interval'])
+            .reindex(columns=['ts_logged', 'result', 'comment', 'tags'])
 
         history_df.result = cls._format_result(history_df.result)
         history_df.ts_logged = cls._format_timestamp(history_df.ts_logged)
