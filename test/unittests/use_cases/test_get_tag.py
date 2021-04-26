@@ -181,14 +181,16 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
         assert_frame_equal(self.empty_tag_df, res, check_like=True)
 
-    def test_merge_tag_and_knowledge_data_one_to_one(self):
+    def test_merge_tag_and_knowledge_data(self):
         tag_df = pd.DataFrame({'tag': ['tag_1', 'tag_2'],
                                'tag_id': [1, 2]})
-        knowledge_df = pd.DataFrame({'tag': ['tag_1', 'tag_2'],
-                                     'KS': [55, 44]})
-        expected_res = pd.DataFrame({'tag': ['tag_1', 'tag_2'],
-                                     'tag_id': [1, 2],
-                                     'KS': [55, 44]})
+        knowledge_df = pd.DataFrame({'tag': ['tag_1', 'tag_2', 'tag_2'],
+                                     'KS': [55, 1, 44],
+                                     'problem': ['prob1', 'prob2', 'prob3']})
+        expected_res = pd.DataFrame({'tag': ['tag_1', 'tag_2', 'tag_2'],
+                                     'tag_id': [1, 2, 2],
+                                     'KS': [55, 1, 44],
+                                     'problem': ['prob1', 'prob2', 'prob3']})
 
         res = TagGetter._merge_tag_and_knowledge_data(tag_df, knowledge_df)
 
@@ -202,6 +204,19 @@ class TestGetPrioritizedTags(unittest.TestCase):
         expected_res = pd.DataFrame({'tag': ['tag_1'],
                                      'tag_id': [1],
                                      'KS': [55]})
+
+        res = TagGetter._merge_tag_and_knowledge_data(tag_df, knowledge_df)
+
+        assert_frame_equal(expected_res, res)
+
+    def test_merge_tag_and_knowledge_data_unlogged_tag(self):
+        tag_df = pd.DataFrame({'tag': ['tag_1', 'unlogged_tag'],
+                               'tag_id': [1, 2]})
+        knowledge_df = pd.DataFrame({'tag': ['tag_1'],
+                                     'KS': [55]})
+        expected_res = pd.DataFrame({'tag': ['tag_1', 'unlogged_tag'],
+                                     'tag_id': [1, 2],
+                                     'KS': [55, np.nan]})
 
         res = TagGetter._merge_tag_and_knowledge_data(tag_df, knowledge_df)
 
