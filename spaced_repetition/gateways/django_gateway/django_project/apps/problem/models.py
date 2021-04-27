@@ -36,8 +36,6 @@ class Problem(models.Model):
 
 class ProblemLog(models.Model):
     comment = models.CharField(max_length=255, blank=True, null=False)
-    ease = models.FloatField(null=False)
-    interval = models.IntegerField(null=False)
     problem = models.ForeignKey(Problem,
                                 on_delete=models.CASCADE,
                                 related_name='logs')
@@ -47,6 +45,6 @@ class ProblemLog(models.Model):
     timestamp = models.DateTimeField(null=False)
 
     def __str__(self):
-        return f"Problem '{self.problem.name}' attemted at {self.timestamp} " \
-            f"with result {self.result}.\nCurrent spacing: " \
-            f"Ease: {self.ease}, Interval: {self.interval}, "
+        return f"Problem '{self.problem.name}' attempted at {self.timestamp} " \
+            f"with result {self.result} and tags " \
+            f"{[t.name for t in self.tags.all()]}."

@@ -81,8 +81,6 @@ class DjangoGateway(DBGatewayInterface):
     def create_problem_log(cls, problem_log: ProblemLog) -> None:
         log = OrmProblemLog.objects.create(
             comment=problem_log.comment,
-            ease=0,
-            interval=0,
             problem=OrmProblem.objects.get(pk=problem_log.problem_id),
             result=problem_log.result.value,
             timestamp=problem_log.timestamp)

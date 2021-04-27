@@ -223,24 +223,18 @@ class TestProblemLogQuerying(TestCase):
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
             comment='test comment 123!',
-            ease=1,
-            interval=1,
             problem_id=self.prob.pk,
             result=Result.SOLVED_SUBOPTIMALLY.value,
             timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))
         self.problem_log.tags.add(self.tag)
 
         log_2 = OrmProblemLog.objects.create(
-            ease=1,
-            interval=1,
             problem_id=self.prob.pk,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25.value,
             timestamp=dt.datetime(2021, 1, 20, 10, tzinfo=gettz('UTC')))
         log_2.tags.add(self.tag)
 
         log_3 = OrmProblemLog.objects.create(
-            ease=1,
-            interval=1,
             problem_id=prob_2.pk,
             result=Result.SOLVED_OPTIMALLY_WITH_HINT.value,
             timestamp=dt.datetime(2021, 1, 15, 10, tzinfo=gettz('UTC')))
