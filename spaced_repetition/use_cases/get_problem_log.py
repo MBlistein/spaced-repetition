@@ -99,7 +99,7 @@ class SuperMemo2:
 
     DEFAULT_EASE = 2.5
     EASE_DELTA = 0.12
-    INTERVAL_KNEW_BY_HEART = 21
+    INTERVAL_KNEW_BY_HEART = 30
     INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25 = 14
     INTERVAL_SOLVED_OPTIMALLY_SLOWER = 7
     INTERVAL_NON_OPTIMAL_SOLUTION = 3
@@ -162,10 +162,17 @@ class SuperMemo2:
 
         # follow-up attempts
         for idx in range(1, len(group_df)):
-            if group_df.result.iloc[idx].value >= Result.SOLVED_OPTIMALLY_SLOWER.value:
+            result = group_df.result.iloc[idx]
+            if result.value >= Result.SOLVED_OPTIMALLY_SLOWER.value:
                 # eventually reached the optimal result without help
+                new_interval = round(
+                    group_df.ease.iloc[idx] * group_df.interval.iloc[idx-1])
+
+                # don't repeat too soon just because last time was bad
+                new_interval = max(new_interval, cls.INITIAL_INTERVALS[result])
+
                 group_df.iloc[idx, group_df.columns.get_loc('interval')] = \
-                    round(group_df.ease.iloc[idx] * group_df.interval.iloc[idx-1])
+                    new_interval
             else:
                 # did not find the optimal solution (without hint) -> start over
                 group_df.iloc[idx, group_df.columns.get_loc('interval')] = \

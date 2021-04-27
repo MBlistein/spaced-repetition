@@ -60,7 +60,7 @@ class TestProblemLogDataRetrieval(unittest.TestCase):
         self.prob1_tag2_ts2_data = {
               'comment': '',
               'ease': 2.5,
-              'interval': 8,
+              'interval': 14,
               'problem_id': 1,
               'result': Result.SOLVED_OPTIMALLY_IN_UNDER_25,
               'tag': 'tag_2',
@@ -265,34 +265,38 @@ class TestSuperMemo2(unittest.TestCase):
     def test_add_interval(self):
         ease = 2
         test_params = [
-            (Result.KNEW_BY_HEART,
+            ([Result.KNEW_BY_HEART] * 2,
              SuperMemo2.INTERVAL_KNEW_BY_HEART,
              SuperMemo2.INTERVAL_KNEW_BY_HEART * ease),
-            (Result.SOLVED_OPTIMALLY_IN_UNDER_25,
+            ([Result.SOLVED_OPTIMALLY_IN_UNDER_25] * 2,
              SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25,
              SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25 * ease),
-            (Result.SOLVED_OPTIMALLY_SLOWER,
+            ([Result.SOLVED_OPTIMALLY_SLOWER] * 2,
              SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_SLOWER,
              SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_SLOWER * ease),
-            (Result.SOLVED_OPTIMALLY_WITH_HINT,
+            ([Result.SOLVED_OPTIMALLY_WITH_HINT] * 2,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION),
-            (Result.SOLVED_SUBOPTIMALLY,
+            ([Result.SOLVED_SUBOPTIMALLY] * 2,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION),
-            (Result.NO_IDEA,
+            ([Result.NO_IDEA] * 2,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
              SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION),
+            ([Result.SOLVED_SUBOPTIMALLY,
+              Result.KNEW_BY_HEART],
+             SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
+             SuperMemo2.INTERVAL_KNEW_BY_HEART),
         ]
 
-        for result, expected_init_intv, expected_intv in test_params:
-            with self.subTest(result=result,
+        for results, expected_init_intv, expected_intv in test_params:
+            with self.subTest(results=results,
                               expected_init_intv=expected_init_intv,
                               expected_intv=expected_intv):
                 df = pd.DataFrame(data={
                     'additional_col': ['some_content'] * 2,
                     'ease': [2] * 2,
-                    'result': [result] * 2})
+                    'result': results})
 
                 res = SuperMemo2._add_interval(df)
 
@@ -331,7 +335,7 @@ class TestSuperMemo2(unittest.TestCase):
                           SuperMemo2.DEFAULT_EASE + 2 * SuperMemo2.EASE_DELTA,
                           SuperMemo2.DEFAULT_EASE,
                           SuperMemo2.DEFAULT_EASE + SuperMemo2.EASE_DELTA]
-        expected_intervals = [3, 8, 21, 58, 3, 8]
+        expected_intervals = [3, 14, 37, 101, 3, 30]
 
         expected_result = pd.DataFrame(data=[
             {'ease': expected_eases[idx],
