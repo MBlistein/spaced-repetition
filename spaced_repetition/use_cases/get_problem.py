@@ -73,16 +73,16 @@ class ProblemGetter:
         return col
 
     def list_problem_tag_combos(self, sorted_by: List[str] = None,
-                                tag_substr: str = None):
+                                tag_substr: str = None,
+                                problem_substr: str = None):
         knowledge_status = self.get_knowledge_status()
         knowledge_status.sort_values(by=sorted_by or 'KS',
                                      inplace=True,
                                      key=self._sort_key,
                                      na_position='first')
-        filtered_df = self._filter_tags(df=knowledge_status,
-                                        tag_substr=tag_substr)
-
-        self.presenter.list_problem_tag_combos(filtered_df)
+        df = self._filter_tags(df=knowledge_status, tag_substr=tag_substr)
+        df = self._filter_problems(df=df, problem_substr=problem_substr)
+        self.presenter.list_problem_tag_combos(df)
 
     def get_knowledge_status(self) -> pd.DataFrame:
         problems = self._get_problems()
@@ -103,6 +103,12 @@ class ProblemGetter:
     def _filter_tags(df: pd.DataFrame, tag_substr: str):
         if tag_substr:
             df = df[df.tag.str.contains(tag_substr)]
+        return df
+
+    @staticmethod
+    def _filter_problems(df: pd.DataFrame, problem_substr: str):
+        if problem_substr:
+            df = df[df.problem.str.contains(problem_substr)]
         return df
 
     def _get_problems(self, name_substr: str = None,

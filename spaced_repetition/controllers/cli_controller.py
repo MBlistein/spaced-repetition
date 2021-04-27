@@ -67,6 +67,9 @@ class CliController:
         combo_parser.add_argument('-ft', '--filter-tags',
                                   help='Show results only for tags containing '
                                        'the provided substring')
+        combo_parser.add_argument('-fp', '--filter-problems',
+                                  help='Show results only for problems '
+                                       'containing the provided substring')
         combo_parser.add_argument('-s', '--sort-by',
                                   choices=['KS', 'ts_logged', 'problem', 'tag'],
                                   nargs='+',
@@ -224,6 +227,8 @@ class CliController:
             kwargs['sorted_by'] = args.sort_by
         if args.filter_tags:
             kwargs['tag_substr'] = args.filter_tags
+        if args.filter_problems:
+            kwargs['problem_substr'] = args.filter_problems
         prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
                                     presenter=CliPresenter())
         prob_getter.list_problem_tag_combos(**kwargs)

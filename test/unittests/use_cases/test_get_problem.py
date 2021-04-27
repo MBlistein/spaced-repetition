@@ -105,24 +105,34 @@ class TestListProblemTagCombos(unittest.TestCase):
 
     @patch.object(ProblemGetter, 'get_knowledge_status')
     @patch.object(ProblemGetter, '_filter_tags')
-    def test_list_problem_tag_combos(self, mock_filter_args,
-                                     mock_get_knowledge_status):
+    @patch.object(ProblemGetter, '_filter_problems')
+    def test_list_problem_tag_combos(self, mock_filter_problems,
+                                     mock_filter_tags, mock_get_knowledge_status):
         mock_get_knowledge_status.return_value = self.problem_tag_combo_df
-        mock_filter_args.return_value = 'fake_res'
+        mock_filter_tags.return_value = 'fake_tag_df'
+        mock_filter_problems.return_value = 'fake_res_prob'
 
         mock_presenter = Mock()
         p_g = ProblemGetter(db_gateway=Mock(), presenter=mock_presenter)
 
         # call
-        p_g.list_problem_tag_combos(tag_substr='test_substr')
+        p_g.list_problem_tag_combos(tag_substr='tag_substr',
+                                    problem_substr='prob_substr')
 
         mock_get_knowledge_status.assert_called_once()
-        call_df = mock_filter_args.call_args[1]['df']
-        filter_str = mock_filter_args.call_args[1]['tag_substr']
-        assert_frame_equal(call_df, self.problem_tag_combo_df.sort_values('KS'))
-        self.assertEqual(filter_str, 'test_substr')
+
+        tag_filter_call_df = mock_filter_tags.call_args[1]['df']
+        tag_filter_str = mock_filter_tags.call_args[1]['tag_substr']
+        assert_frame_equal(tag_filter_call_df, self.problem_tag_combo_df.sort_values('KS'))
+        self.assertEqual(tag_filter_str, 'tag_substr')
+
+        prob_filter_call_df = mock_filter_problems.call_args[1]['df']
+        self.assertEqual(prob_filter_call_df, 'fake_tag_df')
+        prob_filter_str = mock_filter_problems.call_args[1]['problem_substr']
+        self.assertEqual(prob_filter_str, 'prob_substr')
+
         mock_presenter.list_problem_tag_combos.assert_called_once_with(
-            'fake_res')
+            'fake_res_prob')
 
     @patch.object(ProblemGetter, '_get_problems')
     @patch.object(ProblemLogGetter, 'get_last_log_per_problem_tag_combo')
@@ -223,13 +233,28 @@ class TestListProblemTagCombos(unittest.TestCase):
         assert_frame_equal(expected_res, res)
 
     def test_filter_tags(self):
-        tag_2_ks_data = self.t2_p1_knowledge_data.copy()
-        tag_2_ks_data.update(self.problem_data)
-        tag_2_ks_data.pop('tags')
-        expected_result = pd.DataFrame(data=tag_2_ks_data, index=[1])
+        input_df = pd.DataFrame(data={
+            'tag': ['hello', 'nope'],
+            'other_col': ['one', 'two']})
 
-        res = ProblemGetter._filter_tags(self.problem_tag_combo_df,
-                                         tag_substr='g_2')
+        expected_result = pd.DataFrame(data={
+            'tag': ['hello'],
+            'other_col': ['one']})
+
+        res = ProblemGetter._filter_tags(input_df, tag_substr='ello')
+
+        assert_frame_equal(expected_result, res)
+
+    def test_filter_problems(self):
+        input_df = pd.DataFrame(data={
+            'problem': ['hello', 'nope'],
+            'other_col': ['one', 'two']})
+
+        expected_result = pd.DataFrame(data={
+            'problem': ['hello'],
+            'other_col': ['one']})
+
+        res = ProblemGetter._filter_problems(input_df, problem_substr='ello')
 
         assert_frame_equal(expected_result, res)
 
