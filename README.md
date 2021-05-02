@@ -188,7 +188,7 @@ present at time t_0.
 Hence the **Retention Factor RF** is introduced, which calculates
 exactly that:
 
-![Alt text](./docs/RF.svg),
+![retention_factor](./docs/RF.svg),
 
 where:
 * **a** is the fraction of remembered knowledge, **T** days after the
@@ -265,4 +265,7 @@ db or ORM (e.g. SqlAlchemy).
 results to the user. These can be exchanged freely as long as they
 implement the PresenterInterface. Currently, only a basic 'CLI'
 Presenter has been implemented.
-
+  
+### Overview
+The following diagram sketches the described structure:
+![architecture](./docs/architecture_overview.svg),
