@@ -15,21 +15,18 @@ from matplotlib.gridspec import GridSpec
 from tabulate import tabulate
 
 from spaced_repetition.domain.problem_log import (
-    INTERVAL_KNEW_BY_HEART,
-    INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25,
-    INTERVAL_SOLVED_OPTIMALLY_SLOWER,
-    INTERVAL_NON_OPTIMAL_SOLUTION,
     ProblemLogCreator,
     Result)
 from spaced_repetition.domain.tag import TagCreator
+from spaced_repetition.use_cases.get_problem_log import SuperMemo2
 
 DEFAULT_INTERVAL = {
-    Result.KNEW_BY_HEART: INTERVAL_KNEW_BY_HEART,
-    Result.SOLVED_OPTIMALLY_IN_UNDER_25: INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25,
-    Result.SOLVED_OPTIMALLY_SLOWER: INTERVAL_SOLVED_OPTIMALLY_SLOWER,
-    Result.SOLVED_OPTIMALLY_WITH_HINT: INTERVAL_NON_OPTIMAL_SOLUTION,
-    Result.SOLVED_SUBOPTIMALLY: INTERVAL_NON_OPTIMAL_SOLUTION,
-    Result.NO_IDEA: INTERVAL_NON_OPTIMAL_SOLUTION
+    Result.KNEW_BY_HEART: SuperMemo2.INTERVAL_KNEW_BY_HEART,
+    Result.SOLVED_OPTIMALLY_IN_UNDER_25: SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_IN_UNDER_25,
+    Result.SOLVED_OPTIMALLY_SLOWER: SuperMemo2.INTERVAL_SOLVED_OPTIMALLY_SLOWER,
+    Result.SOLVED_OPTIMALLY_WITH_HINT: SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
+    Result.SOLVED_SUBOPTIMALLY: SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION,
+    Result.NO_IDEA: SuperMemo2.INTERVAL_NON_OPTIMAL_SOLUTION
 }
 
 
@@ -64,16 +61,12 @@ def spacing_data(repetition_results) -> pd.DataFrame:
         print(f'\n----------------{result}-----------------')
         last_log = ProblemLogCreator.create(
             problem_id=1,
-            last_log=last_log,
             result=result,
             tags=[TagCreator.create('dummy_tag')])
         data.append({'day': current_day,
                      'repetition': repetition_cnt,
-                     'result': last_log.result,
-                     'interval': last_log.interval,
-                     'ease': last_log.ease})
+                     'result': last_log.result})
 
-        current_day += last_log.interval
         repetition_cnt += 1
 
     print(tabulate(data, headers='keys'))

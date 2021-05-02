@@ -1,6 +1,7 @@
+from typing import List
+
 import pandas as pd
 from tabulate import tabulate
-from typing import List
 
 from spaced_repetition.domain.problem import Problem
 from spaced_repetition.domain.problem_log import ProblemLog
