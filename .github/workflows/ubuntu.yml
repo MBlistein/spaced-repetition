@@ -1,7 +1,7 @@
 name: Test spaced-repetition
 on:
   push:
-    branches: [ master, test-github ]
+    branches: [ main, test-github ]
   pull_request:
 jobs:
   build:
