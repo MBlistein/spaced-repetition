@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 from tabulate import tabulate
 
@@ -37,7 +39,21 @@ class CliPresenter(PresenterInterface):
     # -------------------- pretty-print db contents ------------------------
     @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
-        formatted_df = cls.format_problem_df(df=problems)
+        ordered_cols = ['problem_id', 'problem', 'tags', 'difficulty',
+                        'KS', 'RF', 'url']
+        formatted_df = cls.format_df(df=problems,
+                                     ordered_cols=ordered_cols,
+                                     index_col='problem_id')
+        tabulated_df = cls.tabulate_df(df=formatted_df)
+        print(tabulated_df)
+
+    @classmethod
+    def list_problem_tag_combos(cls, problem_tag_combos: pd.DataFrame) -> None:
+        ordered_cols = ['tag', 'problem', 'problem_id', 'difficulty', 'last_access',
+                        'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
+        formatted_df = cls.format_df(df=problem_tag_combos,
+                                     ordered_cols=ordered_cols,
+                                     index_col='tag')
         tabulated_df = cls.tabulate_df(df=formatted_df)
         print(tabulated_df)
 
@@ -47,7 +63,7 @@ class CliPresenter(PresenterInterface):
         print(f"History for problem '{problem.name}':")
         history_df = problem_log_info \
             .sort_values('ts_logged', ascending=False) \
-            .reindex(columns=['ts_logged', 'result', 'comment', 'ease', 'interval'])
+            .reindex(columns=['ts_logged', 'result', 'comment', 'tags'])
 
         history_df.result = cls._format_result(history_df.result)
         history_df.ts_logged = cls._format_timestamp(history_df.ts_logged)
@@ -60,21 +76,21 @@ class CliPresenter(PresenterInterface):
                         tablefmt='github')
 
     @classmethod
-    def format_problem_df(cls, df: pd.DataFrame):
+    def format_df(cls, df: pd.DataFrame, ordered_cols: List[str],
+                  index_col: str):
         """Needs at least a column named 'problem_id'"""
-        name_mapper = {'problem_id': 'id',
-                       'result': 'last_result',
+        name_mapper = {'result': 'last_result',
                        'ts_logged': 'last_access'}
         df = df \
-            .rename(columns=name_mapper)
-
-        order = ['id', 'name', 'tags', 'difficulty', 'last_access',
-                 'last_result', 'KS', 'RF', 'url', 'ease', 'interval']
-        df = df.reindex(columns=order).set_index('id')
+            .rename(columns=name_mapper) \
+            .reindex(columns=ordered_cols) \
+            .set_index(index_col)  # avoid printing some integer index
 
         df.difficulty = cls._format_difficulty(df.difficulty)
-        df.last_result = cls._format_result(df.last_result)
-        df.last_access = cls._format_timestamp(df.last_access)
+        if 'last_result' in ordered_cols:
+            df.last_result = cls._format_result(df.last_result)
+        if 'last_access' in ordered_cols:
+            df.last_access = cls._format_timestamp(df.last_access)
         return df
 
     @staticmethod

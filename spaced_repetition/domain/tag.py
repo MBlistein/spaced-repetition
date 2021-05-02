@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import List, Union
 
 from .domain_helpers import validate_param
 
@@ -23,3 +23,16 @@ class TagCreator:
         return validate_param(param=name,
                               max_length=MAX_TAG_LENGTH,
                               label='Tag')
+
+
+def validate_tag_list(tags: List[Tag]) -> List[Tag]:
+    if not isinstance(tags, list):
+        raise TypeError("Tags must be a list of Tags.")
+
+    if len(tags) == 0:
+        raise ValueError("Provide at least one tag.")
+
+    if not all(isinstance(tag, Tag) for tag in tags):
+        raise TypeError("Expected a list of Tag instances!")
+
+    return tags

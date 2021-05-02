@@ -1,6 +1,7 @@
 """Command line controller / user interface"""
 
 import argparse
+from typing import List
 
 from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.problem_log import (MAX_COMMENT_LENGTH, Result)
@@ -52,11 +53,29 @@ class CliController:
             nargs='+',
             help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
-                                 choices=['KS', 'name', 'problem_id'],
-                                 nargs=1,
+                                 choices=['KS', 'problem', 'problem_id'],
+                                 nargs='+',
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
         list_parser.set_defaults(func=cls._list_problems)
+
+        # list problem-tag-combos
+        combo_parser = sub_parsers.add_parser(
+            'list-problem-tag-combos',
+            aliases=['list-full', 'lf'],
+            help='List knowledge status of all problem-tag-combos')
+        combo_parser.add_argument('-ft', '--filter-tags',
+                                  help='Show results only for tags containing '
+                                       'the provided substring')
+        combo_parser.add_argument('-fp', '--filter-problems',
+                                  help='Show results only for problems '
+                                       'containing the provided substring')
+        combo_parser.add_argument('-s', '--sort-by',
+                                  choices=['KS', 'ts_logged', 'problem', 'tag'],
+                                  nargs='+',
+                                  help='Provide space-separated attribute(s) to '
+                                       'sort listed problems by')
+        combo_parser.set_defaults(func=cls._list_problem_tag_combos)
 
         # show problem history
         add_parser = sub_parsers.add_parser('show-history',
@@ -99,7 +118,7 @@ class CliController:
                 difficulty=user_input['difficulty'],
                 url=user_input['url'],
                 name=user_input['name'],
-                tags=user_input['tags'])
+                tags=cls._get_tags_from_user())
         except ValueError as err:
             print(err)
             return
@@ -129,7 +148,8 @@ class CliController:
         try:
             prob_logger.log_problem(comment=comment,
                                     problem_name=problem_name,
-                                    result=result)
+                                    result=result,
+                                    tags=cls._get_tags_from_user())
         except ValueError as err:
             print(err)
 
@@ -151,6 +171,11 @@ class CliController:
     def _get_comment(cls):
         return cls._clean_input(input(
             f"Add comment (optional, max {MAX_COMMENT_LENGTH} chars): "))
+
+    @classmethod
+    def _get_tags_from_user(cls) -> List[str]:
+        return cls._format_tags(
+            input("Supply whitespace-separated tags (at least one): "))
 
     @classmethod
     def _get_user_input_result(cls) -> Result:
@@ -177,9 +202,7 @@ class CliController:
                     input(f"Choose a difficulty between "
                           f"{min_diff.value} ({min_diff.name}) and "
                           f"{max_diff.value} ({max_diff.name}): "))),
-            'url': cls._clean_input(input("Url (optional): ")),
-            'tags': cls._format_tags(
-                input("Supply whitespace-separated tags (at least one): "))}
+            'url': cls._clean_input(input("Url (optional): "))}
 
     # -------------------- display elements --------------------
     @staticmethod
@@ -196,6 +219,19 @@ class CliController:
         if args.sort_by:
             kwargs['sorted_by'] = args.sort_by
         prob_getter.list_problems(**kwargs)
+
+    @staticmethod
+    def _list_problem_tag_combos(args):
+        kwargs = {}
+        if args.sort_by:
+            kwargs['sorted_by'] = args.sort_by
+        if args.filter_tags:
+            kwargs['tag_substr'] = args.filter_tags
+        if args.filter_problems:
+            kwargs['problem_substr'] = args.filter_problems
+        prob_getter = ProblemGetter(db_gateway=DjangoGateway(),
+                                    presenter=CliPresenter())
+        prob_getter.list_problem_tag_combos(**kwargs)
 
     @staticmethod
     def _list_tags(args):

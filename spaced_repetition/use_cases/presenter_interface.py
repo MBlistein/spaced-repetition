@@ -30,6 +30,11 @@ class PresenterInterface(ABC):
 
     @classmethod
     @abstractmethod
+    def list_problem_tag_combos(cls, problem_tag_combos: pd.DataFrame) -> None:
+        pass
+
+    @classmethod
+    @abstractmethod
     def show_problem_history(cls, problem: Problem,
                              problem_log_info: pd.DataFrame) -> None:
         pass

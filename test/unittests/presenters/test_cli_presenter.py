@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
+from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
@@ -38,6 +39,102 @@ class TestCommonFormatters(unittest.TestCase):
         assert_series_equal(expected_res, res)
 
 
+class TestListProblemTagCombos(unittest.TestCase):
+    def setUp(self):
+        self.problem_tag_combo_df = pd.DataFrame(data=[{
+            'difficulty': Difficulty.MEDIUM,
+            'ease': 2.5,
+            'interval': 10,
+            'KS': 2.0,
+            'problem': 'name',
+            'problem_id': 5,
+            'result': Result.NO_IDEA,
+            'RF': 0.7,
+            'surplus_col': 'not displayed',
+            'tag': 'test-tag',
+            'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 0, 1561),
+            'url': 'www.test.com'
+        }])
+
+        self.pre_format_cols = ['tag', 'problem', 'problem_id', 'difficulty', 'last_access',
+                                'last_result', 'KS', 'RF', 'url', 'ease',
+                                'interval']
+
+        self.post_format_cols = ['problem', 'problem_id', 'difficulty', 'last_access',
+                                 'last_result', 'KS', 'RF', 'url', 'ease',
+                                 'interval']
+
+    def test_format_df(self):
+        expected_df = pd.DataFrame(data=[{
+            'difficulty': 'MEDIUM',
+            'ease': 2.5,
+            'interval': 10,
+            'problem_id': 5,
+            'KS': 2.0,
+            'last_access': '2021-01-10 08:10',
+            'problem': 'name',
+            'last_result': Result.NO_IDEA.name,
+            'RF': 0.7,
+            'tag': 'test-tag',
+            'url': 'www.test.com'}]) \
+            .set_index('tag') \
+            .reindex(columns=self.post_format_cols)
+
+        formatted_df = CliPresenter.format_df(
+            self.problem_tag_combo_df,
+            ordered_cols=self.pre_format_cols,
+            index_col='tag')
+
+        assert_frame_equal(expected_df, formatted_df)
+
+    def test_format_problem_df_missing_cols(self):
+        data_df = self.problem_tag_combo_df \
+            .loc[:, ['problem', 'problem_id', 'ts_logged']] \
+            .copy()
+
+        expected_df = pd.DataFrame(data=[{
+            'difficulty': np.nan,
+            'ease': np.nan,
+            'interval': np.nan,
+            'problem_id': 5,
+            'KS': np.nan,
+            'last_access': '2021-01-10 08:10',
+            'problem': 'name',
+            'last_result': np.nan,
+            'RF': np.nan,
+            'tag': np.nan,
+            'url': np.nan}]) \
+            .set_index('tag') \
+            .reindex(columns=self.post_format_cols)
+
+        formatted_df = CliPresenter.format_df(data_df,
+                                              ordered_cols=self.pre_format_cols,
+                                              index_col='tag')
+
+        assert_frame_equal(expected_df, formatted_df)
+
+    def test_format_problem_df_empty_smoke_test(self):
+        """ Too much trouble with getting the dtypes right; smoke test
+        suffices for now """
+        CliPresenter.format_df(pd.DataFrame(),
+                               ordered_cols=self.pre_format_cols,
+                               index_col='tag')
+
+    @patch('sys.stdout', new_callable=io.StringIO)
+    def test_list_problem_tag_combos(self, mock_stdout):
+        # pep8: disable=line-too-long
+        expected_output = \
+            "| tag      | problem   |   problem_id | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
+            "|----------|-----------|--------------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
+            "| test-tag | name      |            5 | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
+
+        CliPresenter.list_problem_tag_combos(
+            problem_tag_combos=self.problem_tag_combo_df)
+
+        self.assertEqual(expected_output,
+                         mock_stdout.getvalue())
+
+
 class TestListProblems(unittest.TestCase):
     def setUp(self):
         self.problem_df = pd.DataFrame(data=[{
@@ -45,7 +142,7 @@ class TestListProblems(unittest.TestCase):
             'ease': 2.5,
             'interval': 10,
             'KS': 2.0,
-            'name': 'name',
+            'problem': 'test-prob',
             'problem_id': 5,
             'result': Result.NO_IDEA,
             'RF': 0.7,
@@ -55,66 +152,21 @@ class TestListProblems(unittest.TestCase):
             'url': 'www.test.com'
         }])
 
-        self.intended_order = ['name', 'tags', 'difficulty', 'last_access',
-                               'last_result', 'KS', 'RF', 'url', 'ease',
-                               'interval']
+        self.pre_format_cols = ['id', 'name', 'tags', 'difficulty', 'last_access',
+                                'last_result', 'KS', 'RF', 'url', 'ease',
+                                'interval']
 
-    def test_format_problem_df(self):
-        expected_df = pd.DataFrame(data=[{
-            'difficulty': 'MEDIUM',
-            'ease': 2.5,
-            'interval': 10,
-            'id': 5,
-            'KS': 2.0,
-            'last_access': '2021-01-10 08:10',
-            'name': 'name',
-            'last_result': Result.NO_IDEA.name,
-            'RF': 0.7,
-            'tags': 'test-tag',
-            'url': 'www.test.com'}]) \
-            .set_index('id') \
-            .reindex(columns=self.intended_order)
-
-        formatted_df = CliPresenter.format_problem_df(self.problem_df)
-
-        assert_frame_equal(expected_df, formatted_df)
-
-    def test_format_problem_df_missing_cols(self):
-        data_df = self.problem_df \
-                      .loc[:, ['name', 'problem_id', 'ts_logged']] \
-            .copy()
-
-        expected_df = pd.DataFrame(data=[{
-            'difficulty': np.nan,
-            'ease': np.nan,
-            'interval': np.nan,
-            'id': 5,
-            'KS': np.nan,
-            'last_access': '2021-01-10 08:10',
-            'name': 'name',
-            'last_result': np.nan,
-            'RF': np.nan,
-            'tags': np.nan,
-            'url': np.nan}]) \
-            .set_index('id') \
-            .reindex(columns=self.intended_order)
-
-        formatted_df = CliPresenter.format_problem_df(data_df)
-
-        assert_frame_equal(expected_df, formatted_df)
-
-    def test_format_problem_df_empty_smoke_test(self):
-        """ Too much trouble with getting the dtypes right; smoke test
-        suffices for now """
-        CliPresenter.format_problem_df(pd.DataFrame())
+        self.post_format_cols = ['name', 'tags', 'difficulty', 'last_access',
+                                 'last_result', 'KS', 'RF', 'url', 'ease',
+                                 'interval']
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problems(self, mock_stdout):
         # pep8: disable=line-too-long
         expected_output = \
-            "|   id | name   | tags     | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
-            "|------|--------|----------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
-            "|    5 | name   | test-tag | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
+            "|   problem_id | problem   | tags     | difficulty   |   KS |   RF | url          |\n" \
+            "|--------------|-----------|----------|--------------|------|------|--------------|\n" \
+            "|            5 | test-prob | test-tag | MEDIUM       |    2 |  0.7 | www.test.com |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
@@ -130,10 +182,9 @@ class TestProblemHistory(unittest.TestCase):
                                              problem_id=1)
         self.problem_log_info = pd.DataFrame(data=[{
             'comment': 'problem_log_1 comment',
-            'ease': 2.5,
-            'interval': 10,
             'problem_id': 1,
             'result': Result.NO_IDEA,
+            'tags': 'tag_1',
             'ts_logged': dt.datetime(2021, 1, 10, 8, 10, 25, 1561),
         }])
 
@@ -141,9 +192,9 @@ class TestProblemHistory(unittest.TestCase):
     def test_show_problem_history(self, mock_stdout):
         expected_output = "History for problem 'test_problem':\n"
         expected_output += \
-            "|    | ts_logged        | result   | comment               |   ease |   interval |\n" \
-            "|----|------------------|----------|-----------------------|--------|------------|\n" \
-            "|  0 | 2021-01-10 08:10 | NO_IDEA  | problem_log_1 comment |    2.5 |         10 |\n"
+            "|    | ts_logged        | result   | comment               | tags   |\n" \
+            "|----|------------------|----------|-----------------------|--------|\n" \
+            "|  0 | 2021-01-10 08:10 | NO_IDEA  | problem_log_1 comment | tag_1  |\n"
 
         CliPresenter.show_problem_history(problem=self.problem,
                                           problem_log_info=self.problem_log_info)
@@ -218,7 +269,9 @@ class TestCliPresentConfirmations(unittest.TestCase):
             url='test-url')
 
         self.problem_log = ProblemLogCreator.create(
-            problem_id=1, result=Result.SOLVED_OPTIMALLY_IN_UNDER_25)
+            problem_id=1,
+            result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
+            tags=[TagCreator.create('test-tag')])
 
     def test_problem_confirmation_txt(self):
         expected_txt = "Created Problem 'testname' with id '1' " \

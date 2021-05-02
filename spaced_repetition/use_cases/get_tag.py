@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from spaced_repetition.domain.problem import Difficulty
+from spaced_repetition.domain.tag import Tag
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem import ProblemGetter
 from .helpers_pandas import add_missing_columns
@@ -26,30 +27,37 @@ class TagGetter:
         self.presenter.list_tags(
             tags=self._get_prioritized_tags(sub_str=sub_str))
 
+    def get_existing_tags(self, names: List[str]) -> List[Tag]:
+        """ Returns tags with the given names, and raises ValueError
+        if at least one of them does not exist. """
+        tags = self.repo.get_tags(names=names)
+
+        if len(tags) < len(names):
+            existing_tags = {tag.name for tag in tags}
+            non_existing_tags = set(names).difference(existing_tags)
+            raise ValueError("The following tag names don't exist: "
+                             f"{non_existing_tags}")
+        return tags
+
     def _get_prioritized_tags(self, sub_str: str = None) -> pd.DataFrame:
         tag_df = self._get_tags(sub_str=sub_str)
-        filter_tags = tag_df.tag.to_list() if sub_str else None
 
-        problem_df = self._get_problems_per_tag(filter_tags=filter_tags)
+        problem_getter = ProblemGetter(db_gateway=self.repo,
+                                       presenter=self.presenter)
+        knowledge_status = problem_getter.get_knowledge_status()
 
-        tag_data = pd.merge(tag_df, problem_df, on='tag', how='outer')
+        tag_data = self._merge_tag_and_knowledge_data(
+            tag_data=tag_df, knowledge_data=knowledge_status)
 
         return self._prioritize_tags(tag_data=tag_data)
 
-    def _get_problems_per_tag(self, filter_tags: List[str] = None):
-        problem_getter = ProblemGetter(db_gateway=self.repo,
-                                       presenter=self.presenter)
-        problem_df = problem_getter.get_prioritized_problems(
-            tags_any=filter_tags)
-
-        # de-normalize many-to-one relation between problems and tags
-        if not problem_df.tags.empty:
-            problem_df.tags = problem_df.tags.str.split(', ')
-        problem_df = problem_df \
-            .rename(columns={'tags': 'tag'}) \
-            .explode('tag', ignore_index=True)
-
-        return problem_df
+    @staticmethod
+    def _merge_tag_and_knowledge_data(tag_data: pd.DataFrame,
+                                      knowledge_data: pd.DataFrame) -> pd.DataFrame:
+        return pd.merge(tag_data,
+                        knowledge_data,
+                        on='tag',
+                        how='left')  # to allow filtering for specific tags
 
     def _get_tags(self, sub_str: str = None) -> pd.DataFrame:
         tags = self.repo.get_tags(sub_str=sub_str)
@@ -74,9 +82,6 @@ class TagGetter:
 
     @classmethod
     def _prioritize(cls, group_df: pd.DataFrame) -> pd.Series:
-        """ see docstring for description """
-        if group_df.empty:
-            raise ValueError("Handle group_df empty!")
         easy_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.EASY)
         med_avg_ks = cls._mean_knowledge_score(df=group_df,
@@ -84,8 +89,9 @@ class TagGetter:
         hard_avg_ks = cls._mean_knowledge_score(df=group_df,
                                                 difficulty=Difficulty.HARD)
 
-        weighted_ks = 0.25 * easy_avg_ks + 0.5 * med_avg_ks + 0.25 * hard_avg_ks
-        # experience = min(1.0, len(group_df) / 5)
+        weighted_ks = max(0.5 * easy_avg_ks,
+                          0.75 * med_avg_ks,
+                          hard_avg_ks)
         experience = min(1.0, group_df.ts_logged.count() / 5)
         priority = weighted_ks * experience
 
@@ -93,7 +99,7 @@ class TagGetter:
             data={
                 'experience': experience,
                 'KS (weighted avg)': weighted_ks,
-                'num_problems': len(group_df),
+                'num_problems': group_df.problem.count(),
                 'priority': priority
             },
             dtype='object')

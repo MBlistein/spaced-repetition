@@ -7,7 +7,7 @@ from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.problem_log import Result
 
 
-class TestCliController(unittest.TestCase):
+class TestInputFormatting(unittest.TestCase):
     def test_format_difficulty(self):
         self.assertEqual(CliController._format_difficulty(difficulty='1'),
                          Difficulty.EASY)
@@ -23,7 +23,16 @@ class TestCliController(unittest.TestCase):
         self.assertEqual(['tag1', 'tag2'],
                          CliController._format_tags('tag1 tag2'))
 
-    # ------------------------ test user input --------------------------
+    def test_clean_name_no_change(self):
+        self.assertEqual(CliController._clean_input(user_input='test name'),
+                         'test name')
+
+    def test_clean_name_removes_whitespace(self):
+        self.assertEqual(CliController._clean_input(user_input=' test name '),
+                         'test name')
+
+
+class TestUserInput(unittest.TestCase):
     @patch('builtins.input', return_value=' 0')
     def test_get_user_input_result(self, _):
         self.assertEqual(Result.NO_IDEA,
@@ -39,10 +48,12 @@ class TestCliController(unittest.TestCase):
         self.assertEqual('some_name',
                          CliController._get_problem_name())
 
-    def test_clean_name_no_change(self):
-        self.assertEqual(CliController._clean_input(user_input='test name'),
-                         'test name')
+    @patch('builtins.input', return_value=' tag_1 tag_2 ')
+    def test_get_tags_from_user(self, _):
+        self.assertEqual(['tag_1', 'tag_2'],
+                         CliController._get_tags_from_user())
 
-    def test_clean_name_removes_whitespace(self):
-        self.assertEqual(CliController._clean_input(user_input=' test name '),
-                         'test name')
+    @patch('builtins.input', return_value='')
+    def test_get_tags_from_user_empty(self, _):
+        self.assertEqual([],
+                         CliController._get_tags_from_user())
