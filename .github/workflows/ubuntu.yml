@@ -1,0 +1,17 @@
+name: Test spaced-repetition
+on:
+  push:
+    branches: [ master, test-github ]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: pip3 install -r requirements.txt
+    - run: /home/runner/.local/bin/coverage erase
+    - run: /home/runner/.local/bin/coverage run --parallel-mode --source spaced_repetition -m unittest discover test/unittests -v
+    - run: PYTHONPATH="${PWD}" /home/runner/.local/bin/coverage run --parallel-mode --source spaced_repetition spaced_repetition/gateways/django_gateway/django_project/manage.py test test/integration_tests -v 2
+    - run: PYTHONPATH="${PWD}" /home/runner/.local/bin/coverage run --parallel-mode --source spaced_repetition spaced_repetition/gateways/django_gateway/django_project/manage.py test test/end_to_end_tests -v 2
+    - run: /home/runner/.local/bin/coverage combine; /home/runner/.local/bin/coverage report
+    - run: PYTHONPATH="${PWD}" pylint spaced_repetition --load-plugins pylint_django --django-settings-module=spaced_repetition.gateways.django_gateway.django_project.django_project.settings

@@ -7,7 +7,7 @@ setup(
     author='Marcel Blistein',
     author_email='marcel.blistein@gmail.com',
     url='https://github.com/MBlistein/spaced-repetition',
-    packages=find_packages(exclude=('test*', '*.db', '*.utils', '*.migrations')),
+    packages=find_packages(exclude=('test*', '*.db', '*.utils')),
     install_requires=['Django',
                       'numpy',
                       'pandas',
