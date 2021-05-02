@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'spaced_repetition.gateways.django_gateway.django_project.apps.problem'
+    'spaced_repetition.gateways.django_gateway.django_project.apps.problem.apps.ProblemConfig'
 ]
 
 MIDDLEWARE = [

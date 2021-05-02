@@ -21,13 +21,13 @@ This is an experimental project and implements a minimalist
 solution -> you are welcome to use it with care :-).
 
 ## Setup
-* clone the repository and cd into it
+* clone the repository
 * create a virtual environment, e.g.: `python3 -m venv <your_env_name>`
 * activate the environment: `source <path_to_venv>/bin/activate`
-* install required packages: `pip install -r requirements.txt`
+* install: `pip install -e <path_to_cloned_repo>`
 
 Run the CLI with the '-h' flag to see possible actions:
-`python3 scripts/run_cli.py -h`
+`srep -h`
 
 ## Usage
 When studying algorithmic problems, the goal is not to
@@ -51,7 +51,7 @@ topics to the database (see below), or by starting solving problems related to
 the algorithms of interest. When encountering a problem that is
 somewhat representative of an application for a relevant algorithm,
 this problem should be added to the 'spaced-repetition' database
-via `python3 scripts/run_cli.py add-problem`.
+via `srep add-problem`.
 
 The corresponding dialogue will ask to link the problem to at least one
 'tag', representative of an algorithmic topic, e.g. 'depth-first-search'.
@@ -63,11 +63,11 @@ should not be linked, otherwise the program will schedule repetitions of the
 non-optimal solution.<br>
 Tags need to exist in the database before a problem can
 be linked to them. Create a tag via:
-`python3 scripts/run_cli.py add-tag`.
+`srep add-tag`.
 
 Every attempt at solving a tracked problem should be logged by creating a
 ProblemLog:
-`python3 scripts/run_cli.py add-log`.  
+`srep add-log`.  
 The corresponding dialogue asks to grade how well the problem
 was solved on a provided scale, and via which algorithm(s) /
 tag(s) the problem has been solved. Only algorithms linked to the problem
@@ -77,11 +77,11 @@ From these execution logs, the underlying algorithm calculates:
 
 * a 'knowledge score' per problem-tag combination (representing an application
   case of the linked algorithm). List all knowledge scores via:<br>
-  `python3 scripts/run_cli.py list-full`
+  `srep list-full`
 * an overview of the aggregated knowledge level per problem:<br>
-  `python3 scripts/run_cli.py list-problems`
+  `srep list-problems`
 * an overview of the aggregated knowledge level per tag (i.e. algorithm):<br>
-  `python3 scripts/run_cli.py list-tags`
+  `srep list-tags`
   
 Any of these overviews can be used to find the topic, problem or problem-topic
 combination with the
