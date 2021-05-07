@@ -13,7 +13,7 @@ from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.tag import Tag
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem import ProblemGetter
-from .helpers_pandas import add_missing_columns
+from .helpers_pandas import add_missing_columns, case_insensitive_sort
 from .presenter_interface import PresenterInterface
 
 
@@ -23,9 +23,15 @@ class TagGetter:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def list_tags(self, sub_str: str = None):
-        self.presenter.list_tags(
-            tags=self._get_prioritized_tags(sub_str=sub_str))
+    def list_tags(self, sorted_by: List[str] = None, sub_str: str = None):
+        tag_df = self._get_prioritized_tags(sub_str=sub_str)
+
+        tag_df.sort_values(by=sorted_by or 'priority',
+                           inplace=True,
+                           key=case_insensitive_sort,
+                           na_position='first')
+
+        self.presenter.list_tags(tag_df)
 
     def get_existing_tags(self, names: List[str]) -> List[Tag]:
         """ Returns tags with the given names, and raises ValueError

@@ -1,12 +1,14 @@
 
 import unittest
 
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.use_cases.helpers_pandas import (add_missing_columns,
-                                                        denormalize_tags)
+                                                        denormalize_tags,
+                                                        case_insensitive_sort)
 
 
 class TestAddMissingColumns(unittest.TestCase):
@@ -27,6 +29,8 @@ class TestAddMissingColumns(unittest.TestCase):
 
         assert_frame_equal(expected_res, res)
 
+
+class TestDenormalizeTags(unittest.TestCase):
     def test_denormalize_tags(self):
         problem_df = pd.DataFrame(data=[{
             'difficulty': Difficulty.EASY,
@@ -50,5 +54,33 @@ class TestAddMissingColumns(unittest.TestCase):
         expected_res = pd.DataFrame(columns=['tag'])
 
         res = denormalize_tags(pd.DataFrame())
+
+        assert_frame_equal(expected_res, res)
+
+
+class TestCaseInsensitiveSort(unittest.TestCase):
+    def setUp(self) -> None:
+        self.df = pd.DataFrame(data={'str_col': ['c', 'B', 'Z', 'a', np.nan],
+                                     'int_col': [1, 2, 3, 4, 7]})
+
+    def test_object_column_sort(self):
+        expected_res = pd.DataFrame(data={'str_col': [np.nan, 'a', 'B', 'c', 'Z'],
+                                          'int_col': [7, 4, 2, 1, 3]})
+
+        res = self.df.sort_values(by='str_col',
+                                  key=case_insensitive_sort,
+                                  na_position='first') \
+            .reset_index(drop=True)
+
+        assert_frame_equal(expected_res, res)
+
+    def test_non_object_column_sort(self):
+        expected_res = pd.DataFrame(data={'str_col': ['c', 'B', 'Z', 'a', np.nan],
+                                          'int_col': [1, 2, 3, 4,  7]})
+
+        res = self.df.sort_values(by='int_col',
+                                  key=case_insensitive_sort,
+                                  na_position='first') \
+            .reset_index(drop=True)
 
         assert_frame_equal(expected_res, res)

@@ -96,6 +96,11 @@ class CliController:
         tag_parser.add_argument('-f', '--filter',
                                 help='List only tags whose tag contains '
                                      'the provided substring')
+        tag_parser.add_argument('-s', '--sort-by',
+                                choices=['tag', 'priority', 'num_problems'],
+                                nargs='+',
+                                help='Provide space-separated attribute(s) to '
+                                     'sort listed problems by')
         tag_parser.set_defaults(func=cls._list_tags)
 
         # log problem execution
@@ -238,6 +243,8 @@ class CliController:
         kwargs = {}
         if args.filter:
             kwargs['sub_str'] = args.filter
+        if args.sort_by:
+            kwargs['sorted_by'] = args.sort_by
 
         tag_getter = TagGetter(db_gateway=DjangoGateway(),
                                presenter=CliPresenter())
