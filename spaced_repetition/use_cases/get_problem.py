@@ -119,5 +119,5 @@ class ProblemGetter:
     def problem_to_row_content(problem: Problem) -> dict:
         problem_row = dataclasses.asdict(problem)
         problem_row['problem'] = problem_row.pop('name')
-        problem_row['tags'] = ', '.join(sorted(problem.tags))
+        problem_row['tags'] = ', '.join(sorted([t.name for t in problem.tags]))
         return problem_row

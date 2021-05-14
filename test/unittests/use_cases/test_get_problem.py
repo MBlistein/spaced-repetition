@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal, assert_index_equal
+from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.tag import TagCreator
@@ -26,7 +26,7 @@ class TestListProblemTagCombos(unittest.TestCase):
         self.problem = ProblemCreator.create(difficulty=Difficulty.EASY,
                                              problem_id=1,
                                              name='test_problem',
-                                             tags=['tag_2', 'tag_1'],
+                                             tags=[self.tag_1, self.tag_2],
                                              url='some_url.com')
 
         self.problem_columns = [

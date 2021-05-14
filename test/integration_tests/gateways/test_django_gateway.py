@@ -6,7 +6,7 @@ from unittest.mock import patch
 from dateutil.tz import tzlocal, gettz
 from django.test import TestCase
 
-from spaced_repetition.domain.problem import Difficulty, Problem
+from spaced_repetition.domain.problem import Difficulty, Problem, ProblemCreator
 from spaced_repetition.domain.problem_log import (ProblemLogCreator, Result)
 from spaced_repetition.domain.tag import Tag, TagCreator
 from spaced_repetition.gateways.django_gateway.django_gateway import DjangoGateway
@@ -18,25 +18,26 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
 
 class TestProblemCreation(TestCase):
     def setUp(self):
-        OrmTag.objects.create(name='tag1')
+        self.test_tag = TagCreator.create(name='tag1')
+        OrmTag.objects.create(name=self.test_tag.name)
 
-        self.problem = Problem(difficulty=Difficulty.EASY,
-                               name='testname',
-                               problem_id=99,
-                               tags=['tag1'],
-                               url='https://testurl.com')
+        self.problem = ProblemCreator.create(difficulty=Difficulty.EASY,
+                                             name='test_problem',
+                                             problem_id=99,
+                                             tags=[self.test_tag],
+                                             url='https://testurl.com')
 
     def test_create_problem(self):
         dgw = DjangoGateway()
         problem = dgw.create_problem(problem=self.problem)
         self.assertIsInstance(problem, Problem)
-        self.assertEqual(problem.name, 'testname')
+        self.assertEqual(problem.name, 'test_problem')
 
         orm_problems = OrmProblem.objects.all()
         self.assertEqual(orm_problems.count(), 1)
 
         orm_problem = orm_problems.first()
-        self.assertEqual(orm_problem.name, 'testname')
+        self.assertEqual(orm_problem.name, 'test_problem')
         self.assertNotEqual(orm_problem.pk, 99)  # pk is independent of problem_id
         self.assertEqual(orm_problem.url, 'https://testurl.com')
         self.assertEqual([t.name for t in orm_problem.tags.all()], ['tag1'])
@@ -125,6 +126,8 @@ class TestProblemGetting(TestCase):
 
     def test_format_problems(self):
         problems = DjangoGateway._format_problems(OrmProblem.objects.all())
+        tag_1 = TagCreator.create(name='tag1', tag_id=self.tag_1.pk)
+        tag_2 = TagCreator.create(name='tag2', tag_id=self.tag_2.pk)
 
         self.assertIsInstance(problems, list)
         self.assertEqual(2, len(problems))
@@ -133,7 +136,7 @@ class TestProblemGetting(TestCase):
         self.assertEqual(problems[0].name, 'name2')
         self.assertEqual(problems[0].difficulty, Difficulty.EASY)
         self.assertEqual(problems[0].problem_id, OrmProblem.objects.first().pk)
-        self.assertEqual(problems[0].tags, ['tag1', 'tag2'])
+        self.assertEqual(problems[0].tags, [tag_1, tag_2])
         self.assertEqual(problems[0].url, 'www.test_url.com')
 
     def test_get_problems(self):

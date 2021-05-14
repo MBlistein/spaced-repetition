@@ -15,7 +15,7 @@ class TestProblemLogger(unittest.TestCase):
         self.problem = ProblemCreator.create(name='problem_1',
                                              difficulty=Difficulty.MEDIUM,
                                              problem_id=1,
-                                             tags=[self.tag_1.name])
+                                             tags=[self.tag_1])
         self.pl_1 = ProblemLogCreator.create(
             problem_id=self.problem.problem_id,
             result=Result.NO_IDEA,

@@ -176,9 +176,10 @@ class TestListProblems(unittest.TestCase):
 
 class TestProblemHistory(unittest.TestCase):
     def setUp(self):
+        self.tag = TagCreator.create(name='test-tag')
         self.problem = ProblemCreator.create(name='test_problem',
                                              difficulty=Difficulty.MEDIUM,
-                                             tags=['test_tag'],
+                                             tags=[self.tag],
                                              problem_id=1)
         self.problem_log_info = pd.DataFrame(data=[{
             'comment': 'problem_log_1 comment',
@@ -261,11 +262,13 @@ class TestPresentTags(unittest.TestCase):
 
 class TestCliPresentConfirmations(unittest.TestCase):
     def setUp(self) -> None:
+        self.tag = TagCreator.create(name='test-tag')
+
         self.problem = ProblemCreator.create(
             name='testname',
             difficulty=Difficulty(1),
             problem_id=1,
-            tags=['test-tag'],
+            tags=[self.tag],
             url='test-url')
 
         self.problem_log = ProblemLogCreator.create(
