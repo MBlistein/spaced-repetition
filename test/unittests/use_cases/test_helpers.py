@@ -2,8 +2,7 @@ import datetime as dt
 import unittest
 
 from spaced_repetition.use_cases.helpers import (deserialize_ts,
-                                                 serialize_ts,
-                                                 TS_FORMAT)
+                                                 serialize_ts)
 
 
 class TestTimestampSerialization(unittest.TestCase):

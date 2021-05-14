@@ -15,6 +15,8 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
     ProblemLog as OrmProblemLog,
     Tag as OrmTag)
 
+# pylint: disable=protected-access, no-self-use
+
 
 class TestProblemCreation(TestCase):
     def setUp(self):

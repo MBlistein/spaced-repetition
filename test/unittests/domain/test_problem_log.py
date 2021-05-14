@@ -19,14 +19,14 @@ class TestProblemLogCreator(unittest.TestCase):
     @patch.object(ProblemLogCreator, attribute='validate_result')
     @patch.object(ProblemLogCreator, attribute='validate_or_create_timestamp')
     @patch('spaced_repetition.domain.problem_log.validate_tag_list')
-    def test_create_all_validators_called(self, mock_val_tags, mock_val_ts,
+    def test_create_all_validators_called(self, mock_val_tags, mock_val_ts,  # pylint: disable=too-many-arguments
                                           mock_val_result,
                                           mock_val_problem_id, mock_val_comment):
-        pl = ProblemLogCreator.create(comment='test-comment',
-                                      problem_id=1,
-                                      result=Result.NO_IDEA,
-                                      tags=[self.tag])
-        self.assertIsInstance(pl, ProblemLog)
+        p_l = ProblemLogCreator.create(comment='test-comment',
+                                       problem_id=1,
+                                       result=Result.NO_IDEA,
+                                       tags=[self.tag])
+        self.assertIsInstance(p_l, ProblemLog)
         mock_val_tags.assert_called_once_with([self.tag])
         mock_val_ts.assert_called_once()
         mock_val_result.assert_called_once()
@@ -75,7 +75,7 @@ class TestProblemLogCreator(unittest.TestCase):
 
         self.assertEqual(
             str(context.exception),
-            f"timestamp should be of type dt.datetime, but is <class 'str'>!")
+            "timestamp should be of type dt.datetime, but is <class 'str'>!")
 
     def test_validate_comment_raises_too_long(self):
         with self.assertRaises(ValueError) as context:
@@ -83,4 +83,4 @@ class TestProblemLogCreator(unittest.TestCase):
 
         self.assertEqual(
             str(context.exception),
-            f"Comment too long, max length = 255 chars.")
+            "Comment too long, max length = 255 chars.")

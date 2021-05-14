@@ -8,6 +8,9 @@ from spaced_repetition.use_cases.add_problem import ProblemAdder
 from spaced_repetition.use_cases.get_tag import TagGetter
 
 
+# pylint: disable=protected-access
+
+
 class TestProblemAdder(unittest.TestCase):
     def setUp(self) -> None:
         self.test_tag = TagCreator.create(name='test-tag')

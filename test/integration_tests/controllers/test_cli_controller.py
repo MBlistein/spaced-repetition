@@ -6,6 +6,8 @@ from spaced_repetition.controllers.cli_controller import CliController
 from spaced_repetition.domain.problem import Difficulty
 from spaced_repetition.domain.problem_log import Result
 
+# pylint: disable=protected-access
+
 
 class TestInputFormatting(unittest.TestCase):
     def test_format_difficulty(self):

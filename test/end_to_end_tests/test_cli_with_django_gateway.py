@@ -9,6 +9,8 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
     Problem as OrmProblem,
     Tag as OrmTag)
 
+# pylint: disable=no-self-use
+
 
 class TestCliControllerFullExecution(DjangoTestCase):
     def setUp(self) -> None:

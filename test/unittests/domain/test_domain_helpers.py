@@ -29,17 +29,17 @@ class TestDomainHelpers(unittest.TestCase):
             validate_param(param='12345', max_length=4, label='TestLabel')
 
         self.assertEqual(str(context.exception),
-                         f"TestLabel too long, max length = 4 chars.")
+                         "TestLabel too long, max length = 4 chars.")
 
     def test_validate_name_raises_whitespace_on_end(self):
         with self.assertRaises(ValueError) as context:
             validate_param(param=' before', max_length=10, label='TestLabel')
 
         self.assertEqual(str(context.exception),
-                         f"Error: TestLabel ' before' has whitespace on either end.")
+                         "Error: TestLabel ' before' has whitespace on either end.")
 
         with self.assertRaises(ValueError) as context:
             validate_param(param='after ', max_length=10, label='TestLabel')
 
         self.assertEqual(str(context.exception),
-                         f"Error: TestLabel 'after ' has whitespace on either end.")
+                         "Error: TestLabel 'after ' has whitespace on either end.")

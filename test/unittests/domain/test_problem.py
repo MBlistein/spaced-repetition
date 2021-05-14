@@ -9,6 +9,8 @@ MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
 MAX_TAG_LENGTH = 20
 
+# pylint: disable=no-self-use
+
 
 class TestProblemCreator(unittest.TestCase):
     def test_validate_url_text(self):

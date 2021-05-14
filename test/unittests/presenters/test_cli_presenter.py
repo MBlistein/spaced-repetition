@@ -12,6 +12,8 @@ from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
 from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
+# pylint: disable=protected-access, no-self-use
+
 
 class TestCommonFormatters(unittest.TestCase):
     def test_format_difficulty(self):
@@ -122,7 +124,7 @@ class TestListProblemTagCombos(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problem_tag_combos(self, mock_stdout):
-        # pep8: disable=line-too-long
+        # pylint: disable=line-too-long
         expected_output = \
             "| tag      | problem   |   problem_id | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
             "|----------|-----------|--------------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
@@ -162,7 +164,7 @@ class TestListProblems(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problems(self, mock_stdout):
-        # pep8: disable=line-too-long
+        # pylint: disable=line-too-long
         expected_output = \
             "|   problem_id | problem   | tags     | difficulty   |   KS |   RF | url          |\n" \
             "|--------------|-----------|----------|--------------|------|------|--------------|\n" \
@@ -241,6 +243,7 @@ class TestPresentTags(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_tags(self, mock_stdout):
+        # pylint: disable=line-too-long
         test_df = pd.DataFrame(
             data=[
                 {'tag': 'test-tag',

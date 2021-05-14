@@ -10,6 +10,8 @@ from spaced_repetition.use_cases.helpers_pandas import (add_missing_columns,
                                                         denormalize_tags,
                                                         case_insensitive_sort)
 
+# pylint: disable=no-self-use
+
 
 class TestAddMissingColumns(unittest.TestCase):
     def test_add_missing_columns(self):
