@@ -53,7 +53,7 @@ class CliController:
             nargs='+',
             help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
-                                 choices=['KS', 'problem', 'problem_id'],
+                                 choices=['KS', 'problem', 'problem_id', 'RF'],
                                  nargs='+',
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
@@ -71,7 +71,8 @@ class CliController:
                                   help='Show results only for problems '
                                        'containing the provided substring')
         combo_parser.add_argument('-s', '--sort-by',
-                                  choices=['KS', 'ts_logged', 'problem', 'tag'],
+                                  choices=['KS', 'problem', 'RF', 'tag',
+                                           'ts_logged'],
                                   nargs='+',
                                   help='Provide space-separated attribute(s) to '
                                        'sort listed problems by')
