@@ -40,7 +40,7 @@ class CliPresenter(PresenterInterface):
     # -------------------- pretty-print db contents ------------------------
     @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
-        ordered_cols = ['problem_id', 'problem', 'tags', 'difficulty',
+        ordered_cols = ['problem_id', 'problem', 'difficulty',
                         'KS', 'RF', 'url']
         formatted_df = cls.format_df(df=problems,
                                      ordered_cols=ordered_cols,

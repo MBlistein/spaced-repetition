@@ -166,9 +166,9 @@ class TestListProblems(unittest.TestCase):
     def test_list_problems(self, mock_stdout):
         # pylint: disable=line-too-long
         expected_output = \
-            "|   problem_id | problem   | tags     | difficulty   |   KS |   RF | url          |\n" \
-            "|--------------|-----------|----------|--------------|------|------|--------------|\n" \
-            "|            5 | test-prob | test-tag | MEDIUM       |    2 |  0.7 | www.test.com |\n"
+            "|   problem_id | problem   | difficulty   |   KS |   RF | url          |\n" \
+            "|--------------|-----------|--------------|------|------|--------------|\n" \
+            "|            5 | test-prob | MEDIUM       |    2 |  0.7 | www.test.com |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
