@@ -11,8 +11,9 @@ class TagAdder:
         self.repo = db_gateway
         self.presenter = presenter
 
-    def add_tag(self, name: str):
-        tag = TagCreator.create(name=name)
+    def add_tag(self, name: str, experience_target: int):
+        tag = TagCreator.create(name=name,
+                                experience_target=experience_target)
 
         self._assert_is_unique(tag=tag)
         new_tag = self.repo.create_tag(tag=tag)

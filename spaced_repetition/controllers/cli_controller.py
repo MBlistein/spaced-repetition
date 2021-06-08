@@ -165,7 +165,9 @@ class CliController:
         """Create new Tag"""
         tag_adder = TagAdder(db_gateway=DjangoGateway(),
                              presenter=CliPresenter())
-        tag_adder.add_tag(name=cls._clean_input(input('Tag name: ')))
+        tag_adder.add_tag(
+            name=cls._clean_input(input('Tag name: ')),
+            experience_target=int(cls._clean_input(input('Target experience: '))))
 
     # -------------------- get user input --------------------
 

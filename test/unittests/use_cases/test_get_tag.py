@@ -19,8 +19,8 @@ from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 class TestGetTags(unittest.TestCase):
     def setUp(self) -> None:
-        self.tag_1 = TagCreator.create(name='tag_1')
-        self.tag_2 = TagCreator.create(name='tag_2')
+        self.tag_1 = TagCreator.create(name='tag_1', experience_target=5)
+        self.tag_2 = TagCreator.create(name='tag_2', experience_target=5)
 
     def test_get_tags(self):
 
@@ -42,7 +42,8 @@ class TestGetTags(unittest.TestCase):
         tag_df = tag_getter._get_tags()
 
         self.assertTrue(tag_df.empty)
-        self.assertEqual(['tag', 'tag_id'], tag_df.columns.to_list())
+        self.assertEqual(['tag', 'tag_id', 'experience_target'],
+                         tag_df.columns.to_list())
 
     def test_get_existing_tags(self):
         repo = Mock()
@@ -69,11 +70,13 @@ class TestGetTags(unittest.TestCase):
 class TestGetPrioritizedTags(unittest.TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self) -> None:
+        # --- dicts of merged tag and knowledge data to test prioritization ---
         self.data_tag1_prob1_easy = {
             'problem': 'easy_problem_1',
             'difficulty': Difficulty.EASY,
             'KS': 3,
             'tag': 'tag_1',
+            'experience_target': 5,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag1_prob2_easy = {
@@ -81,6 +84,7 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'difficulty': Difficulty.EASY,
             'KS': 5,
             'tag': 'tag_1',
+            'experience_target': 5,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag1_prob3_medium = {
@@ -88,6 +92,7 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'difficulty': Difficulty.MEDIUM,
             'KS': 2,
             'tag': 'tag_1',
+            'experience_target': 5,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob4_easy = {
@@ -95,6 +100,7 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'difficulty': Difficulty.EASY,
             'KS': 5,
             'tag': 'tag_2',
+            'experience_target': 3,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob5_medium = {
@@ -102,13 +108,15 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'difficulty': Difficulty.MEDIUM,
             'KS': 4,
             'tag': 'tag_2',
+            'experience_target': 3,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag2_prob6_hard = {
-            'problem': 'medium_problem_2',
+            'problem': 'hard_problem',
             'difficulty': Difficulty.HARD,
             'KS': 3,
             'tag': 'tag_2',
+            'experience_target': 3,
             'ts_logged': dt.datetime(2021, 1, 1, 10)}
 
         self.data_tag_untried_problem = {
@@ -116,14 +124,18 @@ class TestGetPrioritizedTags(unittest.TestCase):
             'difficulty': Difficulty.HARD,
             'KS': np.nan,
             'tag': 'tag_with_untried_problem',
+            'experience_target': 4,
             'ts_logged': np.nan}
 
         self.data_tag_no_problems = {
             'problem': np.nan,
             'difficulty': np.nan,
             'KS': np.nan,
-            'tag': 'tag_wo_problems',
+            'tag': 'tag_no_problems',
+            'experience_target': 7,
             'ts_logged': np.nan}
+
+        # ----------------------------------------------------------------------
 
         self.empty_problem_df = add_missing_columns(
             df=pd.DataFrame(),
@@ -172,6 +184,23 @@ class TestGetPrioritizedTags(unittest.TestCase):
         assert_series_equal(expected_res,
                             res.reindex(index=expected_res.index))
 
+    def test_prioritize_tag_with_untried_problem(self):
+        test_df = pd.DataFrame(data=[
+            self.data_tag_untried_problem])
+
+        expected_res = pd.Series(
+            data={
+                'KS (weighted avg)': 0.0,
+                'experience': 0.0,
+                'num_problems': 1,
+                'priority': 0.0},
+            dtype='object')
+
+        res = TagGetter._prioritize(group_df=test_df)
+
+        assert_series_equal(expected_res,
+                            res.reindex(index=expected_res.index))
+
     def test_prioritize_tags(self):
         test_df = pd.DataFrame(data=[
             self.data_tag1_prob1_easy,
@@ -191,22 +220,25 @@ class TestGetPrioritizedTags(unittest.TestCase):
              'priority': 1.2},
             {'tag': 'tag_2',
              'KS (weighted avg)': 3.0,    # max(0.5 * 5 = 2.5, 0.75 * 4 = 3, 3)
-             'experience': 0.6,
+             'experience': 1.0,
              'num_problems': 3,
-             'priority': 1.8},
+             'priority': 3},
             {'tag': 'tag_with_untried_problem',
              'KS (weighted avg)': 0.0,
              'experience': 0.0,
              'num_problems': 1,
              'priority': 0.0},
-            {'tag': 'tag_wo_problems',
+            {'tag': 'tag_no_problems',
              'KS (weighted avg)': 0.0,
              'experience': 0.0,
              'num_problems': 0,
-             'priority': 0.0}
-        ])
+             'priority': 0.0}]) \
+            .sort_values('tag') \
+            .reset_index(drop=True)
 
-        res = TagGetter._prioritize_tags(tag_data=test_df)
+        res = TagGetter._prioritize_tags(tag_data=test_df) \
+            .sort_values('tag') \
+            .reset_index(drop=True)
 
         assert_frame_equal(expected_res, res,
                            check_like=True)
@@ -218,12 +250,14 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
     def test_merge_tag_and_knowledge_data(self):
         tag_df = pd.DataFrame({'tag': ['tag_1', 'tag_2'],
-                               'tag_id': [1, 2]})
+                               'tag_id': [1, 2],
+                               'experience_target': [1, 7]})
         knowledge_df = pd.DataFrame({'tag': ['tag_1', 'tag_2', 'tag_2'],
                                      'KS': [55, 1, 44],
                                      'problem': ['prob1', 'prob2', 'prob3']})
         expected_res = pd.DataFrame({'tag': ['tag_1', 'tag_2', 'tag_2'],
                                      'tag_id': [1, 2, 2],
+                                     'experience_target': [1, 7, 7],
                                      'KS': [55, 1, 44],
                                      'problem': ['prob1', 'prob2', 'prob3']})
 
@@ -233,11 +267,13 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
     def test_merge_tag_and_knowledge_data_filter_tags(self):
         tag_df = pd.DataFrame({'tag': ['tag_1'],
-                               'tag_id': [1]})
+                               'tag_id': [1],
+                               'experience_target': [2]})
         knowledge_df = pd.DataFrame({'tag': ['tag_1', 'tag_2'],
                                      'KS': [55, 44]})
         expected_res = pd.DataFrame({'tag': ['tag_1'],
                                      'tag_id': [1],
+                                     'experience_target': [2],
                                      'KS': [55]})
 
         res = TagGetter._merge_tag_and_knowledge_data(tag_df, knowledge_df)
@@ -246,10 +282,12 @@ class TestGetPrioritizedTags(unittest.TestCase):
 
     def test_merge_tag_and_knowledge_data_unlogged_tag(self):
         tag_df = pd.DataFrame({'tag': ['tag_1', 'unlogged_tag'],
+                               'experience_target': [3, 4],
                                'tag_id': [1, 2]})
         knowledge_df = pd.DataFrame({'tag': ['tag_1'],
                                      'KS': [55]})
         expected_res = pd.DataFrame({'tag': ['tag_1', 'unlogged_tag'],
+                                     'experience_target': [3, 4],
                                      'tag_id': [1, 2],
                                      'KS': [55, np.nan]})
 

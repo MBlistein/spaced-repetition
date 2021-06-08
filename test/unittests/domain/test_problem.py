@@ -57,7 +57,7 @@ class TestProblemCreator(unittest.TestCase):
     @patch.object(ProblemCreator, attribute='validate_url')
     def test_all_validators_called(self, mock_val_url, mock_val_tags,
                                    mock_val_name, mock_val_difficulty):
-        tag = TagCreator.create(name='test-tag')
+        tag = TagCreator.create(name='test-tag', experience_target=5)
         ProblemCreator.create(name='fake',
                               difficulty=Difficulty.EASY,
                               tags=[tag],

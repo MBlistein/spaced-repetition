@@ -10,8 +10,8 @@ from spaced_repetition.use_cases.log_problem import ProblemLogger
 
 class TestProblemLogger(unittest.TestCase):
     def setUp(self) -> None:
-        self.tag_1 = TagCreator.create(name='tag_1')
-        self.tag_2 = TagCreator.create(name='tag_2')
+        self.tag_1 = TagCreator.create(name='tag_1', experience_target=5)
+        self.tag_2 = TagCreator.create(name='tag_2', experience_target=5)
         self.problem = ProblemCreator.create(name='problem_1',
                                              difficulty=Difficulty.MEDIUM,
                                              problem_id=1,

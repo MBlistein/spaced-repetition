@@ -12,7 +12,7 @@ from spaced_repetition.domain.tag import TagCreator
 
 class TestProblemLogCreator(unittest.TestCase):
     def setUp(self) -> None:
-        self.tag = TagCreator.create(name='test-tag')
+        self.tag = TagCreator.create(name='test-tag', experience_target=5)
 
     @patch.object(ProblemLogCreator, attribute='validate_comment')
     @patch.object(ProblemLogCreator, attribute='validate_problem_id')

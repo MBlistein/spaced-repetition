@@ -178,7 +178,7 @@ class TestListProblems(unittest.TestCase):
 
 class TestProblemHistory(unittest.TestCase):
     def setUp(self):
-        self.tag = TagCreator.create(name='test-tag')
+        self.tag = TagCreator.create(name='test-tag', experience_target=5)
         self.problem = ProblemCreator.create(name='test_problem',
                                              difficulty=Difficulty.MEDIUM,
                                              tags=[self.tag],
@@ -265,7 +265,7 @@ class TestPresentTags(unittest.TestCase):
 
 class TestCliPresentConfirmations(unittest.TestCase):
     def setUp(self) -> None:
-        self.tag = TagCreator.create(name='test-tag')
+        self.tag = TagCreator.create(name='test-tag', experience_target=5)
 
         self.problem = ProblemCreator.create(
             name='testname',
@@ -277,7 +277,7 @@ class TestCliPresentConfirmations(unittest.TestCase):
         self.problem_log = ProblemLogCreator.create(
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
-            tags=[TagCreator.create('test-tag')])
+            tags=[TagCreator.create('test-tag', experience_target=5)])
 
     def test_problem_confirmation_txt(self):
         expected_txt = "Created Problem 'testname' with id '1' " \

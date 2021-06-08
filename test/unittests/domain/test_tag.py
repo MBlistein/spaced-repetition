@@ -49,10 +49,14 @@ class TestTagCreator(unittest.TestCase):
                                  str(context.exception))
 
     @patch.object(TagCreator, attribute='validate_name')
-    def test_all_validators_called(self, mock_validate_name):
-        TagCreator.create(name='tag1')
+    @patch.object(TagCreator, attribute='validate_experience_target')
+    def test_all_validators_called(self, mock_validate_experience_target,
+                                   mock_validate_name):
+        TagCreator.create(name='tag1',
+                          experience_target=5)
 
         mock_validate_name.assert_called_once()
+        mock_validate_experience_target.assert_called_once()
 
 
 class TestHelpers(unittest.TestCase):

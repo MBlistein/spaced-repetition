@@ -17,10 +17,12 @@ class Tag:
 
 class TagCreator:
     @classmethod
-    def create(cls, name: str, experience_target: int = 5, tag_id: int = None):
-        return Tag(experience_target=experience_target,
-                   name=cls.validate_name(name),
-                   tag_id=tag_id)
+    def create(cls, name: str, experience_target, tag_id: int = None):
+        return Tag(
+            experience_target=cls.validate_experience_target(
+                experience_target),
+            name=cls.validate_name(name),
+            tag_id=tag_id)
 
     @staticmethod
     def validate_experience_target(experience_target: int) -> int:

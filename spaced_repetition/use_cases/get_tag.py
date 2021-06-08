@@ -70,8 +70,9 @@ class TagGetter:
 
         tag_df = pd.DataFrame(data=[dataclasses.asdict(tag) for tag in tags]) \
             .rename(columns={'name': 'tag'})
+
         return add_missing_columns(tag_df,
-                                   ['tag', 'tag_id'])
+                                   ['tag', 'tag_id', 'experience_target'])
 
     @classmethod
     def _prioritize_tags(cls, tag_data: pd.DataFrame):
@@ -98,7 +99,10 @@ class TagGetter:
         weighted_ks = max(0.5 * easy_avg_ks,
                           0.75 * med_avg_ks,
                           hard_avg_ks)
-        experience = min(1.0, group_df.ts_logged.count() / 5)
+        experience_target = group_df.experience_target.iloc[0]
+        experience = min(1.0, group_df.ts_logged.count() / experience_target)
+        print(f"tag: {group_df.tag.iloc[0]}, {experience_target}")
+        print(group_df)
         priority = weighted_ks * experience
 
         return pd.Series(

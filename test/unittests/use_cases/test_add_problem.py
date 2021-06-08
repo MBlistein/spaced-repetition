@@ -13,7 +13,8 @@ from spaced_repetition.use_cases.get_tag import TagGetter
 
 class TestProblemAdder(unittest.TestCase):
     def setUp(self) -> None:
-        self.test_tag = TagCreator.create(name='test-tag')
+        self.test_tag = TagCreator.create(name='test-tag',
+                                          experience_target=5)
         self.test_problem = ProblemCreator.create(
             name='testname',
             difficulty=Difficulty(1),

@@ -10,13 +10,14 @@ from spaced_repetition.use_cases.add_tag import TagAdder
 
 class TestTagAdder(unittest.TestCase):
     def setUp(self) -> None:
-        self.tag = TagCreator.create('new_tag')
+        self.tag = TagCreator.create('new_tag', experience_target=12)
 
     @patch.object(TagAdder, '_assert_is_unique')
     def test_add_tag(self, mock_assert_unique):
         t_a = TagAdder(db_gateway=Mock(), presenter=Mock())
 
-        t_a.add_tag(name=self.tag.name)
+        t_a.add_tag(name=self.tag.name,
+                    experience_target=12)
 
         mock_assert_unique.assert_called_once_with(tag=self.tag)
         t_a.repo.create_tag.assert_called_once_with(tag=self.tag)  # noqa

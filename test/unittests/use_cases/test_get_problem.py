@@ -24,8 +24,8 @@ class TestListProblemTagCombos(unittest.TestCase):
     def setUp(self):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
         self.time_2 = dt.datetime(2021, 1, 10, 5)
-        self.tag_1 = TagCreator.create(name='tag_1')
-        self.tag_2 = TagCreator.create(name='tag_2')
+        self.tag_1 = TagCreator.create(name='tag_1', experience_target=5)
+        self.tag_2 = TagCreator.create(name='tag_2', experience_target=5)
         self.problem = ProblemCreator.create(difficulty=Difficulty.EASY,
                                              problem_id=1,
                                              name='test_problem',

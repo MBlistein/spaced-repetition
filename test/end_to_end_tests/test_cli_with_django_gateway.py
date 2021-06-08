@@ -1,6 +1,6 @@
 
 import sys
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.test import TestCase as DjangoTestCase
 
@@ -27,8 +27,11 @@ class TestCliControllerFullExecution(DjangoTestCase):
             CliController.run()
 
     def test_add_tag(self):
+        mock_user = Mock()
+        mock_user.side_effect = ['new_tag_name', '2']
+
         with patch.object(sys, 'argv', new=['_', 'add-tag']):
-            with patch('builtins.input', return_value='new_tag_name'):
+            with patch('builtins.input', new=mock_user):
                 CliController.run()
 
                 tags = OrmTag.objects.filter(name='new_tag_name')

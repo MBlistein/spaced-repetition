@@ -67,7 +67,9 @@ class DjangoGateway(DBGatewayInterface):
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,
-            tags=[TagCreator.create(name=tag.name, tag_id=tag.pk)
+            tags=[TagCreator.create(name=tag.name,
+                                    experience_target=tag.experience_target,
+                                    tag_id=tag.pk)
                   for tag in p.tags.all()],
             url=p.url) for p in problems]
 
@@ -112,7 +114,9 @@ class DjangoGateway(DBGatewayInterface):
                 comment=p_l.comment,
                 problem_id=p_l.problem.pk,
                 result=Result(p_l.result),
-                tags=[TagCreator.create(name=tag.name, tag_id=tag.pk)
+                tags=[TagCreator.create(name=tag.name,
+                                        experience_target=tag.experience_target,
+                                        tag_id=tag.pk)
                       for tag in p_l.tags.all()],
                 timestamp=p_l.timestamp))
 
@@ -141,7 +145,9 @@ class DjangoGateway(DBGatewayInterface):
 
     @staticmethod
     def _format_tags(tags: Union[List, QuerySet]) -> List[Tag]:
-        return [TagCreator.create(name=tag.name, tag_id=tag.pk)
+        return [TagCreator.create(name=tag.name,
+                                  experience_target=tag.experience_target,
+                                  tag_id=tag.pk)
                 for tag in tags]
 
     @staticmethod

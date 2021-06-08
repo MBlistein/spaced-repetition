@@ -20,7 +20,8 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
 
 class TestProblemCreation(TestCase):
     def setUp(self):
-        self.test_tag = TagCreator.create(name='tag1')
+        self.test_tag = TagCreator.create(name='tag1',
+                                          experience_target=5)
         OrmTag.objects.create(name=self.test_tag.name,
                               experience_target=5)
 
@@ -132,8 +133,12 @@ class TestProblemGetting(TestCase):
 
     def test_format_problems(self):
         problems = DjangoGateway._format_problems(OrmProblem.objects.all())
-        tag_1 = TagCreator.create(name='tag1', tag_id=self.tag_1.pk)
-        tag_2 = TagCreator.create(name='tag2', tag_id=self.tag_2.pk)
+        tag_1 = TagCreator.create(name='tag1',
+                                  experience_target=5,
+                                  tag_id=self.tag_1.pk)
+        tag_2 = TagCreator.create(name='tag2',
+                                  experience_target=5,
+                                  tag_id=self.tag_2.pk)
 
         self.assertIsInstance(problems, list)
         self.assertEqual(2, len(problems))
@@ -202,7 +207,8 @@ class TestProblemLogCreation(TestCase):
             comment='test comment',
             problem_id=1,
             result=Result.SOLVED_OPTIMALLY_IN_UNDER_25,
-            tags=[TagCreator.create(name=self.tag.name)],
+            tags=[TagCreator.create(name=self.tag.name,
+                                    experience_target=5)],
             timestamp=ts)
 
         dgw.create_problem_log(problem_log=log)
@@ -265,7 +271,9 @@ class TestProblemLogQuerying(TestCase):
                 comment='test comment 123!',
                 problem_id=self.prob.pk,
                 result=Result.SOLVED_SUBOPTIMALLY,
-                tags=[TagCreator.create(name='tag_1', tag_id=self.tag.pk)],
+                tags=[TagCreator.create(name='tag_1',
+                                        experience_target=5,
+                                        tag_id=self.tag.pk)],
                 timestamp=dt.datetime(2021, 1, 10, 10, tzinfo=gettz('UTC')))]
 
         problem_log_qs = OrmProblemLog.objects.filter(pk=self.problem_log.pk)

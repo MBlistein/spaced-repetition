@@ -24,8 +24,8 @@ class TestProblemLogDataRetrieval(unittest.TestCase):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
         self.time_2 = dt.datetime(2021, 1, 10, 5)
 
-        self.tag_1 = TagCreator.create('tag_1')
-        self.tag_2 = TagCreator.create('tag_2')
+        self.tag_1 = TagCreator.create('tag_1', experience_target=5)
+        self.tag_2 = TagCreator.create('tag_2', experience_target=5)
 
         self.problem_log_1 = ProblemLogCreator.create(
             comment='problem_log_1 comment',
@@ -152,8 +152,8 @@ class TestProblemLogDataRetrieval(unittest.TestCase):
 
 class TestKnowledgeScoreCalculation(unittest.TestCase):
     def setUp(self):
-        self.tag_1 = TagCreator.create('tag_1')
-        self.tag_2 = TagCreator.create('tag_2')
+        self.tag_1 = TagCreator.create('tag_1', experience_target=5)
+        self.tag_2 = TagCreator.create('tag_2', experience_target=5)
 
         self.problem_log_1 = ProblemLogCreator.create(
             comment='problem_log_1 comment',
