@@ -137,9 +137,11 @@ class CliPresenter(PresenterInterface):
     def list_tags(cls, tags: pd.DataFrame) -> None:
         formatted_df = cls.format_tag_df(df=tags)
         tabulated_df = cls.tabulate_df(df=formatted_df,
-                                       num_decimals={'priority': 2,
-                                                     'KS (weighted avg)': 2,
-                                                     'num_problems': 0})
+                                       num_decimals={
+                                           'experience': 2,
+                                           'KS (weighted avg)': 2,
+                                           'num_problems': 0,
+                                           'priority': 2})
         print(tabulated_df)
 
     @staticmethod

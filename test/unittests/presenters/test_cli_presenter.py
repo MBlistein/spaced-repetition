@@ -286,7 +286,7 @@ class TestPresentTags(unittest.TestCase):
         expected_output = \
             "| tag      |   priority |   KS (weighted avg) |   experience |   num_problems |\n" \
             "|----------|------------|---------------------|--------------|----------------|\n" \
-            "| test-tag |       4.00 |                5.00 |          0.8 |              4 |\n"
+            "| test-tag |       4.00 |                5.00 |         0.80 |              4 |\n"
 
         CliPresenter.list_tags(tags=test_df)
 
