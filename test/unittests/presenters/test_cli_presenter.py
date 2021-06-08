@@ -16,6 +16,15 @@ from spaced_repetition.presenters.cli_presenter import CliPresenter
 
 
 class TestCommonFormatters(unittest.TestCase):
+    def setUp(self) -> None:
+        self.float_fmt_df = pd.DataFrame(data={
+            'a': [1],
+            'b': 'text',
+            'c': [3.0],
+            'd': [4.0],
+            'e': [5.23]
+        })
+
     def test_format_difficulty(self):
         difficulty = pd.Series({1: Difficulty.MEDIUM})
         expected_res = pd.Series({1: Difficulty.MEDIUM.name})
@@ -39,6 +48,28 @@ class TestCommonFormatters(unittest.TestCase):
         res = CliPresenter._format_timestamp(ts=timestamp)
 
         assert_series_equal(expected_res, res)
+
+    def test_float_fmt(self):
+        num_decimals = {'c': 2}
+        res = CliPresenter._float_fmt(df=self.float_fmt_df,
+                                      num_decimals=num_decimals)
+        expected_res = ['', '', '', '.2f', '', '']
+
+        self.assertEqual(expected_res, res)
+
+    def test_decimal_formatting_of_numeric_cols(self):
+        num_decimals = {'a': 4,  # a is int --> should have 0 decimals
+                        'c': 2,  # c is float --> should have 2
+                        'd': 1}  # d is float --> should have 1
+        res = CliPresenter.tabulate_df(df=self.float_fmt_df,
+                                       num_decimals=num_decimals)
+        # note: no float format specified --> all decimals kept
+        expected_res = \
+            "|    |   a | b    |    c |   d |    e |\n" \
+            "|----|-----|------|------|-----|------|\n" \
+            "|  0 |   1 | text | 3.00 | 4.0 | 5.23 |"
+
+        self.assertEqual(expected_res, res)
 
 
 class TestListProblemTagCombos(unittest.TestCase):
@@ -128,7 +159,7 @@ class TestListProblemTagCombos(unittest.TestCase):
         expected_output = \
             "| tag      | problem   |   problem_id | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
             "|----------|-----------|--------------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
-            "| test-tag | name      |            5 | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       |    2 |  0.7 | www.test.com |    2.5 |         10 |\n"
+            "| test-tag | name      |            5 | MEDIUM       | 2021-01-10 08:10 | NO_IDEA       | 2.00 | 0.70 | www.test.com |    2.5 |         10 |\n"
 
         CliPresenter.list_problem_tag_combos(
             problem_tag_combos=self.problem_tag_combo_df)
@@ -168,7 +199,7 @@ class TestListProblems(unittest.TestCase):
         expected_output = \
             "|   problem_id | problem   | difficulty   |   KS |   RF | url          |\n" \
             "|--------------|-----------|--------------|------|------|--------------|\n" \
-            "|            5 | test-prob | MEDIUM       |    2 |  0.7 | www.test.com |\n"
+            "|            5 | test-prob | MEDIUM       | 2.00 | 0.70 | www.test.com |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
@@ -255,7 +286,7 @@ class TestPresentTags(unittest.TestCase):
         expected_output = \
             "| tag      |   priority |   KS (weighted avg) |   experience |   num_problems |\n" \
             "|----------|------------|---------------------|--------------|----------------|\n" \
-            "| test-tag |          4 |                   5 |          0.8 |              4 |\n"
+            "| test-tag |       4.00 |                5.00 |          0.8 |              4 |\n"
 
         CliPresenter.list_tags(tags=test_df)
 

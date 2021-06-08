@@ -101,8 +101,6 @@ class TagGetter:
                           hard_avg_ks)
         experience_target = group_df.experience_target.iloc[0]
         experience = min(1.0, group_df.ts_logged.count() / experience_target)
-        print(f"tag: {group_df.tag.iloc[0]}, {experience_target}")
-        print(group_df)
         priority = weighted_ks * experience
 
         return pd.Series(
@@ -116,7 +114,7 @@ class TagGetter:
 
     @staticmethod
     def _mean_knowledge_score(df: pd.DataFrame, difficulty: Difficulty):
-        # problems that have never been done should be ignored
+        # problems that have never been done are ignored
         ks = df \
             .loc[df.difficulty == difficulty, 'KS'] \
             .mean()

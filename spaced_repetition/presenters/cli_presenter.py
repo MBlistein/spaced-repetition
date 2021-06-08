@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 from tabulate import tabulate
@@ -45,7 +45,9 @@ class CliPresenter(PresenterInterface):
         formatted_df = cls.format_df(df=problems,
                                      ordered_cols=ordered_cols,
                                      index_col='problem_id')
-        tabulated_df = cls.tabulate_df(df=formatted_df)
+        tabulated_df = cls.tabulate_df(df=formatted_df,
+                                       num_decimals={'KS': 2,
+                                                     'RF': 2})
         print(tabulated_df)
 
     @classmethod
@@ -55,7 +57,10 @@ class CliPresenter(PresenterInterface):
         formatted_df = cls.format_df(df=problem_tag_combos,
                                      ordered_cols=ordered_cols,
                                      index_col='tag')
-        tabulated_df = cls.tabulate_df(df=formatted_df)
+        tabulated_df = cls.tabulate_df(df=formatted_df,
+                                       num_decimals={'KS': 2,
+                                                     'RF': 2})
+
         print(tabulated_df)
 
     @classmethod
@@ -70,11 +75,32 @@ class CliPresenter(PresenterInterface):
         history_df.ts_logged = cls._format_timestamp(history_df.ts_logged)
         print(cls.tabulate_df(history_df))
 
-    @staticmethod
-    def tabulate_df(df: pd.DataFrame):
+    @classmethod
+    def tabulate_df(cls, df: pd.DataFrame, num_decimals: Dict[str, int] = None):
+        """ num_decimals allows to map column names to the number of decimals
+        to display for that column. """
+        num_decimals = num_decimals or {}
         return tabulate(df,
                         headers='keys',
-                        tablefmt='github')
+                        tablefmt='github',
+                        floatfmt=cls._float_fmt(df, num_decimals))
+
+    @staticmethod
+    def _float_fmt(df: pd.DataFrame, num_decimals: Dict[str, int]):
+        """ tabluate accepts teh floatfmt argument, which takes a tuple of
+        strings to determine how many decimals a numeric column should display.
+        Tabulate expects the tuple to contain one value per column, also for
+        non-numeric columns.
+        This helper method allows to specify a dict of columns that should be
+        formatted, and creates empty format values for all other columns,
+        to leave them unformatted. """
+        res = ['']  # index format
+        for col in df.columns:
+            if col in num_decimals:
+                res.append(f".{num_decimals[col]}f")
+            else:
+                res.append('')
+        return res
 
     @classmethod
     def format_df(cls, df: pd.DataFrame, ordered_cols: List[str],
@@ -110,7 +136,10 @@ class CliPresenter(PresenterInterface):
     @classmethod
     def list_tags(cls, tags: pd.DataFrame) -> None:
         formatted_df = cls.format_tag_df(df=tags)
-        tabulated_df = cls.tabulate_df(df=formatted_df)
+        tabulated_df = cls.tabulate_df(df=formatted_df,
+                                       num_decimals={'priority': 2,
+                                                     'KS (weighted avg)': 2,
+                                                     'num_problems': 0})
         print(tabulated_df)
 
     @staticmethod
