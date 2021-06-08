@@ -21,7 +21,8 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
 class TestProblemCreation(TestCase):
     def setUp(self):
         self.test_tag = TagCreator.create(name='tag1')
-        OrmTag.objects.create(name=self.test_tag.name)
+        OrmTag.objects.create(name=self.test_tag.name,
+                              experience_target=5)
 
         self.problem = ProblemCreator.create(difficulty=Difficulty.EASY,
                                              name='test_problem',
@@ -48,11 +49,12 @@ class TestProblemCreation(TestCase):
 class TestProblemQuerying(TestCase):
     def setUp(self):
         # create tags
-        tag_1 = OrmTag.objects.create(name='tag1')
-        tag_2 = OrmTag.objects.create(name='tag2')
-        tag_3 = OrmTag.objects.create(name='tag3')
-        tag_4 = OrmTag.objects.create(name='tag4')
-        OrmTag.objects.create(name='additional_tag')  # not linked to problem
+        tag_1 = OrmTag.objects.create(name='tag1', experience_target=5)
+        tag_2 = OrmTag.objects.create(name='tag2', experience_target=5)
+        tag_3 = OrmTag.objects.create(name='tag3', experience_target=5)
+        tag_4 = OrmTag.objects.create(name='tag4', experience_target=5)
+        OrmTag.objects.create(name='additional_tag',
+                              experience_target=5)  # not linked to problem
 
         # create problems and match to tags
         prob_1 = OrmProblem.objects.create(difficulty=1, name='prob_1')
@@ -118,8 +120,10 @@ class TestProblemQuerying(TestCase):
 
 class TestProblemGetting(TestCase):
     def setUp(self):
-        self.tag_1 = OrmTag.objects.create(name='tag1')
-        self.tag_2 = OrmTag.objects.create(name='tag2')
+        self.tag_1 = OrmTag.objects.create(name='tag1',
+                                           experience_target=5)
+        self.tag_2 = OrmTag.objects.create(name='tag2',
+                                           experience_target=5)
         for name in ['name2', 'name1']:
             prob = OrmProblem.objects.create(difficulty=1,
                                              name=name,
@@ -188,7 +192,8 @@ class TestProblemLogCreation(TestCase):
             name='testname',
             url='https://testurl.com')
 
-        self.tag = OrmTag.objects.create(name='test-tag')
+        self.tag = OrmTag.objects.create(name='test-tag',
+                                         experience_target=5)
 
     def test_create_problem_log(self):
         dgw = DjangoGateway()
@@ -223,7 +228,8 @@ class TestProblemLogQuerying(TestCase):
         prob_2 = OrmProblem.objects.create(difficulty=2,
                                            name='test_problem_2',
                                            url='www.test_url_2.com')
-        self.tag = OrmTag.objects.create(name='tag_1')
+        self.tag = OrmTag.objects.create(name='tag_1',
+                                         experience_target=5)
 
         # create ProblemLogs
         self.problem_log = OrmProblemLog.objects.create(
@@ -283,7 +289,8 @@ class TestProblemLogQuerying(TestCase):
 
 class TestTagCreation(TestCase):
     def test_create_tag(self):
-        tag = DjangoGateway.create_tag(Tag(name='tag1'))
+        tag = DjangoGateway.create_tag(Tag(name='tag1',
+                                           experience_target=5))
         self.assertIsInstance(tag, Tag)
         self.assertEqual(tag.name, 'tag1')
 
@@ -294,9 +301,9 @@ class TestTagCreation(TestCase):
 
 class TestTagGetting(TestCase):
     def setUp(self):
-        OrmTag.objects.create(name='tag2')
-        OrmTag.objects.create(name='Tag1')
-        OrmTag.objects.create(name='t3')
+        OrmTag.objects.create(name='tag2', experience_target=5)
+        OrmTag.objects.create(name='Tag1', experience_target=5)
+        OrmTag.objects.create(name='t3', experience_target=5)
 
     def test_query_tags(self):
         tags = DjangoGateway._query_tags(names=None, sub_str=None)

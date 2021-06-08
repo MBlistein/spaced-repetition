@@ -8,6 +8,11 @@ from spaced_repetition.domain.tag import MAX_TAG_LENGTH
 
 
 class Tag(models.Model):
+    experience_target = models.IntegerField(
+        blank=False,
+        null=False
+    )
+
     name = models.CharField(
         blank=False,
         max_length=MAX_TAG_LENGTH,

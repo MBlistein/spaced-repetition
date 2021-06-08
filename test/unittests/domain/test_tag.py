@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from spaced_repetition.domain.tag import (MAX_TAG_LENGTH,
+                                          Tag,
                                           TagCreator,
                                           validate_tag_list)
 
@@ -9,6 +10,18 @@ from spaced_repetition.domain.tag import (MAX_TAG_LENGTH,
 
 
 class TestTagCreator(unittest.TestCase):
+    def test_create(self):
+        tag = TagCreator.create(
+            experience_target=2,
+            name='test-tag-2',
+            tag_id=22
+        )
+
+        self.assertEqual(tag,
+                         Tag(experience_target=2,
+                             name='test-tag-2',
+                             tag_id=22))
+
     def test_validate_name(self):
         with patch('spaced_repetition.domain.tag.validate_param') as mock:
             mock.return_value = 'validate_input_return_val'
@@ -18,6 +31,22 @@ class TestTagCreator(unittest.TestCase):
             mock.assert_called_once_with(param='valid tag',
                                          max_length=MAX_TAG_LENGTH,
                                          label='Tag')
+
+    def test_validate_experience_target_wrong_type(self):
+        with self.assertRaises(TypeError):
+            TagCreator.validate_experience_target('1')
+
+    def test_validate_experience_target_value_range(self):
+        for value, error_msg in [
+            (0, "Tag.experience_target should be between 1 and 15, but is 0."),
+            (16, "Tag.experience_target should be between 1 and 15, but is 16."),
+        ]:
+            with self.subTest(value=value, error_msg=error_msg):
+                with self.assertRaises(ValueError) as context:
+                    TagCreator.validate_experience_target(value)
+
+                self.assertEqual(error_msg,
+                                 str(context.exception))
 
     @patch.object(TagCreator, attribute='validate_name')
     def test_all_validators_called(self, mock_validate_name):

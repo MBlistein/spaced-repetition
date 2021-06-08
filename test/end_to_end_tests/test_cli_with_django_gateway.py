@@ -14,7 +14,8 @@ from spaced_repetition.gateways.django_gateway.django_project.apps.problem.model
 
 class TestCliControllerFullExecution(DjangoTestCase):
     def setUp(self) -> None:
-        tag_1 = OrmTag.objects.create(name='tag_1')
+        tag_1 = OrmTag.objects.create(name='tag_1',
+                                      experience_target=5)
 
         prob_1 = OrmProblem.objects.create(name='prob_1',
                                            difficulty=1)

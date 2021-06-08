@@ -28,11 +28,12 @@ class TestGetTags(unittest.TestCase):
         tag_getter.repo.get_tags.return_value = [self.tag_1, self.tag_2]
 
         expected_df = pd.DataFrame(data={'tag': ['tag_1', 'tag_2'],
-                                         'tag_id': [None, None]})
+                                         'tag_id': [None, None],
+                                         'experience_target': [5, 5]})
 
         tag_df = tag_getter._get_tags()
 
-        assert_frame_equal(expected_df, tag_df)
+        assert_frame_equal(expected_df, tag_df, check_like=True)
 
     def test_get_tags_no_data(self):
         tag_getter = TagGetter(db_gateway=Mock(), presenter=Mock())

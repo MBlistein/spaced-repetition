@@ -120,7 +120,9 @@ class DjangoGateway(DBGatewayInterface):
 
     @classmethod
     def create_tag(cls, tag: Tag) -> Tag:
-        orm_tag = OrmTag.objects.create(name=tag.name)
+        orm_tag = OrmTag.objects.create(name=tag.name,
+                                        experience_target=tag.experience_target)
+
         return cls._format_tags(tags=[orm_tag])[0]
 
     @classmethod
