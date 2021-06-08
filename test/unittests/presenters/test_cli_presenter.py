@@ -12,6 +12,8 @@ from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
 from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.presenters.cli_presenter import CliPresenter
 
+# pylint: disable=protected-access, no-self-use
+
 
 class TestCommonFormatters(unittest.TestCase):
     def test_format_difficulty(self):
@@ -122,7 +124,7 @@ class TestListProblemTagCombos(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problem_tag_combos(self, mock_stdout):
-        # pep8: disable=line-too-long
+        # pylint: disable=line-too-long
         expected_output = \
             "| tag      | problem   |   problem_id | difficulty   | last_access      | last_result   |   KS |   RF | url          |   ease |   interval |\n" \
             "|----------|-----------|--------------|--------------|------------------|---------------|------|------|--------------|--------|------------|\n" \
@@ -162,11 +164,11 @@ class TestListProblems(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_problems(self, mock_stdout):
-        # pep8: disable=line-too-long
+        # pylint: disable=line-too-long
         expected_output = \
-            "|   problem_id | problem   | tags     | difficulty   |   KS |   RF | url          |\n" \
-            "|--------------|-----------|----------|--------------|------|------|--------------|\n" \
-            "|            5 | test-prob | test-tag | MEDIUM       |    2 |  0.7 | www.test.com |\n"
+            "|   problem_id | problem   | difficulty   |   KS |   RF | url          |\n" \
+            "|--------------|-----------|--------------|------|------|--------------|\n" \
+            "|            5 | test-prob | MEDIUM       |    2 |  0.7 | www.test.com |\n"
 
         CliPresenter.list_problems(problems=self.problem_df)
 
@@ -176,9 +178,10 @@ class TestListProblems(unittest.TestCase):
 
 class TestProblemHistory(unittest.TestCase):
     def setUp(self):
+        self.tag = TagCreator.create(name='test-tag')
         self.problem = ProblemCreator.create(name='test_problem',
                                              difficulty=Difficulty.MEDIUM,
-                                             tags=['test_tag'],
+                                             tags=[self.tag],
                                              problem_id=1)
         self.problem_log_info = pd.DataFrame(data=[{
             'comment': 'problem_log_1 comment',
@@ -240,6 +243,7 @@ class TestPresentTags(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_list_tags(self, mock_stdout):
+        # pylint: disable=line-too-long
         test_df = pd.DataFrame(
             data=[
                 {'tag': 'test-tag',
@@ -261,11 +265,13 @@ class TestPresentTags(unittest.TestCase):
 
 class TestCliPresentConfirmations(unittest.TestCase):
     def setUp(self) -> None:
+        self.tag = TagCreator.create(name='test-tag')
+
         self.problem = ProblemCreator.create(
             name='testname',
             difficulty=Difficulty(1),
             problem_id=1,
-            tags=['test-tag'],
+            tags=[self.tag],
             url='test-url')
 
         self.problem_log = ProblemLogCreator.create(

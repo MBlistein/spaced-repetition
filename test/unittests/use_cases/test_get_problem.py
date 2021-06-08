@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal, assert_index_equal
+from pandas.testing import assert_frame_equal
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.tag import TagCreator
@@ -14,10 +14,13 @@ from spaced_repetition.use_cases.get_problem_log import ProblemLogGetter
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
-""" some day these tests should be regrouped by purpose to de-duplicate data"""
+# some day these tests should be regrouped by purpose to de-duplicate data
+
+# pylint: disable=protected-access, no-self-use
 
 
 class TestListProblemTagCombos(unittest.TestCase):
+    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
         self.time_2 = dt.datetime(2021, 1, 10, 5)
@@ -26,7 +29,7 @@ class TestListProblemTagCombos(unittest.TestCase):
         self.problem = ProblemCreator.create(difficulty=Difficulty.EASY,
                                              problem_id=1,
                                              name='test_problem',
-                                             tags=['tag_2', 'tag_1'],
+                                             tags=[self.tag_1, self.tag_2],
                                              url='some_url.com')
 
         self.problem_columns = [
@@ -158,7 +161,8 @@ class TestListProblemTagCombos(unittest.TestCase):
 
         expected_res = pd.DataFrame(data={
             'difficulty': [Difficulty.EASY] * 4,
-            'problem': ['problem_1', 'problem_1', 'unlogged_problem', 'unlogged_problem_with_logged_tag'],
+            'problem': ['problem_1', 'problem_1', 'unlogged_problem',
+                        'unlogged_problem_with_logged_tag'],
             'problem_id': [1, 1, 2, 3],
             'url': ['some_url.com'] * 4,
             'ease': [1, 1, np.nan, np.nan],
@@ -266,7 +270,8 @@ class TestListProblems(unittest.TestCase):
     def test_aggregate_problems(self):
         knowledge_status = pd.DataFrame(data={
             'difficulty': [Difficulty.EASY] * 4,
-            'problem': ['problem_1', 'problem_1', 'unlogged_problem', 'unlogged_problem_with_logged_tag'],
+            'problem': ['problem_1', 'problem_1', 'unlogged_problem',
+                        'unlogged_problem_with_logged_tag'],
             'problem_id': [1, 1, 2, 3],
             'url': ['some_url.com'] * 4,
             'ease': [1, 1, np.nan, np.nan],
@@ -332,4 +337,3 @@ class TestListProblems(unittest.TestCase):
         res = p_g.presenter.list_problems.call_args[0][0]
 
         assert_frame_equal(expected_res, res, check_like=True)
-

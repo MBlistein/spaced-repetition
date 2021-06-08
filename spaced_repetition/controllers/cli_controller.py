@@ -53,7 +53,7 @@ class CliController:
             nargs='+',
             help='List problems containing any of the provided tags')
         list_parser.add_argument('-s', '--sort-by',
-                                 choices=['KS', 'problem', 'problem_id'],
+                                 choices=['KS', 'problem', 'problem_id', 'RF'],
                                  nargs='+',
                                  help='Provide space-separated attribute(s) to '
                                       'sort listed problems by')
@@ -71,7 +71,8 @@ class CliController:
                                   help='Show results only for problems '
                                        'containing the provided substring')
         combo_parser.add_argument('-s', '--sort-by',
-                                  choices=['KS', 'ts_logged', 'problem', 'tag'],
+                                  choices=['KS', 'problem', 'RF', 'tag',
+                                           'ts_logged'],
                                   nargs='+',
                                   help='Provide space-separated attribute(s) to '
                                        'sort listed problems by')
@@ -96,6 +97,11 @@ class CliController:
         tag_parser.add_argument('-f', '--filter',
                                 help='List only tags whose tag contains '
                                      'the provided substring')
+        tag_parser.add_argument('-s', '--sort-by',
+                                choices=['tag', 'priority', 'num_problems'],
+                                nargs='+',
+                                help='Provide space-separated attribute(s) to '
+                                     'sort listed problems by')
         tag_parser.set_defaults(func=cls._list_tags)
 
         # log problem execution
@@ -238,6 +244,8 @@ class CliController:
         kwargs = {}
         if args.filter:
             kwargs['sub_str'] = args.filter
+        if args.sort_by:
+            kwargs['sorted_by'] = args.sort_by
 
         tag_getter = TagGetter(db_gateway=DjangoGateway(),
                                presenter=CliPresenter())

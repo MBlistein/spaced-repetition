@@ -5,6 +5,7 @@ from spaced_repetition.domain.problem import (Difficulty,
                                               ProblemCreator)
 from spaced_repetition.use_cases.db_gateway_interface import DBGatewayInterface
 from spaced_repetition.use_cases.presenter_interface import PresenterInterface
+from .get_tag import TagGetter
 
 
 class ProblemAdder:
@@ -17,11 +18,13 @@ class ProblemAdder:
                     difficulty: Difficulty,
                     tags: List[str],
                     url: str = None):
+
+        tag_getter = TagGetter(db_gateway=self.repo, presenter=self.presenter)
         problem = ProblemCreator.create(
             name=name,
             difficulty=difficulty,
             problem_id=None,
-            tags=tags,
+            tags=tag_getter.get_existing_tags(names=tags),
             url=url)
 
         self._assert_is_unique(problem=problem)

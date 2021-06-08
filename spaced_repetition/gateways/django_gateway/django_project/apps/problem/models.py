@@ -2,9 +2,9 @@ from django.db import models
 
 from spaced_repetition.domain.problem import (Difficulty,
                                               MAX_NAME_LENGTH,
-                                              MAX_TAG_LENGTH,
                                               MAX_URL_LENGTH)
 from spaced_repetition.domain.problem_log import Result
+from spaced_repetition.domain.tag import MAX_TAG_LENGTH
 
 
 class Tag(models.Model):

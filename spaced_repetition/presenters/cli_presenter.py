@@ -19,8 +19,9 @@ class CliPresenter(PresenterInterface):
     @staticmethod
     def _problem_confirmation_txt(problem: Problem):
         return f"Created Problem '{problem.name}' with id " \
-               f"'{problem.problem_id}' (difficulty '" \
-               f"{problem.difficulty.name}', tags: {', '.join(problem.tags)})"
+               f"'{problem.problem_id}' " \
+               f"(difficulty '{problem.difficulty.name}', " \
+               f"tags: {', '.join([t.name for t in problem.tags])})"
 
     @staticmethod
     def confirm_problem_logged(problem: Problem, problem_log: ProblemLog):
@@ -39,7 +40,7 @@ class CliPresenter(PresenterInterface):
     # -------------------- pretty-print db contents ------------------------
     @classmethod
     def list_problems(cls, problems: pd.DataFrame) -> None:
-        ordered_cols = ['problem_id', 'problem', 'tags', 'difficulty',
+        ordered_cols = ['problem_id', 'problem', 'difficulty',
                         'KS', 'RF', 'url']
         formatted_df = cls.format_df(df=problems,
                                      ordered_cols=ordered_cols,

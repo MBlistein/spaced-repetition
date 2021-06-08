@@ -5,6 +5,8 @@ from unittest.mock import Mock, patch
 from spaced_repetition.domain.tag import TagCreator
 from spaced_repetition.use_cases.add_tag import TagAdder
 
+# pylint: disable=protected-access
+
 
 class TestTagAdder(unittest.TestCase):
     def setUp(self) -> None:

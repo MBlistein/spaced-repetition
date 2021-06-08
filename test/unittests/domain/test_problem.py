@@ -3,10 +3,13 @@ import unittest
 from unittest.mock import patch
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
+from spaced_repetition.domain.tag import TagCreator
 
 MAX_URL_LENGTH = 255
 MAX_NAME_LENGTH = 100
 MAX_TAG_LENGTH = 20
+
+# pylint: disable=no-self-use
 
 
 class TestProblemCreator(unittest.TestCase):
@@ -36,18 +39,6 @@ class TestProblemCreator(unittest.TestCase):
                                          max_length=MAX_NAME_LENGTH,
                                          label='Name')
 
-    def test_validate_tags(self):
-        self.assertEqual(ProblemCreator.validate_tags(tags=['tag1', 'tag2']),
-                         ['tag1', 'tag2'])
-
-    def test_validate_tag_input_validated(self):
-        with patch('spaced_repetition.domain.problem.validate_param') as mock:
-            ProblemCreator.validate_tags(tags=['test_tag'])
-
-            mock.assert_called_once_with(param='test_tag',
-                                         max_length=MAX_TAG_LENGTH,
-                                         label='Tag')
-
     def test_validate_difficulty(self):
         self.assertEqual(
             ProblemCreator.validate_difficulty(difficulty=Difficulty.EASY),
@@ -62,17 +53,18 @@ class TestProblemCreator(unittest.TestCase):
 
     @patch.object(ProblemCreator, attribute='validate_difficulty')
     @patch.object(ProblemCreator, attribute='validate_name')
-    @patch.object(ProblemCreator, attribute='validate_tags')
+    @patch('spaced_repetition.domain.problem.validate_tag_list')
     @patch.object(ProblemCreator, attribute='validate_url')
     def test_all_validators_called(self, mock_val_url, mock_val_tags,
                                    mock_val_name, mock_val_difficulty):
+        tag = TagCreator.create(name='test-tag')
         ProblemCreator.create(name='fake',
-                              difficulty='fake',
-                              tags='fake',
-                              problem_id='fake',
+                              difficulty=Difficulty.EASY,
+                              tags=[tag],
+                              problem_id=1,
                               url='fake')
 
         mock_val_difficulty.assert_called_once()
         mock_val_name.assert_called_once()
-        mock_val_tags.assert_called_once()
+        mock_val_tags.assert_called_once_with([tag])
         mock_val_url.assert_called_once()

@@ -21,7 +21,8 @@ class DjangoGateway(DBGatewayInterface):
             url=problem.url,
             name=problem.name)
 
-        orm_problem.tags.set(OrmTag.objects.filter(name__in=problem.tags))
+        orm_problem.tags.set(OrmTag.objects.filter(
+            name__in=[t.name for t in problem.tags]))
         orm_problem.save()
 
         return cls._format_problems(problems=[orm_problem])[0]
@@ -66,7 +67,8 @@ class DjangoGateway(DBGatewayInterface):
             difficulty=Difficulty(p.difficulty),
             name=p.name,
             problem_id=p.pk,
-            tags=[t.name for t in p.tags.all()],
+            tags=[TagCreator.create(name=tag.name, tag_id=tag.pk)
+                  for tag in p.tags.all()],
             url=p.url) for p in problems]
 
     @staticmethod

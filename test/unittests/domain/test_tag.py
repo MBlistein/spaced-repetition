@@ -5,6 +5,8 @@ from spaced_repetition.domain.tag import (MAX_TAG_LENGTH,
                                           TagCreator,
                                           validate_tag_list)
 
+# pylint: disable=no-self-use
+
 
 class TestTagCreator(unittest.TestCase):
     def test_validate_name(self):

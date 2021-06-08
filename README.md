@@ -47,7 +47,7 @@ when we should re-solve the same problem to get to and maintain the desired
 algorithmic knowledge level.
 
 To use this program, the user can either start by adding relevant algorithmic
-topics to the database (see below), or by starting solving problems related to
+topics to the database (see below), or directly solving problems related to
 the algorithms of interest. When encountering a problem that is
 somewhat representative of an application for a relevant algorithm,
 this problem should be added to the 'spaced-repetition' database

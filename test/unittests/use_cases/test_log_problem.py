@@ -1,6 +1,6 @@
 import datetime as dt
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from spaced_repetition.domain.problem import Difficulty, ProblemCreator
 from spaced_repetition.domain.problem_log import ProblemLogCreator, Result
@@ -15,7 +15,7 @@ class TestProblemLogger(unittest.TestCase):
         self.problem = ProblemCreator.create(name='problem_1',
                                              difficulty=Difficulty.MEDIUM,
                                              problem_id=1,
-                                             tags=[self.tag_1.name])
+                                             tags=[self.tag_1])
         self.pl_1 = ProblemLogCreator.create(
             problem_id=self.problem.problem_id,
             result=Result.NO_IDEA,
@@ -58,8 +58,8 @@ class TestProblemLogger(unittest.TestCase):
                 tags=[self.tag_2.name])
 
         self.assertEqual(str(context.exception),
-                         f"Problem with name 'non_existing_problem_name' does "
-                         f"not exist, try searching for similar problems.")
+                         "Problem with name 'non_existing_problem_name' does "
+                         "not exist, try searching for similar problems.")
 
     def test_log_problem_raises_tags_dont_exist(self):
         repo = Mock()

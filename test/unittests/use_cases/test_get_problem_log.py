@@ -15,8 +15,11 @@ from spaced_repetition.use_cases.get_problem_log import (ProblemLogGetter,
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 from spaced_repetition.domain.tag import TagCreator
 
+# pylint: disable=protected-access, no-self-use
+
 
 class TestProblemLogDataRetrieval(unittest.TestCase):
+    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.time_1 = dt.datetime(2021, 1, 10, 1)
         self.time_2 = dt.datetime(2021, 1, 10, 5)
@@ -388,9 +391,9 @@ class TestSuperMemo2(unittest.TestCase):
         expected_intervals = [14, 14, 3, 37]
 
         result_data = copy.deepcopy(log_data)
-        for idx in range(len(result_data)):
-            result_data[idx].update({'ease': expected_eases[idx],
-                                     'interval': expected_intervals[idx]})
+        for idx, result in enumerate(result_data):
+            result.update({'ease': expected_eases[idx],
+                           'interval': expected_intervals[idx]})
         expected_result = pd.DataFrame(result_data)
 
         res = SuperMemo2.add_spacing_data(log_data=log_df)

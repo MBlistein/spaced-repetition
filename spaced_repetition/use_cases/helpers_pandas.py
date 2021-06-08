@@ -39,3 +39,10 @@ def denormalize_tags(df: pd.DataFrame) -> pd.DataFrame:
     return df \
         .explode('tags', ignore_index=True) \
         .rename(columns={'tags': 'tag'})
+
+
+def case_insensitive_sort(col):
+    """ case-insensitive sorting of text columns """
+    if col.dtype == 'object':
+        return col.str.lower()
+    return col

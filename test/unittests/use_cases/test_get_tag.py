@@ -14,6 +14,9 @@ from spaced_repetition.use_cases.get_problem import ProblemGetter
 from spaced_repetition.use_cases.helpers_pandas import add_missing_columns
 
 
+# pylint: disable=protected-access, no-self-use
+
+
 class TestGetTags(unittest.TestCase):
     def setUp(self) -> None:
         self.tag_1 = TagCreator.create(name='tag_1')
@@ -63,6 +66,7 @@ class TestGetTags(unittest.TestCase):
 
 
 class TestGetPrioritizedTags(unittest.TestCase):
+    # pylint: disable=too-many-instance-attributes
     def setUp(self) -> None:
         self.data_tag1_prob1_easy = {
             'problem': 'easy_problem_1',

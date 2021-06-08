@@ -7,7 +7,7 @@ import pandas as pd
 from spaced_repetition.domain.problem import Problem
 from .db_gateway_interface import DBGatewayInterface
 from .get_problem_log import ProblemLogGetter
-from .helpers_pandas import add_missing_columns, denormalize_tags
+from .helpers_pandas import add_missing_columns, denormalize_tags, case_insensitive_sort
 from .presenter_interface import PresenterInterface
 
 
@@ -37,7 +37,7 @@ class ProblemGetter:
 
         problem_df.sort_values(by=sorted_by or 'KS',
                                inplace=True,
-                               key=self._sort_key,
+                               key=case_insensitive_sort,
                                na_position='first')
         self.presenter.list_problems(problem_df)
 
@@ -65,20 +65,13 @@ class ProblemGetter:
         self.presenter.show_problem_history(problem=problems[0],
                                             problem_log_info=problem_log_df)
 
-    @staticmethod
-    def _sort_key(col):
-        """ case-insensitive sorting of text columns """
-        if col.dtype == 'object':
-            return col.str.lower()
-        return col
-
     def list_problem_tag_combos(self, sorted_by: List[str] = None,
                                 tag_substr: str = None,
                                 problem_substr: str = None):
         knowledge_status = self.get_knowledge_status()
         knowledge_status.sort_values(by=sorted_by or 'KS',
                                      inplace=True,
-                                     key=self._sort_key,
+                                     key=case_insensitive_sort,
                                      na_position='first')
         df = self._filter_tags(df=knowledge_status, tag_substr=tag_substr)
         df = self._filter_problems(df=df, problem_substr=problem_substr)
@@ -126,5 +119,5 @@ class ProblemGetter:
     def problem_to_row_content(problem: Problem) -> dict:
         problem_row = dataclasses.asdict(problem)
         problem_row['problem'] = problem_row.pop('name')
-        problem_row['tags'] = ', '.join(sorted(problem.tags))
+        problem_row['tags'] = ', '.join(sorted([t.name for t in problem.tags]))
         return problem_row
